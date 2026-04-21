@@ -2,8 +2,8 @@
   "status": "running",
   "current_sprint": 2,
   "total_sprints": 7,
-  "completed_sprints": 1,
-  "total_rounds": 7,
+  "completed_sprints": 2,
+  "total_rounds": 8,
   "started_at": "2026-04-21T09:42:13.815362Z",
   "seed": 1776764533,
   "sprint_statuses": [
@@ -27,10 +27,10 @@
     {
       "sprint_number": 2,
       "sprint_name": "C2 Container Overview",
-      "status": "building",
-      "rounds_completed": 2,
+      "status": "passed",
+      "rounds_completed": 3,
       "consecutive_passes": 0,
-      "final_score": null,
+      "final_score": 5.5,
       "best_round": 1,
       "best_scores": {
         "Bi-Directional Node-Narrative Consistency": 9.0,

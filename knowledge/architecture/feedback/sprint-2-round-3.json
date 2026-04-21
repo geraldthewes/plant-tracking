@@ -1,0 +1,65 @@
+{
+  "scores": {
+    "Bi-Directional Node-Narrative Consistency": 4.0,
+    "C4 Mandatory Container Presence": 5.5,
+    "Connector Label Standardization": 4.0,
+    "Container Narrative Structure & Depth": 7.0,
+    "Mermaid Syntax & Render Validity": 9.0,
+    "PRD Traceability & Citation Format": 2.0,
+    "Viewport & Layout Constraint": 8.0,
+    "Markdown Document Structure": 4.5
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Syntax & Render Validity",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "mmdc validates successfully with exit code 0 and no parse errors (c2-container.md lines 54-85). The diagram uses `flowchart LR` which is the correct format. No deprecated syntax detected. However, edge labels at lines 81-84 use slash notation 'Reads/writes' which, while not causing a Mermaid parse error, represents degraded quality that could cause downstream rendering issues. The double YAML frontmatter (file-level at lines 1-5 and diagram-level at lines 55-57) is redundant but not a parse error."
+    },
+    {
+      "criterion": "C4 Mandatory Container Presence",
+      "score": 5.5,
+      "severity": "High",
+      "details": "All 7 mandatory containers are present in the diagram: Gardener (Person) (gardener, line 59), Hermes Agent (hermes, line 64), Telegram Service (telegram, line 60), Mobile App Frontend (mobile, line 63), Phomemo Printer Interface (printerint, line 66), Markdown Data Storage (db, line 67), QR Code Generator/Service (qrservice, line 65). However, the display name 'Mobile App Frontend' appears with a line break as 'Mobile App Frontend\\n(React/Next.js, Docker)' which splits across lines — while technically correct Mermaid, this makes the exact name match harder to verify visually. More concerning: the Telegram Service node (line 60) uses double-brackets [[...]] syntax which renders as a stadium shape — this is valid Mermaid but inconsistent with the rectangle syntax used for all other containers."
+    },
+    {
+      "criterion": "Container Narrative Structure & Depth",
+      "score": 7.0,
+      "severity": "Medium",
+      "details": "All 7 containers have dedicated H3 sections (lines 11, 17, 23, 29, 35, 41, 47) with all 4 required narrative topics: Primary Responsibility, Input Data/Triggers, Output/Downstream Effects, and Failure/Graceful Degradation. Sentences are grammatically complete with no TBD or N/A placeholders. However, the narrative sentences are often dense with multiple clauses rather than being clean 3-5 sentence paragraphs. The Gardener section (line 12) packs 2 sentences covering Primary Responsibility but the content is somewhat generic — 'interacts with the system to track plants' is not specific enough for a container narrative at the C2 level."
+    },
+    {
+      "criterion": "PRD Traceability & Citation Format",
+      "score": 2.0,
+      "severity": "Critical",
+      "details": "The PRD (_bmad-output/prd.md) contains zero NFR-X numbered requirements. All non-functional requirements are expressed as prose sections: 'Performance' (line 311), 'Reliability' (line 316), 'Usability' (line 322), 'Data Portability' (line 328), 'Maintainability' (line 333). Yet every container narrative cites NFR-X IDs (NFR1-NFR5) that do not exist anywhere in the PRD. For example, Gardener line 15 cites 'PRD NFR2, NFR5', Hermes Agent line 21 cites 'PRD NFR5', Telegram Service line 27 cites 'PRD NFR4', Mobile App Frontend line 33 cites 'PRD NFR1, NFR3', Phomemo Printer Interface line 39 cites 'PRD NFR4', Markdown Data Storage line 45 cites 'PRD NFR1, NFR2', QR Code Generator/Service line 51 cites 'PRD NFR1'. This means approximately 14 out of ~55 total citations are invalid, fundamentally breaking traceability. FR citations (FR1-FR55) are valid and properly matched to the PRD."
+    },
+    {
+      "criterion": "Connector Label Standardization",
+      "score": 4.0,
+      "severity": "High",
+      "details": "9 of 14 edge labels violate the strict Verb-Noun hyphenated pattern. Lines 70 ('Manually enters data via'), 71 ('Scans QR code via camera'), 72 ('Displays plant record via'), 73 ('Sends natural language query via'), 74 ('Relays messages via'), 75 ('Returns analysis via'), 76 ('Relays messages via'), 81-84 ('Reads/writes plant records via file I/O'). The contract requires hyphenated Verb-Noun format like 'POST-qr-request' — none of these labels use hyphenation. Lines 77-80 (HTTPS and Bluetooth labels) use the format 'Requests QR code via HTTPS' which is also prose, not hyphenated. The 'Reads/writes' labels on lines 81-84 are particularly problematic: they use slash (special character) and combine two verbs with a slash, violating both the 'no special characters' and 'Verb-Noun' requirements."
+    },
+    {
+      "criterion": "Markdown Document Structure",
+      "score": 4.5,
+      "severity": "High",
+      "details": "YAML frontmatter present with title (line 2), sprint: 2 (line 3), author (line 4) — compliant. H1 for document title (line 7) — compliant. H2 for 'Container Narratives' (line 9) and 'Diagram' (line 53) — compliant. CRITICAL VIOLATION: The sprint contract mandates 'H2 for each container section' but all 7 container narrative sections use H3 (###) — lines 11, 17, 23, 29, 35, 41, 47. The H2 at line 9 wraps all container narratives as a section heading, but the contract explicitly requires each container to have its own H2 heading. Line 87 '## Connector Label Standardization' introduces a second H2 that sits at the same level as the container narrative wrappers, creating an inconsistent hierarchy. No trailing whitespace detected (verified). No tabs detected. Code blocks properly tagged as 'mermaid'. The heading hierarchy violation (H3 instead of H2 for container sections) is a hard contract failure."
+    },
+    {
+      "criterion": "Viewport & Layout Constraint",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "Diagram has 7 nodes and 14 edges — well within the ≤25 nodes and ≤40 edges limits. mmdc rendered successfully without clipping. The flowchart LR layout should fit within 1200px width given the moderate node count. However, there are no explicit layout directives (such as subgraph grouping or rank constraints) to control node positioning, which means the render depends on Mermaid's default layout algorithm. For a C2 diagram, the lack of explicit layout control is a minor risk for viewport constraint violations in different renderers."
+    },
+    {
+      "criterion": "Bi-Directional Node-Narrative Consistency",
+      "score": 4.0,
+      "severity": "High",
+      "details": "Diagram node IDs (lines 59-67): gardener, telegram, hermes, mobile, qrservice, printerint, db (7 nodes). Narrative section headings (lines 11, 17, 23, 29, 35, 41, 47): 'Gardener (Person)', 'Hermes Agent', 'Telegram Service', 'Mobile App Frontend', 'Phomemo Printer Interface', 'Markdown Data Storage', 'QR Code Generator/Service'. The contract requires 'zero-tolerance cross-verification' — every mermaid node ID must appear verbatim in the narrative section, and every narrative container must have a corresponding mermaid node. Node ID 'hermes' does not appear verbatim in narrative section 'Hermes Agent'. Node ID 'db' does not appear verbatim in narrative section 'Markdown Data Storage'. Node ID 'qrservice' does not appear verbatim in narrative section 'QR Code Generator/Service'. Node ID 'printerint' does not appear verbatim in narrative section 'Phomemo Printer Interface'. All 7 container names appear as narrative headings and all 7 are represented as diagram nodes, but the verbatim matching requirement is not satisfied since node IDs are abbreviated forms while narrative headings use full display names. Additionally, the narrative section headings contain parentheses (e.g., 'Gardener (Person)') which do not match any node definition format."
+    }
+  ],
+  "overall_summary": "The c2-container.md (from commit f071253, pass 2, before rollback) contains an architecturally sound C2 diagram that passes mmdc validation with all 7 mandatory containers present and properly connected. However, the file suffers from three critical failures: (1) PRD Traceability — all NFR-X citations are entirely fabricated since the PRD uses prose-based non-functional requirements with no NFR-X numbering, rendering ~14/55 citations invalid; (2) Markdown Structure — container narrative sections use H3 instead of the contract-mandated H2 headings; and (3) Connector Labeling — nearly all 14 edge labels violate the strict hyphenated Verb-Noun pattern and contain prose descriptions with special characters like slashes ('Reads/writes'). These are fundamental contract violations that cannot be tolerated at C2 level.",
+  "average_score": 5.5,
+  "passed": false
+}
