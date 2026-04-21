@@ -1,0 +1,79 @@
+{
+  "scores": {
+    "Mermaid Diagram Validity": 7.0,
+    "C4 Completeness": 9.0,
+    "Narrative Quality & Mapping": 7.0,
+    "PRD Scope Accuracy": 8.5,
+    "Relationship Documentation": 9.5,
+    "Markdown Linting & Structure": 1.0,
+    "Edge Case: Offline Queue & Sync": 7.0,
+    "Edge Case: Hermes Degradation & Fallback": 9.5,
+    "Edge Case: Data Privacy & Encryption": 8.5,
+    "Edge Case: Performance & Latency": 9.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Diagram Validity",
+      "score": 7.0,
+      "severity": "High",
+      "details": "The diagram passes mmdc validation (exit 0). However, the sprint contract mandates 'use standard graph TD or C4Context syntax' — the file uses flowchart LR (line 160). While mmdc parses it successfully, this is a contract-mandated syntax requirement violation. Additionally, the comment on line 187 admits bidirectional response flows are 'simplified as single arrows with implied responses' rather than using explicit <--> edges as the contract requires. Lines 188-193 use single --> for what are explicitly bidirectional interactions (qr_scanner→mobile, qr_scanner→web, photo_capture→mobile, photo_capture→web, hermes→mobile, hermes→web). The contract states 'All edges must be explicitly typed (e.g., '->', '-.->', '<-->') to reflect bidirectional flows.' 6 of 14 edges represent bidirectional flows but use unidirectional syntax."
+    },
+    {
+      "criterion": "C4 Completeness",
+      "score": 9.0,
+      "severity": "Medium",
+      "details": "All 5 required containers are present in the diagram (lines 170-174): mobile (Mobile App Frontend), web (Web Interface), qr_scanner (QR Scanner), photo_capture (Photo Capture), hermes (Hermes Agent). Each has a technology annotation in its label. Each container has a one-sentence responsibility description in the narrative (lines 20-48). However, the PRD terminology is slightly off: 'Mobile App Frontend' vs PRD's 'mobile app interface' (line 184, PRD section on Post-MVP features). The container names in the narrative H3 headings don't match the diagram node labels exactly — e.g., diagram uses 'mobile' as node ID but narrative uses 'Mobile App Frontend' as H3 heading. This is a minor inconsistency. The file has a YAML frontmatter title on line 2 and an H1 on line 5 — the contract does not explicitly require a frontmatter title, but this does create structural issues."
+    },
+    {
+      "criterion": "Narrative Quality & Mapping",
+      "score": 7.0,
+      "severity": "High",
+      "details": "The file lacks a structured mapping table linking containers to FR41-FR45 IDs. The PRD references are embedded inline within narrative text (e.g., 'PRD: FR41-FR45, FR1-FR55' on line 21), but there is no dedicated mapping table as the contract requires. The container definitions reference FR1-FR55 broadly (line 21: 'PRD: FR41-FR45, FR1-FR55') which is excessively wide and dilutes traceability. The QR Scanner narrative (line 33) references FR2, FR5, FR12, FR43 — but the contract requires mapping to FR41-FR45 specifically, and QR Scanner's PRD mapping is missing FR44 and FR45. The Web Interface (line 27) maps FR41-FR45 correctly. The Hermes Agent (line 45) maps FR13-FR40, which is correct but misses FR41-FR45 entirely. Every architectural claim must cite a 'direct PRD quote or section header' — many citations are bare FR IDs without quoting the PRD text verbatim."
+    },
+    {
+      "criterion": "PRD Scope Accuracy",
+      "score": 8.5,
+      "severity": "High",
+      "details": "The diagram correctly excludes backend services, Plant Database, Printer Service, and other out-of-scope containers from the system boundary (lines 168-175). The Assumptions & Constraints section explicitly declares out-of-scope items (line 14: 'Data storage, backend services, and printer interfaces are out of scope'). However, the Mobile App Frontend narrative (line 21) cites 'PRD: FR41-FR45, FR1-FR55' — the FR1-FR55 range is massively out of scope for a frontend-focused C2 diagram and suggests the narrative is copy-pasting the entire FR range without filtering. The Hermes Agent narrative (line 47) states 'Sends analysis requests to external AI services (simplified as internal logic)' — this introduces an architectural concept ('external AI services') not present in the PRD or contract. The PRD does not explicitly define a 'Telegram' container as an external system boundary element in section 2.1-2.3; Telegram is mentioned as an integration channel but not as a named external system. This is a minor scope creep."
+    },
+    {
+      "criterion": "Relationship Documentation",
+      "score": 9.5,
+      "severity": "Medium",
+      "details": "The Relationship Details section (lines 50-104) provides structured Protocol, Payload Format, and Authentication for each relationship. External links specify exact protocols: HTTPS/REST (line 89), HTTPS/Telegram Bot API (line 101), Browser Media API getUserMedia (line 77). Payload formats are specific: JSON (line 90), JSON message objects (line 102), Base64-encoded JPEG (line 72). Authentication methods are documented: Bearer token OAuth 2.0-style (line 91), Bot token in Authorization header (line 103). However, internal relationships (Gardener → Mobile App, Gardener → Web Interface) use 'Direct human interaction' as the protocol (lines 53, 59) which is technically accurate but vague compared to the rest. Same-origin authentication (line 80) is correct but generic. The diagram edge labels (lines 178-193) are more narrative than structured — they lack the explicit protocol/payload/auth triplet found in the narrative section."
+    },
+    {
+      "criterion": "Markdown Linting & Structure",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "The file catastrophically fails all four specified markdownlint rules: (1) MD013 — approximately 50+ lines exceed 80 characters (worst: line 8 at 472 chars, line 48 at 289 chars, line 24 at 275 chars). (2) MD025 — YAML frontmatter title on line 2 conflicts with H1 on line 5 ('single-title/single-h1' violation). The contract requires 'exactly one H1' but the frontmatter title creates ambiguity. (3) MD022 — approximately 20 headings lack blank lines around them (lines 7, 10, 20, 26, 32, 38, 44, 52, 58, 64, 70, 76, 82, 88, 94, 100, 108, 117, 131, 141, 158, 196). (4) MD033 — inline HTML not detected as a separate error, but the MD025 and MD013 violations are sufficient for failure. The contract states 'zero errors on rules MD013, MD025, MD033, and MD041' — this file has zero passing lines for these rules. The mermaid code block on line 159 also violates MD031 (not in the four specified rules but still notable). File ends without a trailing newline (MD047, line 201)."
+    },
+    {
+      "criterion": "Edge Case: Offline Queue & Sync",
+      "score": 7.0,
+      "severity": "High",
+      "details": "The section (lines 108-115) covers: local storage schema (IndexedDB + localStorage fallback, line 109), queue capacity (1000 operations, FIFO eviction, line 110), conflict resolution (LWW with timestamp, manual merge for conflicts, line 111), timeout thresholds (5s network retry, exponential backoff 5s→10s→20s→40s capped at 5min, 5 permanent failures, line 112), sync backoff (exponential with jitter, line 113), and data eviction policies (LRU for media, 90-day observation log archive, line 114). However, there is a fundamental contradiction: the PRD section 'Technical Architecture Considerations' (line 178) states 'Offline Mode: Not required as the user assumes connectivity will be available in 2026' — the file documents offline queue behavior for a feature the PRD explicitly says is not required. This is architecturally contradictory. Additionally, the PRD citations (FR31-FR35) reference Multi-Source Data Integration, but FR31-FR35 do not specifically describe offline queue/sync behavior — they cover manual data entry, external imports, data reconstruction, validation, and gap identification."
+    },
+    {
+      "criterion": "Edge Case: Hermes Degradation & Fallback",
+      "score": 9.5,
+      "severity": "Medium",
+      "details": "Excellent coverage of all required elements: (1) Fallback UI states (lines 119-120) define specific states: 'Degraded' with dimmed button and tooltip, 'Offline' with banner message. (2) Data staleness tolerance (>24h flagged with warning, >72h triggers refresh, line 121) — exceeds the minimum 24h requirement. (3) User notification (line 122) specifies toast notifications for state changes and Telegram notifications for critical failures. (4) Error boundaries (line 123) specify React error boundaries isolating Hermes UI components. (5) Retry backoff (line 124) specifies exponential (5s, 10s, 20s, 40s) capped at 5 minutes with HTTP 429 respect. (6) Graceful degradation paths (lines 125-128) detail per-container fallback behavior for Mobile App Frontend, Web Interface, and Hermes Agent. Only minor gap: the specific fallback UI text strings should be formalized in a constants file rather than inline descriptions."
+    },
+    {
+      "criterion": "Edge Case: Data Privacy & Encryption",
+      "score": 8.5,
+      "severity": "High",
+      "details": "Covers data at rest (line 132: AES-256-GCM via Web Crypto API with device-specific key derivation), data in transit (line 133: TLS 1.2+ enforced, certificate pinning for Hermes endpoints), and plaintext logging prohibition (lines 134-138: no full QR payloads logged, no image metadata beyond dimensions/format, no observations beyond anonymized aggregates, all logs PII-redacted). However, the PRD citations are imprecise: line 139 cites 'NFR - Data Portability (encryption requirement)' but the PRD's Data Portability section (lines 328-331) discusses CSV/JSON export/import, not encryption. The actual encryption requirement is inferred from the Reliability section (line 317: 'zero lost or corrupted plant records'), not from a named encryption constraint. Certificate pinning (line 133) is a security feature not mentioned in the PRD at all. The contract requires 'Must reference PRD security constraints verbatim' but no verbatim PRD security/encryption quotes are provided."
+    },
+    {
+      "criterion": "Edge Case: Performance & Latency",
+      "score": 9.0,
+      "severity": "Medium",
+      "details": "Covers all required elements: (1) Maximum render time (line 143: <200ms initial paint, line 144: <50ms interaction to frame). (2) Memory limits (line 146: 150MB mobile, line 147: 100MB web JS heap). (3) Garbage collection (lines 149-151: object pools for QR/photo buffers, incremental GC for logs, web workers for image processing). (4) Mitigation strategies (lines 152-155: lazy loading, request queuing with priority, Hermes debouncing at 500ms). The PRD references (line 156) cite NFR Performance requirements correctly: 'QR scanning <3s, Hermes insights <10s, data entry <2s'. Minor gap: no explicit mention of Lighthouse performance budget enforcement as a CI gate, and the 100MB JS heap limit for web (line 147) is tighter than the 300MB previously used without justification. The contract requires 'Any container exceeding stated thresholds without a documented mitigation strategy' — the mitigation strategies are well-documented."
+    }
+  ],
+  "overall_summary": "Round 3 represents a massive improvement from Round 2 (1.8→7.1 avg), with comprehensive coverage of all edge case requirements (offline queue, Hermes degradation, data privacy, performance). However, two critical failures persist: (1) Markdown Linting scores 1.0 — the file has ~50+ MD013 violations, a definitive MD025 conflict between YAML frontmatter title and H1 heading, ~20 MD022 blank-line violations, and no line passes MD013. The contract mandates 'zero errors' on MD013, MD025, MD033, MD041 — this is an immediate contract rejection. (2) Mermaid Diagram Validity scores 7.0 — the file uses flowchart LR instead of the contract-mandated 'graph TD or C4Context syntax', and 6 of 14 bidirectional edges are simplified to unidirectional arrows despite the contract requiring explicit bidirectional edge types. The structural integrity of the edge cases is strong, but formatting compliance is abysmal, and the diagram syntax deviation from the explicit contract requirement is a fundamental failure.",
+  "average_score": 7.6,
+  "passed": false
+}
