@@ -72,3 +72,18 @@
 - [Low] Bi-Directional Node-Narrative Consistency (9.0/10): All 7 mandatory container names appear as narrative H3 section headings and as mermaid node definitions. Node IDs (gardener, telegram, hermes, mobile, printer, db, qr) correspond to narrative containe
 **Summary**: The most critical issue is the PRD Traceability criterion: every NFR-X citation across all 7 container narratives references non-existent requirement IDs, as the PRD contains no numbered NFR requirements — only prose descriptions. This fundamentally invalidates approximately 40% of all citations. Th
 ---
+
+## Sprint 2 · Round 2 — 2026-04-21 15:18:50 UTC
+**Score**: 5.8/10  **Passed**: No
+**Concerns**:
+- [Low] Mermaid Syntax & Render Validity (9.0/10): Diagram passes mmdc validation (exit code 0). However, the diagram uses `
+` (escaped newline) inside node labels (c2-container.md lines 6-8, 12-15) rather than `&lt;br&gt;` — while this is technically
+- [High] C4 Mandatory Container Presence (5.5/10): Exactly 7 containers are referenced: Mobile App Frontend (mobile, line 23), Hermes Agent (hermes, line 19), Phomemo Printer Interface (printer, line 24), Markdown Data Storage (db, line 25), QR Code G
+- [Medium] Container Narrative Structure & Depth (7.0/10): Each of the 7 containers has a dedicated H3 section (lines 43, 50, 57, 64, 71, 78, 85). All sections cover the 4 required topics: Primary Responsibility, Input Data/Triggers, Output/Downstream Effects
+- [Critical] PRD Traceability & Citation Format (2.0/10): The PRD (prd.md) contains no NFR-X numbered requirements — it uses prose headings for non-functional requirements (Performance, Reliability, Usability, Data Portability, Maintainability) without any '
+- [High] Connector Label Standardization (4.5/10): 9 edges are present. Two edges contain parentheses (special characters) in their labels, violating the 'contain no special characters' rule: (1) 'Returns QR code image (PNG)' on edge qr --> mobile (c2
+- [High] Markdown Document Structure (4.5/10): YAML frontmatter is present (lines 1-5) with title, sprint: 2, and author fields — compliant. H1 for document title (line 7), H2 for 'Container Narratives' (line 41), H3 for each container section — h
+- [Low] Viewport & Layout Constraint (8.0/10): Diagram has 7 nodes (≤ 25 threshold met) and 9 edges (≤ 40 threshold met). mmdc rendered successfully without clipping. The flowchart LR layout should fit within 1200px width given the moderate node c
+- [High] Bi-Directional Node-Narrative Consistency (6.0/10): Diagram node IDs: gardener, telegram, hermes, mobile, printer, db, qr (7 nodes). Narrative sections: Gardener (Person), Hermes Agent, Telegram Service, Mobile App Frontend, Phomemo Printer Interface, 
+**Summary**: The C2 Container diagram renders cleanly via mmdc and has correct heading hierarchy with all 7 mandatory containers present. However, the evaluation exposes critical failures in citation traceability — the PRD contains no NFR-X numbered requirements, rendering all NFR citations (NFR1-NFR5) invalid a
+---

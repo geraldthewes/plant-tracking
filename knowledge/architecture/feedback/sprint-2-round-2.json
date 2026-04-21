@@ -1,0 +1,65 @@
+{
+  "scores": {
+    "Bi-Directional Node-Narrative Consistency": 6.0,
+    "C4 Mandatory Container Presence": 5.5,
+    "Connector Label Standardization": 4.5,
+    "Container Narrative Structure & Depth": 7.0,
+    "Markdown Document Structure": 4.5,
+    "Mermaid Syntax & Render Validity": 9.0,
+    "PRD Traceability & Citation Format": 2.0,
+    "Viewport & Layout Constraint": 8.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Syntax & Render Validity",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "Diagram passes mmdc validation (exit code 0). However, the diagram uses `\n` (escaped newline) inside node labels (c2-container.md lines 6-8, 12-15) rather than `&lt;br&gt;` — while this is technically valid in Mermaid, it produces literal backslash-n in rendered output rather than actual line breaks, making labels like 'Gardener\\n(Person)' appear broken. This is a cosmetic/rendering issue, not a parse error, so not Critical but worth noting."
+    },
+    {
+      "criterion": "C4 Mandatory Container Presence",
+      "score": 5.5,
+      "severity": "High",
+      "details": "Exactly 7 containers are referenced: Mobile App Frontend (mobile, line 23), Hermes Agent (hermes, line 19), Phomemo Printer Interface (printer, line 24), Markdown Data Storage (db, line 25), QR Code Generator/Service (qr, line 26), Gardener (gardener, line 17), and Telegram Service (telegram, line 18). All 7 are present in the diagram. However, the Hermes Agent and Telegram Service are marked as '(External)' nodes placed OUTSIDE the system subgraph boundary (lines 18-19). The contract requires them as containers IN the C2 diagram. They are rendered as external nodes, not as containers within the system. This is a scope issue — they should be inside the Plant Tracking System subgraph as C2-level containers since the diagram is meant to show internal deployable containers."
+    },
+    {
+      "criterion": "Container Narrative Structure & Depth",
+      "score": 7.0,
+      "severity": "Medium",
+      "details": "Each of the 7 containers has a dedicated H3 section (lines 43, 50, 57, 64, 71, 78, 85). All sections cover the 4 required topics: Primary Responsibility, Input Data/Triggers, Output/Downstream Effects, and Failure/Graceful Degradation. No TBD or N/A placeholders found. However, there are 28 lines with trailing whitespace (verified via grep -cn ' $'), violating the 'no trailing whitespace' rule stated in the Markdown Document Structure criterion. The narrative content itself is well-written with 3-5 grammatically complete sentences per section."
+    },
+    {
+      "criterion": "PRD Traceability & Citation Format",
+      "score": 2.0,
+      "severity": "Critical",
+      "details": "The PRD (prd.md) contains no NFR-X numbered requirements — it uses prose headings for non-functional requirements (Performance, Reliability, Usability, Data Portability, Maintainability) without any 'NFR1', 'NFR2', etc. labels. Every container narrative cites NFR1 through NFR5 (e.g., Gardener cites NFR2, NFR3; Hermes cites NFR1, NFR5; Telegram cites NFR2, NFR4), but these NFR IDs do NOT exist in the authoritative PRD index. This means all NFR citations are invalid — they reference non-existent PRD sections. The FR citations (FR2, FR3, FR5, FR6, FR7, FR10, FR36, FR37, FR38, FR42, FR43, FR44, FR51, FR52) DO exist in the PRD. However, citing only FR requirements without valid NFR citations means multiple containers fail the 'at least one [FR-X] and one [NFR-X]' requirement. This is a fundamental flaw."
+    },
+    {
+      "criterion": "Connector Label Standardization",
+      "score": 4.5,
+      "severity": "High",
+      "details": "9 edges are present. Two edges contain parentheses (special characters) in their labels, violating the 'contain no special characters' rule: (1) 'Returns QR code image (PNG)' on edge qr --> mobile (c2-container.md line 36), and (2) 'Sends print job (image)' on edge mobile --> printer (c2-container.md line 37). Additionally, several labels do not follow a strict Verb-Noun pattern: 'Queries plant data via file system access' (line 33) is a clause, not Verb-Noun; 'Reads/writes plant records via file I/O' (line 34) uses slash and is verbose at 8 words; 'Relays messages to/from' (line 32) is incomplete. 'Uses via mobile app' and 'Chats via Telegram' are Verb-only, missing the noun. Edge labels like 'Sends print job (image)' should be 'Sends-print-job' per strict Verb-Noun format. Finally, while labels appear in narratives, there is no explicit cross-reference to connector labels in the narrative sections."
+    },
+    {
+      "criterion": "Markdown Document Structure",
+      "score": 4.5,
+      "severity": "High",
+      "details": "YAML frontmatter is present (lines 1-5) with title, sprint: 2, and author fields — compliant. H1 for document title (line 7), H2 for 'Container Narratives' (line 41), H3 for each container section — heading hierarchy is correct. However, there are 28 lines with trailing whitespace (lines 44-75, 82-89), explicitly violating the 'no trailing whitespace' rule. Additionally, the narrative uses bold inline labels (e.g., **Primary Responsibility**) rather than H3/H4 sub-sections for narrative blocks as required — the contract specifies 'H3/H4 for narrative blocks' but the current structure has bold labels within H3 sections, which is a heading hierarchy violation."
+    },
+    {
+      "criterion": "Viewport & Layout Constraint",
+      "score": 8.0,
+      "severity": "Low",
+      "details": "Diagram has 7 nodes (≤ 25 threshold met) and 9 edges (≤ 40 threshold met). mmdc rendered successfully without clipping. The flowchart LR layout should fit within 1200px width given the moderate node count. One concern: the `\n` in node labels (c2-container.md lines 6, 8, 12-15) may cause unexpected vertical expansion of nodes, potentially increasing rendered width. Overall meets viewport constraints but the line-break escaping is a minor layout concern."
+    },
+    {
+      "criterion": "Bi-Directional Node-Narrative Consistency",
+      "score": 6.0,
+      "severity": "High",
+      "details": "Diagram node IDs: gardener, telegram, hermes, mobile, printer, db, qr (7 nodes). Narrative sections: Gardener (Person), Hermes Agent, Telegram Service, Mobile App Frontend, Phomemo Printer Interface, Markdown Data Storage, QR Code Generator/Service (7 sections). The node-narrative mapping is: gardener→Gardener (Person), hermes→Hermes Agent, telegram→Telegram Service, mobile→Mobile App Frontend, printer→Phomemo Printer Interface, db→Markdown Data Storage, qr→QR Code Generator/Service. The 'db' node ID does not appear verbatim in any narrative — the narrative uses 'Markdown Data Storage' but the node ID is 'db'. Similarly 'mobile', 'qr', 'printer', etc. are abbreviated node IDs. The criterion says 'every mermaid node ID must appear verbatim in the narrative' — the abbreviated IDs (db, mobile, qr, printer) do not appear as such in the narrative text. This is a structural mismatch."
+    }
+  ],
+  "overall_summary": "The C2 Container diagram renders cleanly via mmdc and has correct heading hierarchy with all 7 mandatory containers present. However, the evaluation exposes critical failures in citation traceability — the PRD contains no NFR-X numbered requirements, rendering all NFR citations (NFR1-NFR5) invalid and every container narrative non-compliant with the FR+NFR dual citation requirement. Connector labels violate the Verb-Noun format rule with 2 labels containing parentheses (special characters), and several labels fail the 8-word limit or strict Verb-Noun pattern. The document has 28 lines with trailing whitespace, violating the no-trailing-whitespace rule. The `db` and abbreviated node IDs (mobile, qr, printer) do not appear verbatim in the narrative, failing bidirectional consistency. The Hermes Agent and Telegram Service are placed outside the system subgraph boundary rather than as internal containers, which is a scope mismatch for a C2 diagram.",
+  "average_score": 5.8125,
+  "passed": false
+}
