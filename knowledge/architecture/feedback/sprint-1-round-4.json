@@ -1,0 +1,51 @@
+{
+  "scores": {
+    "Adversarial Edge Case Logging": 9.5,
+    "C4 Actor & System Completeness": 9.5,
+    "Markdown Linting & Formatting": 2.0,
+    "Mermaid Syntax & Render Compliance": 9.5,
+    "Narrative Structure & PRD Traceability": 9.5,
+    "Relationship Specification": 9.5
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Syntax & Render Compliance",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "Diagram passes mmdc validation (exit 0). No raw < > & characters inside the diagram block that require HTML entity escaping — the & in 'Assumptions & Constraints' (line 11) is prose, not in the diagram. One minor point: node labels use \\n for line breaks inside Mermaid strings (e.g., line 49-54), which is the correct Mermaid approach. No issues found."
+    },
+    {
+      "criterion": "C4 Actor & System Completeness",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All six required entities are present in the diagram: User (line 49, 'Home Gardener'), Plant Tracking System (line 50, 'sys'), Hermes Agent (line 51, 'hermes'), Phomemo M120 Printer (line 52, 'printer'), Seed Packet Data Source (line 53, 'seed'), and Weather Service (line 54, 'weather'). Each node participates in at least one inbound or outbound edge. No orphan nodes. No external systems placed inside the system subgraph (no subgraph used at C1 level, which is correct). All container nodes show technology annotations in their labels."
+    },
+    {
+      "criterion": "Narrative Structure & PRD Traceability",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "Document contains all three required sections: '1. Scope' (line 7), '2. Assumptions & Constraints' (line 10), '3. Component Definitions' (line 18). Every diagram node is defined in section 3 with explicit PRD requirement ID mappings: User (FR5, FR8, FR10, FR12, line 19), Plant Tracking System (FR3, FR5, FR6, FR12, FR13-FR17-FR21, FR25-FR26, FR36-FR40, line 20), Hermes Agent (FR36-FR40, line 21), Phomemo M120 Printer (FR3, FR51-FR55, line 22), Seed Packet Data Source (FR6, line 23), Weather Service (FR25, FR26, line 24). PRD IDs are specific and traceable."
+    },
+    {
+      "criterion": "Relationship Specification",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All 11 edges in the diagram carry typed labels with interaction protocol and directionality: QR scan (line 56, '[User -> System]'), plant data return (line 57, '[System -> User]'), Hermes query (line 58-59, 'via Telegram API'), printer data (line 60-61, 'via Bluetooth'), seed packet read (line 63, '[User -> Seed]'), seed data entry (line 64, '[User -> System]'), care activity log (line 66, '[User -> System]'), confirmation (line 67, '[System -> User]'), weather request (line 69, 'via REST API'), weather response (line 70, 'via REST API'). No vague verbs like 'uses' or 'talks to'. No missing subgraph at C1 level is correct for context diagrams."
+    },
+    {
+      "criterion": "Markdown Linting & Formatting",
+      "score": 2.0,
+      "severity": "Critical",
+      "details": "File fails markdownlint with 25+ errors. Primary issues: (1) MD025 'single-title/single-h1': Multiple top-level headings detected (line 5 vs frontmatter title on line 2 — the YAML frontmatter `title:` field is being interpreted as an implicit heading by markdownlint, creating a conflict with the H1 on line 5). (2) MD013 'line-length': 25+ lines exceed 80 character limit. Worst offender is line 23 with 405 characters (Plant Tracking System definition spanning an entire line). Other severe violations at lines 9 (429 chars), 20 (181 chars), 21 (148 chars), 25 (149 chars). The file does NOT pass with zero warnings as required. While trailing whitespace and mixed tabs/spaces are clean, and fenced code blocks are properly tagged with 'mermaid' (line 56), the line-length violations are pervasive across all prose sections."
+    },
+    {
+      "criterion": "Adversarial Edge Case Logging",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "Section 4 (line 29) covers all three required edge cases with specific handling details: (1) Network Partition Scenarios (line 31): Documents QR scan failure, Hermes query failure, weather request failure with cache fallback, Bluetooth printer unaffected, and offline data sync behavior. (2) Hardware Failure (line 41): Documents Phomemo battery/Bluetooth unavailability, no automatic job queuing, and fallback via manual temporary label. (3) Data Latency/Consistency (line 49): Documents local vs external latency expectations, eventual consistency model, and last-write-wins conflict resolution. Each case states specific behaviors, though none explicitly state 'in/out of C1 scope' — this is a minor gap since C1 is context-level and these behaviors are still context-relevant."
+    }
+  ],
+  "overall_summary": "The c1-context.md file is architecturally sound — all six required entities are present in the diagram, every edge carries typed protocol/directionality labels, PRD traceability is explicit with requirement ID mappings, and all three adversarial edge cases are documented with concrete handling behavior. The Mermaid diagram passes mmdc validation cleanly. The single critical failure is in markdownlint compliance: 25+ MD013 line-length violations (worst: 405 chars on line 23) and an MD025 conflict between the YAML frontmatter `title:` field and the H1 heading. The file must be rewritten with line wrapping and a resolved heading strategy before it can pass the 'zero warnings' threshold. Without fixing these formatting issues, the criterion fails at 2.0.",
+  "average_score": 8.25,
+  "passed": false
+}

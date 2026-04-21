@@ -10,6 +10,7 @@
 - **Round 3 Update**: Removed self-referencing edge in C1 diagram (internal detail leaking into context view)
 - **Round 3 Update**: Simplified edge labels to be concise and include specific protocol/technology (e.g., "via camera", "via Telegram")
 - **Round 3 Update**: Added explicit C1 scope declarations for all adversarial edge cases (in-scope/out-of-scope)
+- **Round 4 Update**: Fixed self-referencing edge and redundant diagram title pattern; simplified edge labels to be concise with specific protocol/technology annotations; added explicit C1 scope declarations for adversarial edge cases
 
 ## Patterns and Approaches that Scored Well with the Critic
 - Proper Mermaid syntax using double quotes and \n for line breaks (passed validation)
