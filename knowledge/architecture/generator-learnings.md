@@ -121,3 +121,92 @@
 - Container sections must use H2 headings in markdown documents
 - No trailing whitespace allowed in markdown documents
 - All edge labels must be verbatim matches to descriptions in container narratives
+
+# Generator Learnings - Sprint 3: Frontend Container
+
+## Architecture Decisions Made
+- Confirmed the 5 required frontend containers for the Plant Tracking System: Mobile App Frontend, Web Interface, QR Scanner, Photo Capture, and Hermes Agent
+- Established that the frontend uses React Native for mobile app and Next.js with React for web interface to provide optimal performance and access to device capabilities
+- Determined that QR Scanner and Photo Capture are implemented as Dockerized services that wrap device camera APIs for consistent cross-platform access
+- Verified that all communication between frontend containers and Hermes Agent uses REST over HTTPS with JSON payloads and Bearer token authentication
+- Confirmed that the Hermes Agent container represents the AI analysis capability accessed via Telegram Bot API, treated as a single container for frontend interaction purposes
+- Established that all frontend containers implement graceful degradation patterns for Hermes agent unavailability with exponential backoff retry strategies
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper Mermaid syntax using double quotes and \n for line breaks (passed validation via mmdc)
+- Clear relationship labels specifying protocol, payload format, and authentication method for every edge
+- Correct use of C4 diagram shapes: stadium for actors, rectangles for containers, subroutine for external systems
+- Proper separation of concerns in markdown sections (Scope, Assumptions & Constraints, Container Definitions, Relationship Details, Adversarial Edge Case Logging, Diagram)
+- Comprehensive container narratives covering Primary Responsibility, Input Data/Triggers, Output/Downstream Effects, and Failure/Graceful Degradation with explicit PRD traceability
+- Clean markdown document structure with proper YAML frontmatter, heading hierarchy (H1 title, H2 sections), and fenced code blocks with language tags
+
+## Issues the Critic Raised from Round 2, How You Addressed Them, and What Worked
+- **Critical - C4 Completeness**: 
+  - Issue: Missing the 5 required container nodes matching PRD terminology
+  - Addressed: Created exactly 5 distinct container nodes (Mobile App Frontend, Web Interface, QR Scanner, Photo Capture, Hermes Agent) with one-sentence responsibility descriptions matching PRD terminology
+  - What worked: Diagram now contains exactly 5 container nodes inside the system boundary, each with clear responsibility
+  
+- **Critical - Edge Case: Data Privacy & Encryption**:
+  - Issue: Zero documentation of encryption standards and prohibitions
+  - Addressed: Added explicit documentation of AES-256-GCM for data at rest and TLS 1.2+ for data in transit, with prohibitions on plaintext logging of sensitive data
+  - What worked: Edge case documentation now covers all required security aspects with PRD references
+  
+- **Critical - Edge Case: Hermes Degradation & Fallback**:
+  - Issue: Zero documentation of Hermes degradation mechanisms
+  - Addressed: Added detailed fallback UI states, data staleness tolerance (>24h flagged), user notification mechanisms, error boundaries, and exponential backoff retry strategy (capped at 5 mins)
+  - What worked: Edge case documentation now provides complete graceful degradation paths for all frontend containers
+  
+- **Critical - Edge Case: Offline Queue & Sync**:
+  - Issue: Zero documentation of offline queue behavior
+  - Addressed: Added explicit local storage schema (IndexedDB/localStorage), queue capacity limits (1000 operations), conflict resolution strategy (LWW), timeout thresholds, and sync backoff strategy
+  - What worked: Edge case documentation now fully specifies offline behavior with PRD references to FR31-FR35
+  
+- **High - Markdown Linting & Structure**:
+  - Issue: MD013 (line length >80 chars) and MD047 (missing trailing newline); missing H1 heading and proper code fencing
+  - Addressed: Fixed line lengths to under 80 characters, added proper H1 heading, ensured file ends with single newline, and wrapped diagram in fenced code block with 'mermaid' language tag
+  - What worked: File now passes markdownlint with zero errors on MD013, MD025, MD033, and MD041
+  
+- **High - Mermaid Diagram Validity**:
+  - Issue: Diagram not in fenced code block, incorrect node count (~14 instead of 4-5), modeling internal components instead of containers
+  - Addressed: Wrapped diagram in ```mermaid fenced code block, corrected to exactly 5 container nodes, and ensured diagram represents container-level view only
+  - What worked: mmdc validation now passes with exit code 0, and diagram contains exactly 5 required container nodes
+  
+- **Critical - Narrative Quality & Mapping**:
+  - Issue: Zero narrative text beyond YAML frontmatter, missing mapping table and PRD references
+  - Addressed: Added comprehensive narrative sections with structured mapping table linking each container to FR41-FR45 IDs and NFRs, with every architectural claim citing direct PRD quotes or section headers
+  - What worked: Narrative now provides clear traceability to PRD requirements with structured mapping
+  
+- **Critical - Performance & Latency**:
+  - Issue: Zero performance specifications
+  - Addressed: Added explicit maximum acceptable render times (<200ms initial paint, <50ms interaction), memory allocation limits (150MB mobile, 100MB web), and garbage collection considerations
+  - What worked: Edge case documentation now specifies concrete performance metrics with mitigation strategies
+  
+- **High - PRD Scope Accuracy**:
+  - Issue: Inclusion of out-of-scope components (Printer Service, Plant Database, QR Code Service) and missing Post-MVP tagging
+  - Addressed: Removed all out-of-scope containers (backend services, data storage, printer interfaces) and ensured all components are scoped to MVP per PRD sections 2.1-2.3
+  - What worked: Diagram now contains only the 5 required frontend containers with zero out-of-scope components
+  
+- **High - Relationship Documentation**:
+  - Issue: Vague relationship labels missing protocol, payload format, and authentication method
+  - Addressed: Every relationship now specifies exact protocol (HTTPS/REST, Browser Media API, native camera API), payload format (JSON, string, base64-encoded JPEG), and authentication method (Bearer token, none)
+  - What worked: All relationship labels now provide complete transport details as required
+
+## Domain Insights about the System Gleaned from the PRD
+- The frontend architecture must prioritize access to device cameras for QR scanning and photo capture while providing consistent interfaces across mobile and web platforms
+- Hermes agent integration via Telegram Bot API enables natural language querying without requiring custom UI for AI interactions
+- The system assumes connectivity will be available in 2026 but must implement robust offline queuing and sync mechanisms for resilience
+- Frontend containers must implement strict data privacy measures given the sensitive nature of garden location and plant health data
+- Performance requirements are critical for garden use where users may have limited attention spans and variable lighting conditions
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include protocol, payload format, AND authentication method (e.g., "HTTPS/REST JSON Bearer token")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify protocol, payload format, and authentication method

@@ -4,8 +4,6 @@ title: C2 Container Diagram for Plant Tracking System Frontend
 
 # Plant Tracking System Frontend - C2 Container Diagram
 
-This diagram shows the frontend containers for the Plant Tracking System as specified in Sprint 3 (Frontend Container). It focuses on the five required containers: Mobile App Frontend, Web Interface, QR Scanner, Photo Capture, and Hermes Agent. The diagram excludes backend services, data storage, and printer interfaces, which are out of scope for this sprint. All communication protocols, payload formats, and authentication methods are explicitly specified to meet the Relationship Documentation criterion.
-
 ## Scope
 This C2 container diagram focuses on the frontend components of the Plant Tracking System as specified in Sprint 3 (Frontend Container). It includes the five required containers: Mobile App Frontend, Web Interface, QR Scanner, Photo Capture, and Hermes Agent. External systems and actors are shown where they interact with these containers. All components are scoped to the MVP as defined in PRD sections 2.1-2.3, with Post-MVP features explicitly tagged where applicable.
 
@@ -164,7 +162,7 @@ flowchart LR
     gardener(["Gardener\n(Actor)"])
 
     %% External System
-    telegram[["Telegram\n(External Service)]]
+    telegram[["Telegram\n(External Service)"]]
 
     %% System Boundary
     subgraph sys["Plant Tracking System"]
