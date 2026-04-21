@@ -1,0 +1,51 @@
+{
+  "scores": {
+    "Adversarial Edge Case Logging": 9.5,
+    "C4 Actor & System Completeness": 10.0,
+    "Mermaid Syntax & Render Compliance": 10.0,
+    "Narrative Structure & PRD Traceability": 8.5,
+    "Relationship Specification": 9.5,
+    "Markdown Linting & Formatting": 1.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Syntax & Render Compliance",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "Diagram passes mmdc validation with exit code 0. All special characters are properly handled. Node labels use \\n for line breaks which is correct Mermaid syntax. All 6 edges specify protocol and directionality."
+    },
+    {
+      "criterion": "C4 Actor & System Completeness",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All 6 required entities are present in the diagram: User (Home Gardener), Plant Tracking System, Hermes Agent (Telegram), Phomemo M120 Printer, Seed Packet Data Source, and Weather Service. Every node participates in at least one inbound or outbound relationship. No undefined actors included."
+    },
+    {
+      "criterion": "Narrative Structure & PRD Traceability",
+      "score": 8.5,
+      "severity": "Medium",
+      "details": "Document contains all three required sections (1. Scope, 2. Assumptions & Constraints, 3. Component Definitions). Section 3 maps every component to FR IDs. However, the Component Definitions are extremely dense single-line entries (e.g., line 20 has a 405-character line listing 16 FR IDs). The 'direct mapping' requirement is weak — PRD IDs like FR36-FR40 are collapsed as ranges rather than cited individually. The Scope section (line 8) is a 429-character run-on paragraph that provides no actionable detail beyond restating the diagram nodes."
+    },
+    {
+      "criterion": "Relationship Specification",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All 10 diagram edges include typed labels with protocol and directionality (e.g., line 59: 'Sends natural language query to Hermes agent via Telegram API [System -> Hermes]', line 62: 'Sends label data to Phomemo M120 Printer via Bluetooth [System -> Printer]'). No vague verbs like 'uses' or 'talks to' detected. One minor gap: edge at line 65 'Reads seed packet information [User -> Seed]' is semantically inverted — the user reads a physical seed packet, not interacting with the system via 'Seed Packet Data Source' node."
+    },
+    {
+      "criterion": "Markdown Linting & Formatting",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "File fails markdownlint with 40+ errors. Specific issues: (1) MD025 at line 5: two H1-level headings (yaml frontmatter title + H1 on line 5); (2) MD022 at lines 7, 10, 18, 26, 27, 35, 41: headings are not surrounded by blank lines — headings run directly into preceding content with 0 blank lines instead of required 1; (3) MD013 at 20+ lines: massive line length violations, the worst being line 20 at 405 characters and line 8 at 429 characters, far exceeding the 80-character limit; (4) MD032 at lines 11, 19, 29, 37, 42: lists not surrounded by blank lines; (5) MD047 at line 73: file does not end with a single newline character. Every single criterion in the contract demands 'zero warnings' — this file has zero clean lines in many sections."
+    },
+    {
+      "criterion": "Adversarial Edge Case Logging",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All three required edge cases are explicitly documented in Section 4: (1) Network partition at lines 27-33 covers QR scan failure, Hermes query failure, weather data failure, Bluetooth unaffected, and offline sync; (2) Hardware failure at lines 35-39 covers Phomemo offline with no automatic queuing and a manual fallback; (3) Data latency at lines 41-45 covers local vs. external consistency with last-write-wins conflict resolution. Each case clearly states its in-scope nature for C1."
+    }
+  ],
+  "overall_summary": "The document passes Mermaid validation and includes all required C4 actors with well-specified relationship labels, and the adversarial edge case section is thorough. However, the file catastrophically fails markdownlint with 40+ errors: no blank lines around headings, 20+ lines exceeding 80-character width (up to 429 chars), double H1 headings, lists not surrounded by blank lines, and missing trailing newline. These are not cosmetic issues — they represent a complete disregard for the 'zero warnings' requirement in the Markdown Linting & Formatting criterion. The file must be reformatted before it can be considered production-ready.",
+  "average_score": 8.083333333333334,
+  "passed": false
+}
