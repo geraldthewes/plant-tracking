@@ -1,0 +1,51 @@
+{
+  "scores": {
+    "Adversarial Edge Case Logging": 2.0,
+    "C4 Actor & System Completeness": 9.0,
+    "Markdown Linting & Formatting": 4.5,
+    "Mermaid Syntax & Render Compliance": 9.0,
+    "Narrative Structure & PRD Traceability": 6.0,
+    "Relationship Specification": 9.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Syntax & Render Compliance",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "The mmdc validation passes (exit 0). However, the code fence on line 23 is tagged with plain 'mermaid' — the sprint contract explicitly requires 'explicit fenced code blocks tagged with mermaid', which conventionally means '```mermaid' with the language identifier. The file uses '```mermaid' which is technically correct. The H1 headings (lines 5, 8, 15) are a markdownlint concern rather than Mermaid concern. No HTML entity escaping issues found — labels contain no unescaped & < or > characters. Minor note: the node labels contain parentheses (lines 25-30) like '(Actor)', '(Internal System)', '(External)' which are inside quoted strings so they parse correctly."
+    },
+    {
+      "criterion": "C4 Actor & System Completeness",
+      "score": 9.0,
+      "severity": "Medium",
+      "details": "All six required entities are present: User (line 25), Plant Tracking System (line 26), Hermes Agent Telegram (line 27), Phomemo M120 Printer (line 28), Seed Packet Data Source (line 29), and Weather Service (line 30). No undefined actors are included. However, the node styling is inconsistent: the system is defined as `sys[\"...\"]` (rectangle) while all external entities use `[\"...\"]` with double brackets (should be cylinder/subroutine notation in C4). Additionally, the labels include `(Actor)`, `(Internal System)`, `(External)` annotations in the label text rather than using proper C4 type indicators or technology annotations. Missing technology in labels per C4 quality rules: no tech annotation in parentheses within labels (e.g., 'Telegram API' for hermes, 'Bluetooth' for printer)."
+    },
+    {
+      "criterion": "Narrative Structure & PRD Traceability",
+      "score": 6.0,
+      "severity": "High",
+      "details": "The three required sections '1. Scope', '2. Assumptions & Constraints', and '3. Component Definitions' are present (lines 5, 8, 15). However, the PRD requirement ID mapping is dangerously vague: 'User' maps to 'FR1-FR45' (lines 16) which covers the entire requirements spectrum — this is not a specific mapping. 'Plant Tracking System' maps to 'FR6-FR11, FR13-FR16' (line 17) but FR14 (compare plants) and FR15 (filter records) are Hermes/analysis features, not core system features. 'Hermes Agent' maps to FR36-FR40 (line 18) which is appropriate. The document entirely omits a dedicated edge case handling section — the Adversarial Edge Case Logging criterion explicitly requires documentation of network partitions, hardware failure, and data latency/consistency expectations, none of which appear anywhere in this file."
+    },
+    {
+      "criterion": "Relationship Specification",
+      "score": 9.0,
+      "severity": "Medium",
+      "details": "All 12 diagram connections (lines 32-43) include typed labels with directionality. However, several edge labels use the generic verb 'via API' without specifying the actual protocol: line 39 'Queries plant data via API', line 40 'Returns plant data via API', line 42 'Requests weather data via API', line 43 'Returns weather data via API'. The C4 quality rules flag 'Vague edge labels — the majority of edges use 'Calls' or 'Depends on' with no specific action or protocol'. Here, 'via API' is repeated 4 times without distinguishing REST/GraphQL/gRPC/HTTP. The Bluetooth relationship (line 41) and Telegram relationships (lines 37-38) are better specified with their transport technology named."
+    },
+    {
+      "criterion": "Markdown Linting & Formatting",
+      "score": 4.5,
+      "severity": "High",
+      "details": "Multiple formatting violations detected: (1) All section headings use H1 (`#`) — lines 5, 8, 15 — instead of a proper H1 root heading followed by H2/H3 hierarchy. The sprint contract requires 'H1 root heading, H2/H3 hierarchy'. (2) No root H1 title heading exists before section 1 — the YAML frontmatter title is not an H1 heading in rendered markdown. (3) The markdownlint criterion specifies 'zero warnings' but these heading hierarchy violations would each generate warnings in standard markdownlint configurations (MD025 - multiple headings at same level, MD024 - multiple headings with same content if duplicated). (4) The YAML frontmatter block (lines 1-3) is present but the sprint contract requires explicit 'title:' line which is present. (5) No trailing whitespace detected (grep returned exit 1). No tabs detected (grep returned exit 1)."
+    },
+    {
+      "criterion": "Adversarial Edge Case Logging",
+      "score": 2.0,
+      "severity": "Critical",
+      "details": "The document completely fails this criterion. None of the three required edge case categories are documented: (1) Network partition scenarios — the assumptions on line 9 state 'The system assumes connectivity will be available' but never describes what happens when connectivity is lost. No mention of offline caching, retry logic, or degraded mode. (2) Hardware failure (Phomemo offline) — line 10 states 'Phomemo M120 printer is available for label printing' but provides no failure handling. What happens when Bluetooth fails? No retry, no queued label storage, no fallback. (3) Data latency/consistency expectations — entirely absent. No mention of eventual consistency, sync conflicts, or data loss windows. The PRD itself (line 9 of the log) states 'Offline Mode: Not required' for the mobile app, but this C1 context diagram should at minimum flag these as known constraints/out-of-scope items with explicit boundary statements. The single paragraph in 'Assumptions & Constraints' (lines 8-13) provides zero operational guidance for failure scenarios."
+    }
+  ],
+  "overall_summary": "The c1-context.md file is structurally present and contains the required sections and diagram entities, but it is fundamentally shallow in its treatment of operational reality. The Mermaid diagram parses correctly and includes all six required actors, but the relationship labels repeatedly use the vague 'via API' without protocol specification. The heading hierarchy is flat (all H1) with no root H1 title, violating markdownlint standards. The PRD requirement mappings are suspiciously broad (User → FR1-FR45 covering the entire requirements document). Most critically, the document entirely omits edge case handling for network partitions, hardware failures, and data consistency — the single assumptions paragraph makes optimistic connectivity assumptions with zero failure-mode documentation. This is a context diagram that describes the ideal path without acknowledging any operational boundary of the system's reliability.",
+  "average_score": 6.583333333333333,
+  "passed": false
+}
