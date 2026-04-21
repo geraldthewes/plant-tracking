@@ -64,3 +64,9 @@ that caused the regression. Check critic-history.md for what the critic flagged.
 **Files modified**: sprint-2-round-2-log.json, sprint-2-round-2.json, progress.json, critic-history.md, generator-history.md
 **Token usage**: 0
 ---
+
+## Sprint 3 · Round 1 — 2026-04-21 18:47:42 UTC
+**Feedback addressed**: First round — no prior feedback
+**Files modified**: sprint-3.json, auth.md, c2-container-fixed.md, c2-container-no-comments.md, c2-container-plain.md, c2-container.md, debug.md, debug_content.md, fresh.md, frontend_test.mmd, frontend_test.svg, minimal.md, minimal_diagram.md, no_frontmatter.md, schemas.md, simple.md, simple_test.md, test.md, test2.md, test_comment.mmd, test_comment.svg, test_copy.mmd, test_diagram.md, test_from_printf.md, test_frontmatter.mmd, test_minimal.md, test_minimal_diagram.md, test_minimal_working.md, test_no_comments.md, test_no_frontmatter.md, test_title.md, test_valid_copy.mmd, test_working.md, with_frontmatter.md, working.mmd, working_test.md, architect-run-20260421-143243.log, architect-run-20260421-143324.log, sprint-02-documentation.md, progress.json
+**Token usage**: 0
+---
