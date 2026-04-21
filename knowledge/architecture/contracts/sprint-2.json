@@ -1,0 +1,49 @@
+{
+  "sprint_number": 2,
+  "sprint_name": "C2 Container Overview",
+  "files_to_produce": [
+    "c2-container.md"
+  ],
+  "criteria": [
+    {
+      "name": "Mermaid Syntax & Render Validity",
+      "description": "The Mermaid block must parse cleanly using @mermaid-js/mermaid-cli v10+ without warnings or errors. Rendering to SVG/PNG must produce a valid, non-corrupted image. Any use of deprecated syntax or external graphviz dependencies not listed in the project config causes immediate failure.",
+      "threshold": 9.8
+    },
+    {
+      "name": "C4 Mandatory Container Presence",
+      "description": "Exactly 7 mandatory containers must be present in both the mermaid AST and the narrative: Mobile App Frontend, Hermes Agent, Phomemo Printer Interface, Markdown Data Storage, QR Code Generator/Service, Gardener (Person), Telegram Service. Exact node ID or display name match is required. Omission, duplication, or misspelling results in failure.",
+      "threshold": 9.7
+    },
+    {
+      "name": "Container Narrative Structure & Depth",
+      "description": "Each of the 7 containers must have a dedicated H3/H4 section. The narrative must contain 3-5 sentences explicitly covering: Primary Responsibility, Input Data/Triggers, Output/Downstream Effects, and Failure/Graceful Degradation handling. Sentences must be grammatically complete and free of placeholders like 'TBD' or 'N/A'.",
+      "threshold": 9.6
+    },
+    {
+      "name": "PRD Traceability & Citation Format",
+      "description": "Every container narrative must cite at least one [FR-X] and one [NFR-X] requirement. All cited IDs must exactly match the authoritative PRD index. Citations must appear inline. Missing citations, invalid ID formats, or citations referencing non-existent PRD sections cause failure.",
+      "threshold": 9.6
+    },
+    {
+      "name": "Connector Label Standardization",
+      "description": "Every arrow/edge in the diagram must have a label. Labels must follow a strict Verb-Noun pattern (e.g., POST-qr-request), be ≤ 8 words, contain no special characters, and appear verbatim in the corresponding container narrative. Unlabeled, incorrectly formatted, or uncited connectors cause failure.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Markdown Document Structure",
+      "description": "File must use valid YAML frontmatter (title, sprint: 2, author), H1 for document title, H2 for each container section, H3/H4 for narrative blocks. Strict UTF-8 encoding, no trailing whitespace, consistent 2-space indentation for lists, and fenced code blocks labeled exactly 'mermaid'. Violations of heading hierarchy or formatting rules cause failure.",
+      "threshold": 9.4
+    },
+    {
+      "name": "Viewport & Layout Constraint",
+      "description": "When rendered via standard mermaid-cli at 100% scale, the diagram must fit within a 1200px width without clipping or requiring horizontal scroll. Node count must be ≤ 25 and edge count ≤ 40. Overlapping bounding boxes or broken layout directives cause failure.",
+      "threshold": 9.6
+    },
+    {
+      "name": "Bi-Directional Node-Narrative Consistency",
+      "description": "Zero-tolerance cross-verification required: every mermaid node ID must appear verbatim in the narrative section, and every narrative container must have a corresponding mermaid node. Mismatches, orphaned nodes, or narrative sections without diagram representations cause failure.",
+      "threshold": 9.5
+    }
+  ]
+}
