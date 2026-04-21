@@ -1,0 +1,79 @@
+{
+  "scores": {
+    "Mermaid Diagram Validity": 8.0,
+    "C4 Completeness": 8.5,
+    "Narrative Quality & Mapping": 4.0,
+    "PRD Scope Accuracy": 5.5,
+    "Relationship Documentation": 8.0,
+    "Markdown Linting & Structure": 1.0,
+    "Edge Case: Offline Queue & Sync": 7.5,
+    "Edge Case: Hermes Degradation & Fallback": 9.0,
+    "Edge Case: Data Privacy & Encryption": 7.5,
+    "Edge Case: Performance & Latency": 8.5
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Diagram Validity",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "Diagram passes mmdc validation (exit 0) with exactly 5 container nodes (mobile, web, qr_scanner, photo_capture, hermes) inside the subgraph boundary. All edges use explicit --> typing. However, lines 187-193 contain redundant return-flow edges that duplicate the forward-direction edges in reverse (e.g., line 180 mobile→qr_scanner and line 188 qr_scanner→mobile). A C2 diagram should use bidirectional arrows (<-->) for request/response pairs rather than two unidirectional arrows, making the diagram more architecturally precise. Additionally, the comment on line 187 ('Bidirectional response flows (simplified as single arrows with implied responses)') contradicts the explicit return edges immediately following it."
+    },
+    {
+      "criterion": "C4 Completeness",
+      "score": 8.5,
+      "severity": "Low",
+      "details": "All 5 required containers are present as distinct nodes with technology annotations: Mobile App Frontend (Native, Android/iOS) at line 170, Web Interface (Next.js, React) at line 171, QR Scanner (Camera API) at line 172, Photo Capture (Camera API) at line 173, Hermes Agent (AI Analysis) at line 174. Each narrative section (lines 20-48) includes a responsibility description. However, 'match PRD terminology exactly' has minor deviations: PRD uses 'Mobile Interface' as the section header (line 288) rather than 'Mobile App Frontend'; PRD uses 'Hermes agent' (lowercase 'a') consistently while the document uses 'Hermes Agent' (capitalized). The QR Scanner and Photo Capture are described as '(Camera API)' technology — this is an API layer, not a runtime technology, making the annotation less informative than e.g. 'Docker, Native Camera API' or the React Native Camera module name."
+    },
+    {
+      "criterion": "Narrative Quality & Mapping",
+      "score": 4.0,
+      "severity": "High",
+      "details": "The sprint contract mandates 'a structured mapping table linking each of the 5 containers to at least one FR41-FR45 ID and one NFR.' No such table exists anywhere in the file. Container-to-FR mappings are scattered inline: Mobile App Frontend cites 'FR41-FR45, FR1-FR55' (line 21), Web Interface cites 'FR41-FR45' (line 27), QR Scanner cites 'FR2, FR5, FR12, FR43' (line 33 — only FR43 is in the FR41-FR45 range), Photo Capture cites 'FR9, FR42, FR44' (line 39 — FR42 and FR44 are in range), Hermes Agent cites 'FR13-FR40, FR17-FR21' (line 45 — ZERO FR41-FR45 references). The Hermes Agent container is therefore unmapped to the required FR41-FR45 range. Furthermore, the PRD contains NO 'NFR-X' numbered requirements — NFRs exist only as prose section headers (Performance at line 311, Reliability at line 316, Usability at line 322, Data Portability at line 328, Maintainability at line 333). References like 'NFR - Reliability' (line 24) are fabricated numbering format, not actual PRD references."
+    },
+    {
+      "criterion": "PRD Scope Accuracy",
+      "score": 5.5,
+      "severity": "High",
+      "details": "The sprint contract states 'Zero tolerance for out-of-scope components' and 'Post-MVP items must be explicitly tagged as [Post-MVP].' The PRD at lines 210-213 explicitly lists 'Mobile app interface' and 'Web Interface' as Phase 2 (Post-MVP) features. Yet neither the Mobile App Frontend (line 20) nor Web Interface (line 26) containers carry a [Post-MVP] tag. The scope declaration on line 8 states 'All components are scoped to the MVP as defined in PRD sections 2.1-2.3' — this is demonstrably false since PRD sections 2.1-2.3 (MVP, Growth Features, Vision) clearly place mobile and web as growth/post-MVP. The QR Scanner and Photo Capture are not explicitly called out as Post-MVP in the PRD but are described as 'Dockerized camera API wrapper' in architecture-decisions.md line 25-26 — these are infrastructure abstractions that don't appear in the PRD at all, making them architectural interpretations rather than PRD-scoped components."
+    },
+    {
+      "criterion": "Relationship Documentation",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "External networked relationships are well-documented with protocol, payload, and auth: Mobile↔Hermes (line 89-91: HTTPS/REST, JSON, Bearer token), Web↔Hermes (line 94-98: HTTPS/REST, JSON, Bearer token), Hermes→Telegram (line 100-104: HTTPS/Telegram Bot API, JSON, Bot token). However, the Gardener→Mobile relationship (line 52-56) specifies Protocol as 'Direct human interaction via touch interface' and Payload Format as 'Not applicable' — while technically accurate for human-system interaction, the contract requires 'exact protocol (HTTPS/MQTT/BLE/HTTP)'. For intra-device relationships, Mobile→QR Scanner (line 64-68) specifies 'Direct function call (native module interface)' as protocol — this is an internal IPC mechanism, not a network protocol, and is reasonable for same-device. Web→QR Scanner (line 76-80) specifies 'Browser Media API (getUserMedia)' — again, a browser API, not a transport protocol. These intra-container relationships don't involve network protocols and the contract's protocol requirements are less applicable here, but the distinction should be acknowledged."
+    },
+    {
+      "criterion": "Markdown Linting & Structure",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "The file catastrophically fails all four specified markdownlint rules with 102 total errors: (1) MD013: 40+ lines exceed 80 characters — worst example is line 8 at 472 characters, line 48 at 289 characters, line 24 at 275 characters, and dozens of lines between 120-216 characters. (2) MD025: line 5 has a H1 heading ('Plant Tracking System Frontend') that duplicates the YAML frontmatter title on line 2, violating the single-title/single-h1 rule. (3) MD022: 18+ headings lack blank lines above/below — lines 7, 10, 20, 26, 32, 38, 44, 52, 58, 64, 70, 76, 88, 94, 100, 106, 108, 117, 131, 141. (4) MD032: 8+ list blocks lack surrounding blank lines (lines 11, 53, 59, 65, 71, 77, 89, 95). The document is structurally broken despite having correct section ordering."
+    },
+    {
+      "criterion": "Edge Case: Offline Queue & Sync",
+      "score": 7.5,
+      "severity": "Medium",
+      "details": "Covers local storage schema (IndexedDB + localStorage fallback, line 109), queue capacity (1000 operations FIFO, line 110), conflict resolution (LWW with timestamps, line 111), timeout thresholds (5s retry, exponential 5/10/20/40s capped at 5min, line 112), sync backoff (exponential with jitter, line 113), data eviction (LRU for media, 90-day archive, line 114). However, the PRD explicitly states 'Offline Mode: Not required as the user assumes connectivity will be available in 2026' at line 178 — the architecture implements offline queue features that contradict the PRD's stated assumption without justification. The PRD reference FR31-FR35 (Multi-Source Data Integration, line 115) is a stretch — these requirements cover manual/automated data combination, external imports, missing data reconstruction, quality validation, and gap identification, not offline queue mechanics. The PRD reference should cite the Reliability NFR section (line 316) instead."
+    },
+    {
+      "criterion": "Edge Case: Hermes Degradation & Fallback",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "Excellent coverage of all required elements: (1) Fallback UI states defined with specifics — 'Degraded: Dimmed Hermes agent button with tooltip' and 'Offline: Banner display' (lines 119-120). (2) Data staleness tolerance correctly specified — '>24h flagged with warning stamp, >72h triggers refresh recommendation' (line 121). (3) User notification mechanism includes toast notifications and Telegram notifications (line 122). (4) Error boundaries specified as 'React error boundaries isolate Hermes agent UI components' (line 123). (5) Retry backoff strategy defined as exponential 5/10/20/40s capped at 5 minutes (line 124). (6) Graceful degradation paths provided per-container (lines 125-128). Minor gap: the fallback UI states do not specify what happens to queued Hermes queries when the system returns to connected state — auto-flush or manual flush? The Web Interface mentions 'service worker enables offline UI access' (line 127) but this is stated without implementation detail about how the service worker interacts with the offline queue."
+    },
+    {
+      "criterion": "Edge Case: Data Privacy & Encryption",
+      "score": 7.5,
+      "severity": "High",
+      "details": "Covers data at rest encryption (AES-256-GCM via Web Crypto API, line 132) and in transit encryption (TLS 1.2+ with certificate pinning, line 133). Plaintext logging prohibition is explicit: no full QR payloads, no image metadata beyond dimensions, no raw user observations (lines 135-138). However, the PRD references are problematic: 'NFR - Data Portability (encryption requirement)' (line 139) — the PRD Data Portability section (line 328) covers export/import formats and migration, with NO encryption constraint. Similarly, 'NFR - Reliability (data integrity)' (line 139) — the PRD Reliability section (line 316) covers zero data loss and scan success rates, with NO encryption mandate. These are fabricated PRD citations. The PRD has no explicit security/encryption section at all — the document is adding security measures not specified in the PRD, which should be acknowledged as architectural decisions rather than PRD mandates."
+    },
+    {
+      "criterion": "Edge Case: Performance & Latency",
+      "score": 8.5,
+      "severity": "Medium",
+      "details": "Covers all required elements: render time thresholds (<200ms initial paint, <50ms interaction to frame, lines 143-144), memory limits (150MB mobile heap, 100MB web JS heap, lines 146-147), GC considerations (object pools, incremental GC, web workers, lines 148-151), and mitigation strategies (lazy loading, request queuing, Hermes query debouncing at 500ms, lines 152-155). The PRD performance NFR (line 311) specifies 'QR code scanning within 3 seconds', 'Hermes insights within 10 seconds', 'data entry within 2 seconds' — the document's <200ms initial paint is significantly more stringent than the PRD's 3-second scan requirement, which is acceptable as a stricter internal target. Minor gap: the document specifies JS heap limits for the Web Interface but does not specify a corresponding frame budget or animation frame budget (e.g., 16.67ms per frame) for the mobile app, which would be a standard performance metric."
+    }
+  ],
+  "overall_summary": "The C2 Container document for Sprint 3 is structurally present with all 5 required containers and passes Mermaid validation, but suffers from two critical failures that prevent contract approval: (1) Markdown Linting scores 1.0/10 — the file has 102 markdownlint errors across MD013 (40+ lines exceeding 80 chars), MD025 (duplicate H1 vs frontmatter title), MD022 (18+ headings without blank lines), and MD032 (8+ lists without blank lines), making the document non-compliant with the structural requirement of zero errors. (2) Narrative Quality & Mapping scores 4.0/10 — no structured mapping table exists, and the Hermes Agent container has zero FR41-FR45 references despite the contract requiring each container to link to at least one FR41-FR45 ID. Additional concerns: (a) PRD Scope Accuracy — Mobile App Frontend and Web Interface are Post-MVP per PRD line 210-213 but lack [Post-MVP] tags (line 8 falsely claims all components are MVP-scoped); (b) Data Privacy PRD references (line 139) cite non-existent encryption requirements in the PRD; (c) Offline Queue implementation contradicts the PRD's explicit 'Offline Mode: Not required' statement (line 178). The edge case sections for Hermes Degradation (9.0) and Performance (8.5) are reasonably well-covered, but the structural failures are fundamental blockers.",
+  "average_score": 6.75,
+  "passed": false
+}
