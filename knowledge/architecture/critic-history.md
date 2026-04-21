@@ -213,3 +213,19 @@
 - [Low] Edge Case: Performance & Latency (9.0/10): Section at lines 141-156 covers all required elements: (1) Render time: <200ms initial paint, <50ms interaction to frame (lines 143-144) — meets contract thresholds exactly. (2) Memory limits: 150MB m
 **Summary**: The c2-container.md file represents a significant improvement over previous rounds with all 5 required containers present, passing Mermaid validation, and comprehensive coverage of edge cases (offline queue, Hermes degradation, data privacy, performance). However, two critical failures prevent contr
 ---
+
+## Sprint 3 · Round 8 — 2026-04-21 23:29:33 UTC
+**Score**: 6.9/10  **Passed**: No
+**Concerns**:
+- [Medium] Mermaid Diagram Validity (8.0/10): Diagram passes mmdc validation (exit 0), uses graph TD, contains exactly 5 Container nodes (mobile, web, qr, photo, hermes), and all edges use explicit typed arrows. However, all 5 containers are anno
+- [Medium] C4 Completeness (7.5/10): All 5 required containers are present with responsibility descriptions. However, the mobile app frontend is tagged '[Post-MVP]' (c2-container.md:27, c2-container.md:173) which conflicts with sprint 3 
+- [High] Narrative Quality & Mapping (6.0/10): The mapping table (c2-container.md:88-94) shows the Hermes Agent with dashes for ALL FR41-FR45 columns — it has zero FR41-FR45 mapping despite being a container. FR31-FR35 are never referenced anywher
+- [High] PRD Scope Accuracy (7.0/10): The document tags Mobile App Frontend as [Post-MVP] (c2-container.md:5, c2-container.md:27) but includes it in the sprint 3 deliverable. Docker is annotated on all 5 frontend containers (c2-container.
+- [High] Relationship Documentation (7.0/10): The relationship table (c2-container.md:98-116) exists but contains vague terms: 'Direct human interaction' (c2-container.md:100, c2-container.md:102) is not a technical protocol. 'Native camera API' 
+- [Critical] Markdown Linting & Structure (2.0/10): FAILS catastrophically on all specified rules. MD013 (line-length): 47+ violations where every content line in list sections exceeds 80 characters (e.g., c2-container.md:6 is 151 chars, c2-container.m
+- [Medium] Edge Case: Offline Queue & Sync (7.5/10): Deferred as [Post-MVP] (c2-container.md:120) per PRD assumption. However, the document does provide useful details: IndexedDB schema with SQLite fallback (c2-container.md:122), queue capacity of 1000 
+- [Medium] Edge Case: Hermes Degradation & Fallback (8.0/10): Well-specified: fallback UI states defined (Degraded dimmed button, Offline banner message at c2-container.md:131-132), >24h staleness flagging with >72h auto-refresh trigger (c2-container.md:133), to
+- [Medium] Edge Case: Data Privacy & Encryption (8.0/10): AES-256-GCM via Web Crypto API with hardware-backed key derivation (c2-container.md:144), TLS 1.2+ with certificate pinning (c2-container.md:145), plaintext logging prohibition for QR payloads (hashed
+- [Medium] Edge Case: Performance & Latency (8.0/10): <200ms initial paint, <50ms interaction specified (c2-container.md:154). Memory limits: 150MB mobile, 100MB web JS heap (c2-container.md:155). GC mitigation: object pools for QR/photo buffers, increme
+**Summary**: The document is critically broken on Markdown Linting & Structure (score 2.0) — 47+ MD013 line-length violations, multiple MD032/MD022 spacing errors, MD009 trailing spaces, MD031 fence spacing, and MD047 missing trailing newline make the file non-compliant. Architecturally, the Hermes Agent has zer
+---

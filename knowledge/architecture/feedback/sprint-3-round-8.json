@@ -1,0 +1,79 @@
+{
+  "scores": {
+    "Mermaid Diagram Validity": 8.0,
+    "C4 Completeness": 7.5,
+    "Narrative Quality & Mapping": 6.0,
+    "PRD Scope Accuracy": 7.0,
+    "Relationship Documentation": 7.0,
+    "Markdown Linting & Structure": 2.0,
+    "Edge Case: Offline Queue & Sync": 7.5,
+    "Edge Case: Hermes Degradation & Fallback": 8.0,
+    "Edge Case: Data Privacy & Encryption": 8.0,
+    "Edge Case: Performance & Latency": 8.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Diagram Validity",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "Diagram passes mmdc validation (exit 0), uses graph TD, contains exactly 5 Container nodes (mobile, web, qr, photo, hermes), and all edges use explicit typed arrows. However, all 5 containers are annotated with '(Docker)' which is architecturally inconsistent for frontend containers — frontend apps are deployed via Docker but Docker is not a 'container technology' in the C4 sense (c2-container.md:173-177). The gardener actor is outside the subgraph, which is correct for C2. The diagram also lacks a YAML frontmatter `title:` line."
+    },
+    {
+      "criterion": "C4 Completeness",
+      "score": 7.5,
+      "severity": "Medium",
+      "details": "All 5 required containers are present with responsibility descriptions. However, the mobile app frontend is tagged '[Post-MVP]' (c2-container.md:27, c2-container.md:173) which conflicts with sprint 3 being a 'Frontend Container' sprint — if it's Post-MVP it shouldn't appear in sprint 3's deliverable. Additionally, NFR references use non-standard identifiers like 'NFR-Perf' rather than PRD-standard NFR numbering (c2-container.md:38-40). Each container does have a one-sentence responsibility matching PRD terminology."
+    },
+    {
+      "criterion": "Narrative Quality & Mapping",
+      "score": 6.0,
+      "severity": "High",
+      "details": "The mapping table (c2-container.md:88-94) shows the Hermes Agent with dashes for ALL FR41-FR45 columns — it has zero FR41-FR45 mapping despite being a container. FR31-FR35 are never referenced anywhere in the document. The Web Interface and Mobile App Frontend copy the exact same FR41-FR45 citations (c2-container.md:48-40 vs c2-container.md:9-55) without differentiating their distinct responsibilities. Unverified claims reference PRD sections like 'PRD: Performance requirements' but the PRD source file is not available for verification."
+    },
+    {
+      "criterion": "PRD Scope Accuracy",
+      "score": 7.0,
+      "severity": "High",
+      "details": "The document tags Mobile App Frontend as [Post-MVP] (c2-container.md:5, c2-container.md:27) but includes it in the sprint 3 deliverable. Docker is annotated on all 5 frontend containers (c2-container.md:173-177) — Docker is a deployment mechanism, not a runtime container in the C4 sense. The 'Data storage backend services' are correctly excluded (c2-container.md:13). Out-of-scope items are noted but the PRD sections (2.1-2.3) referenced cannot be verified as the PRD file is not present. The claim 'PRD does not define external AI services' (c2-container.md:15) is unverified."
+    },
+    {
+      "criterion": "Relationship Documentation",
+      "score": 7.0,
+      "severity": "High",
+      "details": "The relationship table (c2-container.md:98-116) exists but contains vague terms: 'Direct human interaction' (c2-container.md:100, c2-container.md:102) is not a technical protocol. 'Native camera API' (c2-container.md:109, c2-container.md:113) and 'Browser Media API getUserMedia' (c2-container.md:111, c2-container.md:115) lack specific payload formats — marked as 'N/A (scan request)' which provides no useful detail. Same-process relationships correctly omit protocol but could benefit from naming the actual IPC mechanism (e.g., React component props, shared state). The HTTPS/Telegram Bot API relationships correctly specify JSON payload and Bearer token auth."
+    },
+    {
+      "criterion": "Markdown Linting & Structure",
+      "score": 2.0,
+      "severity": "Critical",
+      "details": "FAILS catastrophically on all specified rules. MD013 (line-length): 47+ violations where every content line in list sections exceeds 80 characters (e.g., c2-container.md:6 is 151 chars, c2-container.md:19 is 201 chars, c2-container.md:28 is 243 chars). MD025 (heading structure): headings under sections lack blank line separation — MD022 triggers on every ### heading (c2-container.md:27, c2-container.md:42, c2-container.md:57, c2-container.md:66, c2-container.md:75, c2-container.md:120, c2-container.md:129, c2-container.md:142, c2-container.md:152). MD033 (inline HTML): none detected (passes). MD041 (H1): passes (single H1 on line 1). MD032 (blanks around lists): 10+ violations where list items follow headings or other content without blank line separation (c2-container.md:6, c2-container.md:13, c2-container.md:33, c2-container.md:122, c2-container.md:130, c2-container.md:144, c2-container.md:154). MD031 (blanks around fences): c2-container.md:166 — mermaid fence not surrounded by blank lines. MD009 (trailing spaces): c2-container.md:130, c2-container.md:146, c2-container.md:160. MD047 (trailing newline): c2-container.md:198 — file does not end with single newline."
+    },
+    {
+      "criterion": "Edge Case: Offline Queue & Sync",
+      "score": 7.5,
+      "severity": "Medium",
+      "details": "Deferred as [Post-MVP] (c2-container.md:120) per PRD assumption. However, the document does provide useful details: IndexedDB schema with SQLite fallback (c2-container.md:122), queue capacity of 1000 with FIFO eviction (c2-container.md:123), LWW with vector clocks conflict resolution (c2-container.md:124), exponential backoff 5s→10s→20s→40s capped at 5min (c2-container.md:125), data eviction LRU for media caches >50MB and 90-day observation archive (c2-container.md:127). Missing: explicit FR31-FR35 references (criterion requires exact FR31-FR35 references), specific IndexedDB schema structure (object stores, keys, indexes), and the 24h/72h staleness tolerance is not clearly distinguished from the sync backoff."
+    },
+    {
+      "criterion": "Edge Case: Hermes Degradation & Fallback",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "Well-specified: fallback UI states defined (Degraded dimmed button, Offline banner message at c2-container.md:131-132), >24h staleness flagging with >72h auto-refresh trigger (c2-container.md:133), toast notifications for state changes (c2-container.md:134), React error boundaries (c2-container.md:135), exponential backoff 5s→10s→20s→40s capped at 5min with HTTP 429 Retry-After respect (c2-container.md:136), and per-container degradation paths (c2-container.md:138-140). Missing: explicit error boundary boundary names, specific HTTP status codes that trigger each state, and the 'Telegram notifications for critical failures' lacks delivery mechanism detail."
+    },
+    {
+      "criterion": "Edge Case: Data Privacy & Encryption",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "AES-256-GCM via Web Crypto API with hardware-backed key derivation (c2-container.md:144), TLS 1.2+ with certificate pinning (c2-container.md:145), plaintext logging prohibition for QR payloads (hashed IDs only), image metadata, and personal observations (c2-container.md:146-150). Missing: explicit mention of how camera metadata is encrypted (only logging prohibition stated), no mention of key rotation policy, no reference to GDPR or data retention beyond the PRD Reliability quote. The PRD quote about 'zero lost or corrupted plant records' (c2-container.md:143) is a reliability quote, not a security/privacy constraint — misapplied."
+    },
+    {
+      "criterion": "Edge Case: Performance & Latency",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "<200ms initial paint, <50ms interaction specified (c2-container.md:154). Memory limits: 150MB mobile, 100MB web JS heap (c2-container.md:155). GC mitigation: object pools for QR/photo buffers, incremental GC for logs, web workers for image processing (c2-container.md:157-159). Mitigation: lazy loading, priority queuing, 500ms Hermes debouncing (c2-container.md:161-163). Missing: specific frame budget per component, bundle size limits, initial load time specification, and the 200ms/50ms thresholds are stated but without measurement methodology or monitoring strategy."
+    }
+  ],
+  "overall_summary": "The document is critically broken on Markdown Linting & Structure (score 2.0) — 47+ MD013 line-length violations, multiple MD032/MD022 spacing errors, MD009 trailing spaces, MD031 fence spacing, and MD047 missing trailing newline make the file non-compliant. Architecturally, the Hermes Agent has zero FR41-FR45 mapping in the table (c2-container.md:94), 'Direct human interaction' (c2-container.md:100, c2-container.md:102) is not a valid technical protocol, and Docker annotations on all 5 frontend containers (c2-container.md:173-177) are C4-level inconsistent. The PRD Scope Accuracy suffers from the [Post-MVP] mobile app appearing in sprint 3 deliverables. The offline sync, Hermes degradation, data privacy, and performance edge cases are well-documented with specific values, but the offline section misses explicit FR31-FR35 references and the privacy section misapplies a reliability quote as a security constraint. The document needs a complete structural rewrite to fix linting violations before any architectural review can be meaningful.",
+  "average_score": 6.9,
+  "passed": false
+}

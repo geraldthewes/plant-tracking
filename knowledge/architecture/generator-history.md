@@ -157,3 +157,9 @@ that caused the regression. Check critic-history.md for what the critic flagged.
 Your next round should build on this baseline — do NOT reintroduce the changes
 that caused the regression. Check critic-history.md for what the critic flagged.
 ---
+
+## Sprint 3 · Round 8 — 2026-04-21 23:26:01 UTC
+**Feedback addressed**: 10 concern(s) from prior critic round (avg 7.0/10)
+**Files modified**: sprint-3-round-7-log.json, sprint-3-round-7.json, architect-run-20260421-185900.log, progress.json, architecture-decisions.md, critic-history.md, c2-container.md, generator-history.md, generator-learnings.md
+**Token usage**: 0
+---
