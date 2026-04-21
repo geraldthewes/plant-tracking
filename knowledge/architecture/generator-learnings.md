@@ -183,7 +183,7 @@
   
 - **High - PRD Scope Accuracy**:
   - Issue: Inclusion of out-of-scope components (Printer Service, Plant Database, QR Code Service) and missing Post-MVP tagging
-  - Addressed: Removed all out-of-scope containers (backend services, data storage, printer interfaces) and ensured all components are scoped to MVP per PRD sections 2.1-2.3
+  - Addressed: Removed all out-of-scope components (backend services, data storage, printer interfaces) and ensured all components are scoped to MVP per PRD sections 2.1-2.3
   - What worked: Diagram now contains only the 5 required frontend containers with zero out-of-scope components
   
 - **High - Relationship Documentation**:
@@ -287,3 +287,85 @@
 - All edge labels must specify protocol, payload format, and authentication method
 - Bidirectional flows must use <--> edges with explicit labels when contract requires explicit typing
 - Post-MVP features must be explicitly tagged to maintain PRD scope accuracy
+
+# Generator Learnings - Sprint 3: Frontend Container (Round 8)
+
+## Architecture Decisions Made
+- Confirmed the 5 required frontend containers for the Plant Tracking System: Mobile App Frontend [Post-MVP], Web Interface, QR Scanner, Photo Capture, and Hermes Agent
+- Established that bidirectional flows must be explicitly typed with <--> edges as required by the sprint contract
+- Determined that all relationship labels must include protocol, payload format, and authentication method triplets
+- Verified that the diagram must contain exactly 5 container nodes with proper technology annotations
+- Confirmed that Post-MVP features must be explicitly tagged to maintain PRD scope accuracy
+- Established that every architectural claim must cite direct PRD quotes or section headers
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper Mermaid syntax using double quotes and \n for line breaks (passed validation via mmdc)
+- Used graph TD syntax as mandated by sprint contract
+- All bidirectional relationships explicitly use <--> edges with structured labels containing protocol/payload/auth triplets
+- Clear relationship labels specifying protocol, payload format, and authentication method for every edge
+- Correct use of C4 diagram shapes: stadium for actors, rectangles for containers, subroutine for external systems
+- Proper separation of concerns in markdown sections (Scope, Assumptions & Constraints, Container Definitions, Relationship Details, Adversarial Edge Case Logging, Diagram)
+- Comprehensive container narratives covering Primary Responsibility, Input Data/Triggers, Output/Downstream Effects, and Failure/Graceful Degradation with explicit PRD traceability
+- Clean markdown document structure with proper YAML frontmatter, heading hierarchy (H1 title, H2 sections), and fenced code blocks with language tags
+- Strict adherence to 80-character line length rule (MD013 compliance)
+- Single H1 heading with no YAML frontmatter title conflict (MD025 compliance)
+- Proper blank lines around all headings and code blocks (MD022 compliance)
+- File ends with a single newline character (MD047 compliance)
+- Structured mapping table linking each container to FR41-FR45 IDs and NFRs
+- Explicit [Post-MVP] tagging for Mobile App Frontend container
+
+## Issues the Critic Raised from Round 7, How You Addressed Them, and What Worked
+- **High - Mermaid Diagram Validity (7.0/10 → Addressed)**:
+  - Issue: Diagram used unidirectional --> arrows for flows that are inherently bidirectional (QR Scanner↔Mobile App, Photo Capture↔Mobile App, Hermes↔Mobile App, etc.)
+  - Addressed: Replaced all unidirectional --> edges for bidirectional flows with explicit <--> edges and included protocol/payload/auth triplets in labels
+  - What worked: mmdc validation passes with clean Mermaid syntax; diagram now satisfies contract requirement for explicit bidirectional edge types
+  
+- **Critical - Narrative Quality & Mapping (4.0/10 → Addressed)**:
+  - Issue: No structured mapping table linking each of the 5 containers to at least one FR41-FR45 ID and one NFR
+  - Addressed: Added dedicated Container-to-Requirements Mapping Table with explicit FR41-FR45 mappings and NFR references
+  - What worked: Every architectural claim now cites direct PRD quotes or section headers; traceability improved significantly
+  
+- **High - PRD Scope Accuracy (5.0/10 → Addressed)**:
+  - Issue: False claim that "Post-MVP items are not present" while Mobile App Frontend appeared as container without [Post-MVP] tag
+  - Addressed: Added [Post-MVP] tag to Mobile App Frontend container node and corrected narrative to acknowledge its Post-MVP status
+  - What worked: Diagram now accurately reflects PRD scope with proper tagging of MVP vs Post-MVP components
+  
+- **Critical - Markdown Linting & Structure (3.0/10 → Addressed)**:
+  - Issue: ~60+ MD013 (line-length) violations, missing trailing newline (MD047)
+  - Addressed: Wrapped all lines to ≤80 characters, ensured file ends with single newline, fixed heading spacing and list indentation
+  - What worked: File now passes markdownlint with zero errors on MD013, MD025, MD033, and MD041
+  
+- **Medium - Relationship Documentation (7.5/10 → Addressed)**:
+  - Issue: Used 'Direct human interaction' as protocol for Gardener↔Mobile/Web and 'Direct function call' for native interfaces
+  - Addressed: Replaced with actual transport protocols (HTTPS for web/mobile access, Native module interface/Browser Media API for device features)
+  - What worked: Every relationship now specifies exact protocol, payload format, and authentication method as required
+  
+- **Medium - Edge Case: Offline Queue & Sync (7.5/10 → Addressed)**:
+  - Issue: Misattributed FR31-FR35 references (actually about Multi-Source Data Integration)
+  - Addressed: Corrected PRD references and clarified Offline Queue & Sync is [Post-MVP] per PRD connectivity assumption
+  - What worked: Edge case documentation now accurately references PRD sections and aligns with scope
+
+## Domain Insights about the System Gleaned from the PRD
+- The frontend architecture must prioritize access to device cameras for QR scanning and photo capture while providing consistent interfaces across mobile and web platforms
+- Hermes agent integration via Telegram Bot API enables natural language querying without requiring custom UI for AI interactions
+- The system assumes connectivity will be available in 2026 but must implement robust offline queuing and sync mechanisms for resilience (Post-MVP)
+- Frontend containers must implement strict data privacy measures given the sensitive nature of garden location and plant health data
+- Performance requirements are critical for garden use where users may have limited attention spans and variable lighting conditions
+- Clear separation between MVP features (Web Interface, QR Scanner, Photo Capture, Hermes Agent) and Post-MVP features (Mobile App Frontend, advanced offline capabilities)
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include protocol, payload format, AND authentication method (e.g., "HTTPS/REST JSON Bearer token")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify protocol, payload format, and authentication method
+- Bidirectional flows must use <--> edges with explicit labels when contract requires explicit typing
+- Post-MVP features must be explicitly tagged to maintain PRD scope accuracy
+- Every architectural claim must cite direct PRD quotes or section headers
+- Structured mapping table must link containers to FR41-FR45 IDs and NFRs

@@ -20,8 +20,11 @@
 
 ## Sprint 3: Frontend Container
 
-- Mobile App Frontend: React Native — cross-platform native performance with access to device cameras and sensors
+- Mobile App Frontend: React Native [Post-MVP] — cross-platform native performance with access to device cameras and sensors
 - Web Interface: Next.js with React — server-side rendered web app accessible via mobile/desktop browsers
 - QR Scanner Service: Dockerized camera API wrapper — handles QR code decoding with native camera integration
 - Photo Capture Service: Dockerized camera API wrapper — manages image capture and format conversion for plant documentation
 - Hermes Agent Container: AI analysis via Telegram Bot API — provides natural language querying and insights generation
+- Communication Protocol: HTTPS/REST with JSON and Bearer token — standardized authentication for frontend-Hermes communication
+- Device Camera Access: Native module interface (mobile) / Browser Media API (web) — consistent cross-platform camera utilization
+- Telegram Integration: HTTPS/Telegram Bot API with Bot token — enables natural language interaction via familiar messaging interface

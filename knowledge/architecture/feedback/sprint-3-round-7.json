@@ -1,0 +1,79 @@
+{
+  "scores": {
+    "Mermaid Diagram Validity": 7.0,
+    "C4 Completeness": 9.0,
+    "Narrative Quality & Mapping": 4.0,
+    "PRD Scope Accuracy": 5.0,
+    "Relationship Documentation": 7.5,
+    "Markdown Linting & Structure": 3.0,
+    "Edge Case: Offline Queue & Sync": 7.5,
+    "Edge Case: Hermes Degradation & Fallback": 8.5,
+    "Edge Case: Data Privacy & Encryption": 9.0,
+    "Edge Case: Performance & Latency": 9.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Diagram Validity",
+      "score": 7.0,
+      "severity": "High",
+      "details": "Diagram passes mmdc validation (exit 0) with exactly 5 Container nodes (lines 170-174). However, (1) the contract mandates 'exactly 4-5 Container nodes' and 'all edges must be explicitly typed to reflect bidirectional flows' — lines 187-193 use unidirectional --> arrows for flows that are inherently bidirectional (QR Scanner↔Mobile App, Photo Capture↔Mobile App, Hermes↔Mobile App, etc.). The comment on line 187 admits these are 'simplified as single arrows with implied responses', which fails the contract's requirement for explicit bidirectional typing. (2) Line 164 places Telegram as an external system node — this is acceptable in C4 as it sits outside the subgraph boundary. (3) The diagram uses flowchart LR which mmdc accepts, though the contract language prefers 'graph TD or C4Context'. Overall the diagram has 8 nodes (2 actors/external + 5 containers + 1 subgraph) which is within the ≤25 node limit."
+    },
+    {
+      "criterion": "C4 Completeness",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "All 5 required containers are present as distinct nodes: Mobile App Frontend (line 170), Web Interface (line 171), QR Scanner (line 172), Photo Capture (line 173), Hermes Agent (line 174). Each has a one-sentence responsibility description in the Container Definitions section (lines 20-48) and a technology annotation in the diagram label. Minor note: the contract specifies exact PRD terminology 'mobile app, web interface, QR scanner, photo capture, Hermes agent' — the file uses 'Mobile App Frontend' rather than 'mobile app' (lines 20, 170), which is a slight naming deviation but semantically equivalent."
+    },
+    {
+      "criterion": "Narrative Quality & Mapping",
+      "score": 4.0,
+      "severity": "Critical",
+      "details": "The sprint contract mandates 'a structured mapping table linking each of the 5 containers to at least one FR41-FR45 ID and one NFR.' No such table exists anywhere in this file. Container-to-FR mappings are scattered as inline parenthetical citations within narrative text (e.g., line 21: 'PRD: FR41-FR45'), but there is no structured table. The previous Round 6 file had this table; it was removed in the current version. Furthermore, the requirement also specifies 'Every architectural claim in the narrative must cite a direct PRD quote or section header' — many claims cite 'NFR - Reliability' (lines 24, 42, 48, 115, 129) and 'NFR - Performance' (line 36) which are not direct PRD quotes but generic section names. The file also cites 'Innovation & Novel Patterns' (lines 45, 98) which appears to be a section header but is not a verifiable PRD reference."
+    },
+    {
+      "criterion": "PRD Scope Accuracy",
+      "score": 5.0,
+      "severity": "High",
+      "details": "Critical contradiction: Line 201 claims 'Post-MVP items are not present; all components are scoped to MVP per PRD sections 2.1-2.3' — yet the diagram includes Mobile App Frontend which the Scope section (line 9 of Round 3) and architecture-decisions.md both designate as [Post-MVP]. The Mobile App Frontend appears as a container node without a [Post-MVP] tag on lines 170 and 177. Additionally, line 45 cites 'Innovation & Novel Patterns' as a PRD section which is not a standard requirement ID format. The Telegram external system on line 165 is in-scope per FR36 (Telegram integration), but its inclusion in the diagram needs to be explicitly tagged. The Out-of-Scope section correctly excludes backend services and printer interfaces. The core failure is the false claim that no Post-MVP items are present."
+    },
+    {
+      "criterion": "Relationship Documentation",
+      "score": 7.5,
+      "severity": "Medium",
+      "details": "The Relationship Details section (lines 50-104) provides structured Protocol/Payload/Auth for most relationships. However, lines 53-55 use 'Direct human interaction' as the protocol for Gardener↔Mobile and Gardener↔Web — this is not a network protocol (HTTPS/MQTT/BLE/HTTP) as the contract requires. Similarly, line 65 uses 'Direct function call (native module interface)' for Mobile App↔QR Scanner — also not a network protocol. While same-process communication is reasonable, the contract says 'every external link must specify exact protocol' and these human interaction descriptions violate that. Lines 89-104 for networked relationships are well-specified with HTTPS/REST, JSON payloads, and Bearer token auth. The diagram edge labels (lines 178-193) mix protocol info with payload descriptions inconsistently — line 180 has protocol but no auth, line 184 has all three."
+    },
+    {
+      "criterion": "Markdown Linting & Structure",
+      "score": 3.0,
+      "severity": "Critical",
+      "details": "File fails all four specified markdownlint rules with approximately 60+ violations: (1) MD013 (line-length): ~60 lines exceed 80 characters — worst is line 8 at 472 characters, line 14 at 144 characters, line 15 at 136 characters, line 16 at 194 characters. (2) MD025: No frontmatter title conflicts (the file has YAML frontmatter with title on line 2, and H1 on line 5 — this creates a potential double-title issue depending on markdownlint config). (3) MD033 (inline HTML): No raw HTML detected in prose. (4) MD041 (trailing newline): The file does NOT end with a newline character — `tail -c 5` confirms the file ends at '2.3.' without a trailing newline. (5) The mermaid code block on line 159 is properly fenced with ```mermaid tag. (6) Heading hierarchy uses H1→H2→H3 correctly: H1 on line 5, H2 on lines 7/10/18/50/106/158/196, H3 for containers and edge cases."
+    },
+    {
+      "criterion": "Edge Case: Offline Queue & Sync",
+      "score": 7.5,
+      "severity": "Medium",
+      "details": "Section at lines 108-115 covers: (1) Local storage schema: IndexedDB with localStorage fallback (line 109) — adequate. (2) Queue capacity: 1000 operations FIFO (line 110) — meets requirement. (3) Conflict resolution: LWW with timestamps, manual merge for observations (line 111) — adequate. (4) Timeout thresholds: 5s retry, exponential backoff 5s→10s→20s→40s capped at 5min (line 112) — meets requirement. (5) Sync backoff: exponential with jitter (line 113) — meets requirement. (6) Data eviction: LRU for media, 90-day archive (line 114) — meets requirement. However, (a) references 'FR31-FR35' at line 115 but FR31-FR35 are about Multi-Source Data Integration per the file's own text, not offline queue/sync — this is a misattribution. (b) The PRD explicitly states 'Offline Mode: Not required as the user assumes connectivity will be available in 2026' (line 11) — documenting this as an edge case is architecturally valid as a Post-MVP consideration, but the PRD reference at line 115 is inaccurate."
+    },
+    {
+      "criterion": "Edge Case: Hermes Degradation & Fallback",
+      "score": 8.5,
+      "severity": "Low",
+      "details": "Section at lines 117-129 covers all required elements: (1) Fallback UI states: 'Degraded' dimmed button with tooltip (line 119), 'Offline' banner message (line 120) — explicit and adequate. (2) Data staleness tolerance: >24h flagged (line 121), >72h refresh trigger (line 121) — meets requirement. (3) User notification: toast notifications (line 122), Telegram notifications (line 122) — adequate. (4) Error boundaries: React error boundaries (line 123) — adequate. (5) Retry backoff: exponential 5s→10s→20s→40s, capped at 5 min, respects HTTP 429 (line 124) — meets requirement. (6) Graceful degradation paths per container (lines 125-128) — adequate. Minor issue: the 'PRD References' on line 129 cite 'FR36-FR40' which is correct for Hermes integration."
+    },
+    {
+      "criterion": "Edge Case: Data Privacy & Encryption",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "Section at lines 131-138 covers all required elements: (1) Data at rest: AES-256-GCM via Web Crypto API with device-specific key derivation (line 132) — meets AES-256 requirement. (2) Data in transit: TLS 1.2+ enforced with certificate pinning (line 133) — meets TLS 1.2+ requirement. (3) Plaintext logging prohibition: no full QR payloads logged, no image metadata beyond dimensions/format, no observations logged beyond anonymized aggregates, PII-redaction by default (lines 134-138) — comprehensive and explicit. The only minor gap: the PRD references on line 139 cite 'NFR - Data Portability (encryption requirement)' and 'NFR - Reliability' which are generic section names rather than verbatim PRD quotes. However, the substantive requirements are fully met."
+    },
+    {
+      "criterion": "Edge Case: Performance & Latency",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "Section at lines 141-156 covers all required elements: (1) Render time: <200ms initial paint, <50ms interaction to frame (lines 143-144) — meets contract thresholds exactly. (2) Memory limits: 150MB mobile heap, 100MB web JS heap (lines 146-147) — meets requirement. (3) GC considerations: object pools for QR/photo buffers, incremental GC for logs, web workers for image processing (lines 149-151) — adequate. (4) Mitigation strategies: lazy loading, priority request queuing, Hermes debouncing at 500ms (lines 153-155) — adequate. The PRD references on line 156 cite 'NFR - Performance' generically but the specific thresholds match the contract."
+    }
+  ],
+  "overall_summary": "The c2-container.md file represents a significant improvement over previous rounds with all 5 required containers present, passing Mermaid validation, and comprehensive coverage of edge cases (offline queue, Hermes degradation, data privacy, performance). However, two critical failures prevent contract approval: (1) The narrative quality & mapping criterion fails because there is NO structured mapping table linking each of the 5 containers to FR41-FR45 IDs and NFRs — mappings exist only as scattered inline citations. (2) The markdown linting criterion fails catastrophically with ~60+ MD013 (line-length) violations (worst: 472 chars on line 8), missing trailing newline (MD047), and the file does not end cleanly. Additional high-severity issues: the file claims 'Post-MVP items are not present' while the diagram includes Mobile App Frontend which is [Post-MVP] per the PRD (scope accuracy failure), and the diagram uses unidirectional --> arrows for inherently bidirectional flows (QR Scanner↔Mobile App, Hermes↔Mobile App, etc.) instead of the contract-mandated explicit bidirectional typing. The Telegram external system node is correctly placed outside the subgraph boundary but should be cross-referenced more clearly in the narrative.\"}",
+  "average_score": 6.95,
+  "passed": false
+}
