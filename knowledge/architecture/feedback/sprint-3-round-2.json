@@ -1,0 +1,79 @@
+{
+  "scores": {
+    "C4 Completeness": 1.0,
+    "Edge Case: Data Privacy & Encryption": 1.0,
+    "Edge Case: Hermes Degradation & Fallback": 1.0,
+    "Edge Case: Offline Queue & Sync": 1.0,
+    "Markdown Linting & Structure": 3.0,
+    "Narrative Quality & Mapping": 1.0,
+    "Performance & Latency": 1.0,
+    "PRD Scope Accuracy": 2.0,
+    "Relationship Documentation": 2.0,
+    "Mermaid Diagram Validity": 5.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Diagram Validity",
+      "score": 5.0,
+      "severity": "High",
+      "details": "The diagram parses via mmdc (exit 0), but violates contract requirements: (1) Contract mandates 'graph TD or C4Context syntax' — file uses flowchart LR (line 4). (2) Contract requires 'exactly 4-5 Container nodes' — diagram contains 14 nodes including actors, nested sub-nodes, and out-of-scope services, far exceeding the limit. (3) All 18 edges use `-->` (lines 30-55) rather than the explicitly typed edge syntax (`->`, `-.->`, `<-->`) the contract demands for bidirectional flows."
+    },
+    {
+      "criterion": "C4 Completeness",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "File completely fails to define any of the 5 required container nodes. Contract requires: 'mobile app, web interface, QR scanner, photo capture, Hermes agent' as distinct Container nodes matching PRD terminology. Instead: (1) gardener as Actor (line 6) — not a container. (2) Single 'Mobile App Frontend' subgraph (line 13) with 6 internal components merges all frontend concerns — not 5 distinct containers. (3) backend, db, qr_service, printer_service (lines 23-26) — out-of-scope. No node matches PRD terminology. No one-sentence responsibility descriptions anywhere in the file."
+    },
+    {
+      "criterion": "Narrative Quality & Mapping",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "File is 54 lines with ZERO narrative text beyond YAML frontmatter (lines 1-3). No structured mapping table linking containers to FR41-FR45 IDs. grep for 'FR41', 'FR42', 'FR43', 'FR44', 'FR45' returns zero matches. grep for 'PRD' returns zero matches. Entire narrative section required by sprint contract is absent."
+    },
+    {
+      "criterion": "PRD Scope Accuracy",
+      "score": 2.0,
+      "severity": "Critical",
+      "details": "Sprint is 'Frontend Container' — should scope only frontend. Diagram includes: (1) Backend API (line 23) — not frontend. (2) Plant Database (line 24) — backend concern. (3) QR Code Service (line 25) — backend service. (4) Printer Service (line 26) — backend service. (5) Phomemo M120 (line 8) — external hardware. No [Post-MVP] tags appear anywhere. Contract states: 'Zero tolerance for out-of-scope components' and 'Scope creep is grounds for contract rejection.'"
+    },
+    {
+      "criterion": "Relationship Documentation",
+      "score": 2.0,
+      "severity": "High",
+      "details": "Multiple edges lack the three required elements (protocol, payload format, authentication): (1) Line 39: 'Reads/writes cached data via' — incomplete, no protocol or payload. (2) Line 31: 'Captures photos via camera' — no protocol or payload. (3) Line 36: 'Triggers API calls via SWR hooks' — SWR is a library, not a transport protocol. (4) Line 40: 'Sends messages via Telegram API' — no payload format or auth. Contract requires: 'Every external link must specify exact protocol (HTTPS/MQTT/BLE/HTTP), payload format (JSON/XML/Protobuf), and authentication method.'"
+    },
+    {
+      "criterion": "Markdown Linting & Structure",
+      "score": 3.0,
+      "severity": "High",
+      "details": "markdownlint reports errors: (1) MD013 at line 13: 89 characters exceeds 80-char limit. (2) MD047 at line 55: file does not end with a single newline. Additionally: (a) No H1 heading — YAML frontmatter at line 2 is not a markdown heading. Contract requires 'exactly one H1'. (b) No H2 headings — no section hierarchy exists. (c) Mermaid diagram not wrapped in fenced code block with language tag (line 4). Contract requires 'Fenced code blocks must specify language tags (mermaid, typescript, json)'."
+    },
+    {
+      "criterion": "Edge Case: Offline Queue & Sync",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "Zero documentation of offline queue/sync. Only mention is node label 'Local Storage (IndexedDB, localStorage)' at line 18 — a node definition, not schema. No local storage schema, queue capacity limits, conflict resolution strategy (LWW vs manual merge), timeout thresholds, data eviction policies, or sync backoff strategy. No FR31-FR35 references. Contract states: 'Failure to specify data eviction policies or sync backoff results in rejection.'"
+    },
+    {
+      "criterion": "Edge Case: Hermes Degradation & Fallback",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "Zero documentation of Hermes degradation/fallback. No fallback UI states, data staleness tolerance (>24h flagged), user notification mechanism, explicit error boundaries, retry backoff strategy (exponential, capped at 5 mins), or graceful degradation paths for any frontend container. The 'hermes_client' node at line 19 is a bare label with no operational behavior."
+    },
+    {
+      "criterion": "Edge Case: Data Privacy & Encryption",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "Zero documentation of data privacy or encryption. No mention of: (1) AES-256 or equivalent for data at rest. (2) TLS 1.2+ for data in transit. (3) Prohibition on plaintext logging of PII/QR data/camera metadata. (4) PRD security constraint references. The 'storage' node (line 18) stores data locally but no encryption-at-rest is mentioned."
+    },
+    {
+      "criterion": "Edge Case: Performance & Latency",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "Zero performance specifications. No mention of: (1) Maximum acceptable render time (<200ms initial paint). (2) Interaction latency (<50ms). (3) Memory allocation limits. (4) Garbage collection considerations for long-running queues. Contract requires these explicitly."
+    }
+  ],
+  "overall_summary": "This file is fundamentally incomplete as a Sprint 3 C2 Container deliverable. It consists of only 54 lines: a 3-line YAML frontmatter header and raw Mermaid diagram text without any fenced code block, with zero narrative text. The diagram uses flowchart LR instead of contract-mandated graph TD/C4Context, contains 14 nodes instead of the required 4-5, and includes multiple out-of-scope backend components with no [Post-MVP] tagging. All 5 required containers (mobile app, web interface, QR scanner, photo capture, Hermes agent) are absent as distinct nodes — frontend concerns are collapsed into a single 'Mobile App Frontend' subgraph. No mapping table links containers to FR41-FR45 IDs. All four edge case criteria (offline queue/sync, Hermes degradation, data privacy/encryption, performance/latency) are completely unaddressed. The file fails 7 of 10 criteria at score 1.0-2.0 (Critical severity).",
+  "average_score": 1.8,
+  "passed": false
+}

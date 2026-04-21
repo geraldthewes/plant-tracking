@@ -70,3 +70,18 @@ that caused the regression. Check critic-history.md for what the critic flagged.
 **Files modified**: sprint-3.json, auth.md, c2-container-fixed.md, c2-container-no-comments.md, c2-container-plain.md, c2-container.md, debug.md, debug_content.md, fresh.md, frontend_test.mmd, frontend_test.svg, minimal.md, minimal_diagram.md, no_frontmatter.md, schemas.md, simple.md, simple_test.md, test.md, test2.md, test_comment.mmd, test_comment.svg, test_copy.mmd, test_diagram.md, test_from_printf.md, test_frontmatter.mmd, test_minimal.md, test_minimal_diagram.md, test_minimal_working.md, test_no_comments.md, test_no_frontmatter.md, test_title.md, test_valid_copy.mmd, test_working.md, with_frontmatter.md, working.mmd, working_test.md, architect-run-20260421-143243.log, architect-run-20260421-143324.log, sprint-02-documentation.md, progress.json
 **Token usage**: 0
 ---
+
+## Sprint 3 · Round 2 — 2026-04-21 19:15:19 UTC
+**Feedback addressed**: 10 concern(s) from prior critic round (avg 2.3/10)
+**Files modified**: sprint-3-round-1-log.json, sprint-3-round-1.json, progress.json, critic-history.md, generator-history.md, architect-run-20260421-143324.log
+**Token usage**: 0
+---
+
+## [ROLLBACK] Sprint 3 · Round 2 — 2026-04-21 19:19:25 UTC
+**Action**: Architecture files reverted to best-scoring commit
+**Reason**: Score regressed 1.8/10 vs best 2.3/10
+**Reverted to commit**: `dadf671b5e5c`
+**What this means**: The files you see now reflect the best architecture so far.
+Your next round should build on this baseline — do NOT reintroduce the changes
+that caused the regression. Check critic-history.md for what the critic flagged.
+---
