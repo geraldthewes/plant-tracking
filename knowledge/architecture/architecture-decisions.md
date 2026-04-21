@@ -19,9 +19,8 @@
 - External Services: Telegram Service (external), Phomemo Printer Interface (external device) — clearly bounded system interactions
 
 ## Sprint 3: Frontend Container
-
-- Mobile App Frontend: React Native — cross-platform native performance with access to device cameras and sensors
-- Web Interface: Next.js with React — server-side rendered web app accessible via mobile/desktop browsers
-- QR Scanner Service: Dockerized camera API wrapper — handles QR code decoding with native camera integration
-- Photo Capture Service: Dockerized camera API wrapper — manages image capture and format conversion for plant documentation
-- Hermes Agent Container: AI analysis via Telegram Bot API — provides natural language querying and insights generation
+- Mobile App Frontend: React Native [Post-MVP] — cross-platform native performance with access to device cameras and sensors (deferred to Post-MVP per PRD)
+- Web Interface: Next.js with React — server-side rendered web app accessible via mobile/desktop browsers (MVP)
+- QR Scanner: Camera API wrapper — handles QR code decoding via native camera API (mobile) or Browser Media API (web)
+- Photo Capture: Camera API wrapper — manages image capture and format conversion via native camera API (mobile) or Browser Media API (web)
+- Hermes Agent: AI analysis via Telegram Bot API — provides natural language querying and insights generation

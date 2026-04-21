@@ -149,3 +149,19 @@
 - [Medium] Edge Case: Performance & Latency (9.0/10): Covers all required elements: (1) Maximum render time (line 143: <200ms initial paint, line 144: <50ms interaction to frame). (2) Memory limits (line 146: 150MB mobile, line 147: 100MB web JS heap). (
 **Summary**: Round 3 represents a massive improvement from Round 2 (1.8→7.1 avg), with comprehensive coverage of all edge case requirements (offline queue, Hermes degradation, data privacy, performance). However, two critical failures persist: (1) Markdown Linting scores 1.0 — the file has ~50+ MD013 violations,
 ---
+
+## Sprint 3 · Round 4 — 2026-04-21 20:29:49 UTC
+**Score**: 7.2/10  **Passed**: No
+**Concerns**:
+- [Medium] Mermaid Diagram Validity (9.0/10): Diagram passes mmdc validation (exit 0) and uses 5 container nodes with explicit edges. However, the YAML frontmatter block (lines 88-90: '--- title: ... ---') is duplicated INSIDE the mermaid code bl
+- [High] C4 Completeness (7.5/10): All 5 required containers are present as distinct nodes in the subgraph (lines 96-100): Mobile App Frontend, Web Interface, QR Scanner, Photo Capture, Hermes Agent. Each has a technology annotation in
+- [High] Critic Narrative Quality & Mapping (6.5/10): The relationship table (lines 42-52) links containers to protocols and auth but does NOT contain a structured mapping table linking each of the 5 containers to FR41-FR45 IDs AND NFRs as required by th
+- [High] Critic PRD Scope Accuracy (7.0/10): Critical scope issue: The Web Interface container is listed as Post-MVP in architecture-decisions.md line 21 ('Web Interface: Alternative web-based access point for plant data viewing and management')
+- [High] Critic Relationship Documentation (6.5/10): The relationship table provides protocol, payload format, and auth in separate columns (lines 42-52), which is good. However, multiple edges fail the explicit specification requirement. Line 44-45: Ga
+- [Medium] Critic Markdown Linting & Structure (6.0/10): MD013 (line length): Line 9 is 284 characters, far exceeding 120-char limit. Lines 22, 26, 42-52 (table), 58, 76 also exceed 120 chars. Multiple violations = significant penalty. MD025 (heading struct
+- [High] Critic Edge Case: Offline Queue & Sync (6.5/10): The file states offline mode is 'Out of scope for MVP' (line 58) with a PRD reference. While this is a valid architectural decision, the contract requires the edge case to be 'detailed' — and the sing
+- [Medium] Critic Edge Case: Hermes Degradation & Fallback (8.0/10): Good coverage of fallback UI states (line 62: 'Degraded' and 'Offline'), toast notifications (line 64), React error boundaries (line 65), and exponential retry backoff with specific values (line 66: '
+- [Medium] Critic Edge Case: Data Privacy & Encryption (7.5/10): AES-256-GCM for at-rest encryption (line 74) and TLS 1.2+ for transit (line 75) are specified. However, the descriptions are problematic: both claim these measures 'to prevent loss or corruption (PRD:
+- [Medium] Critic Edge Case: Performance & Latency (8.0/10): Render time thresholds are specified (<200ms initial paint, <50ms interaction — line 80) matching the contract requirements. Memory limits stated (150MB mobile, 100MB web JS heap — line 81). Garbage c
+**Summary**: The file passes Mermaid syntax validation and includes all 5 required containers, but suffers from multiple structural and content gaps. The most critical issues are: (1) the Web Interface container is Post-MVP per architecture-decisions.md but included without a [Post-MVP] tag, violating zero-toler
+---
