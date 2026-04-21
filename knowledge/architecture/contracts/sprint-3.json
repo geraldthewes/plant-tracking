@@ -1,0 +1,59 @@
+{
+  "sprint_number": 3,
+  "sprint_name": "Frontend Container",
+  "files_to_produce": [
+    "frontend/c2-container.md"
+  ],
+  "criteria": [
+    {
+      "name": "Mermaid Diagram Validity",
+      "description": "Must parse without errors via mermaid.parse(), use standard graph TD or C4Context syntax, and contain exactly 4-5 Container nodes. All edges must be explicitly typed (e.g., '->', '-.->', '<-->') to reflect bidirectional flows. Partial rendering or deprecated syntax results in immediate failure.",
+      "threshold": 9.5
+    },
+    {
+      "name": "C4 Completeness",
+      "description": "Must explicitly define all 5 required containers (mobile app, web interface, QR scanner, photo capture, Hermes agent) as distinct Container nodes. Each node must include a one-sentence responsibility description and match PRD terminology exactly. Merged, missing, or hallucinated containers fail this criterion.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Narrative Quality & Mapping",
+      "description": "Must contain a structured mapping table linking each of the 5 containers to at least one FR41-FR45 ID and one NFR. Every architectural claim in the narrative must cite a direct PRD quote or section header. Unmapped containers or unverified claims are rejected.",
+      "threshold": 9.5
+    },
+    {
+      "name": "PRD Scope Accuracy",
+      "description": "Zero tolerance for out-of-scope components. Any container, library, or capability not explicitly scoped in PRD sections 2.1-2.3 results in immediate failure. Post-MVP items must be explicitly tagged as [Post-MVP]. Scope creep is grounds for contract rejection.",
+      "threshold": 9.8
+    },
+    {
+      "name": "Relationship Documentation",
+      "description": "Every external link must specify exact protocol (HTTPS/MQTT/BLE/HTTP), payload format (JSON/XML/Protobuf), and authentication method. Vague terms like 'sync', 'connect', or 'data exchange' are rejected. Missing transport details constitute a fail.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Markdown Linting & Structure",
+      "description": "Must pass markdownlint with zero errors on rules MD013, MD025, MD033, and MD041. Must use exactly one H1, sequential H2s for sections, and strict 2-space indentation for nested lists. Fenced code blocks must specify language tags (mermaid, typescript, json).",
+      "threshold": 9.0
+    },
+    {
+      "name": "Edge Case: Offline Queue & Sync",
+      "description": "Must detail local storage schema (e.g., IndexedDB/SQLite), queue capacity limits, conflict resolution strategy (LWW vs manual merge), and explicit timeout thresholds. References FR31-FR35 must be exact. Failure to specify data eviction policies or sync backoff results in rejection.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Edge Case: Hermes Degradation & Fallback",
+      "description": "Must define exact fallback UI states, data staleness tolerance (>24h flagged), and user notification mechanism. Must include explicit error boundaries, retry backoff strategy (exponential, capped at 5 mins), and graceful degradation paths for each frontend container.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Edge Case: Data Privacy & Encryption",
+      "description": "Must explicitly state how sensitive PII/QR data is encrypted at rest (AES-256 or equivalent) and in transit (TLS 1.2+). Plaintext logging of user data, QR payloads, or camera metadata is strictly prohibited. Must reference PRD security constraints verbatim.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Edge Case: Performance & Latency",
+      "description": "Must specify maximum acceptable render time (<200ms initial paint, <50ms interaction), memory allocation limits, and garbage collection considerations for long-running queues. Any container exceeding stated thresholds without a documented mitigation strategy fails this criterion.",
+      "threshold": 9.5
+    }
+  ]
+}
