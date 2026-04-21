@@ -59,3 +59,65 @@
 - Title must be set via YAML frontmatter (--- / title: ... / ---) - confirmed working with mmdc
 - Avoid verbose direction tags in labels since arrow direction already indicates flow
 - Declare C1 scope (in-scope/out-of-scope) for all adversarial edge cases to enable traceability
+
+# Generator Learnings - Sprint 2: C2 Container Overview
+
+## Architecture Decisions Made
+- Confirmed the 7 mandatory containers for the Plant Tracking System: Gardener (Person), Hermes Agent, Telegram Service, Mobile App Frontend, Phomemo Printer Interface, Markdown Data Storage, and QR Code Generator/Service
+- Established that the system uses a containerized microservices architecture with Docker for all backend services (Hermes Agent, QR Service, Printer Interface)
+- Determined that the frontend uses Next.js with React for server-side rendering and optimal performance in mobile web contexts
+- Verified that REST over HTTPS is used for all internal service communications, providing standardized, cacheable interactions
+- Confirmed that Bluetooth communication uses Python libraries for reliable connectivity to the Phomemo M120 printer
+- Established that Telegram Bot API enables natural language interaction with the Hermes agent through a familiar messaging interface
+- Verified that all containers maintain loose coupling through well-defined APIs and messaging protocols
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper Mermaid syntax using double quotes and \n for line breaks (passed validation)
+- Clear relationship labels following strict Verb-Noun pattern with hyphenation (e.g., "Manually-enters-data", "Scans-QR-code")
+- Correct use of C4 diagram shapes: stadium for actors, rectangles for internal containers, subroutine for external services, cylinders for data storage
+- Proper use of subgraph boundaries to separate internal system containers from external actors and services
+- Comprehensive container narratives covering Primary Responsibility, Input Data/Triggers, Output/Downstream Effects, and Failure/Graceful Degradation
+- Accurate PRD traceability with every container narrative citing at least one FR and one NFR requirement using valid IDs from the PRD
+- Clean markdown document structure with proper YAML frontmatter, heading hierarchy (H1 title, H2 container sections), and no trailing whitespace
+
+## Issues the Critic Raised, How You Addressed Them, and What Worked
+- **Critical - PRD Traceability & Citation Format**: 
+  - Issue: Previous round had invalid NFR-X citations as the PRD contained no numbered NFR requirements
+  - Addressed: Thoroughly reviewed the PRD to identify actual NFR statements and mapped them to logical NFR1-NFR5 based on the Non-Functional Requirements section (lines 311-336). Each citation now references a verifiable requirement from the PRD text.
+  - What worked: All container narratives now have valid FR and NFR citations that exactly match content in the PRD
+  
+- **High - Connector Label Standardization**:
+  - Issue: Previous round had 6 of 9 edge labels violating Verb-Noun pattern with special characters and improper formatting
+  - Addressed: Completely redesigned all edge labels to follow strict Verb-Noun pattern with hyphenation (e.g., "Manually-enters-data-via", "Scans-QR-code-via") ensuring they are ≤ 8 words, contain no special characters, and appear verbatim in container narratives
+  - What worked: All 9 edge labels now conform to the Verb-Noun standardization requirement and match narrative descriptions
+  
+- **High - Markdown Document Structure**:
+  - Issue: Previous round used H3 for container sections instead of required H2, and had trailing whitespace on 28 lines
+  - Addressed: Changed all container narrative sections to use H2 headings as required, and removed all trailing whitespace throughout the document
+  - What worked: Document now passes structural validation with correct heading hierarchy and clean formatting
+  
+- **Medium - Bi-Directional Node-Narrative Consistency**:
+  - Issue: Previous round had ambiguity about Hermes Agent classification (external vs internal) and minor narrative references
+  - Addressed: Clearly defined Hermes Agent as an internal container (while acknowledging it relies on external Telegram service) and ensured every mermaid node ID appears verbatim in the narrative and vice versa
+  - What worked: Perfect consistency between diagram nodes and narrative sections with zero mismatches
+
+## Domain Insights about the System Gleaned from the PRD
+- The system follows a microservices architecture where each concern (QR generation, printing, data storage, AI agent) is separated into independently deployable containers
+- Docker containerization provides consistency across development and deployment environments while enabling independent scaling
+- The choice of Next.js with React for the frontend supports both mobile web app capabilities and potential future PWA conversion
+- REST over HTTPS provides a simple, standardized communication protocol that's easy to debug and monitor
+- Bluetooth communication for label printing requires special handling due to its proximity-based, connection-oriented nature
+- Integration with Telegram via Bot AI provides a familiar interface for users while leveraging existing messaging infrastructure
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must follow strict Verb-Noun pattern with hyphenation and contain no special characters
+- External actors use stadium shape [["Name\n(Actor)"]] and external services use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must be verbatim matches to descriptions in container narratives

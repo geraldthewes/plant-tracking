@@ -1,0 +1,65 @@
+{
+  "scores": {
+    "Bi-Directional Node-Narrative Consistency": 9.0,
+    "C4 Mandatory Container Presence": 9.5,
+    "Connector Label Standardization": 4.0,
+    "Container Narrative Structure & Depth": 9.0,
+    "Mermaid Syntax & Render Validity": 9.5,
+    "Markdown Document Structure": 5.5,
+    "PRD Traceability & Citation Format": 3.0,
+    "Viewport & Layout Constraint": 9.5
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Syntax & Render Validity",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "Diagram renders cleanly via mmdc (exit 0). No parse errors. However, edge labels contain special characters like `to/from` (line 32), `Reads/writes` (line 34), `(PNG)` (line 36), `(image)` (line 37) which, while not breaking syntax, contribute to the Connector Label Standardization failures. The `\\n` escape sequences in node labels (lines 17-26) are valid Mermaid but represent literal backslash-n rather than actual line breaks."
+    },
+    {
+      "criterion": "C4 Mandatory Container Presence",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All 7 mandatory containers are present in both diagram and narrative: Gardener (Person) line 43, Hermes Agent line 50, Telegram Service line 57, Mobile App Frontend line 64, Phomemo Printer Interface line 71, Markdown Data Storage line 78, QR Code Generator/Service line 85. No duplicates or misspellings found. The gardener and telegram nodes are placed outside the system subgraph boundary, which is correct for C4 context-level actors."
+    },
+    {
+      "criterion": "Container Narrative Structure & Depth",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "All 7 containers have all 4 required sections (Primary Responsibility, Input Data/Triggers, Output/Downstream Effects, Failure/Graceful Degradation). Each narrative contains 5 complete sentences with no placeholders. Minor issue: some narrative sentences are repetitive across containers (e.g., manual entry fallback mentioned in Gardener, Mobile App Frontend, and QR Code Generator/Service sections)."
+    },
+    {
+      "criterion": "PRD Traceability & Citation Format",
+      "score": 3.0,
+      "severity": "Critical",
+      "details": "All NFR citations are invalid — the authoritative PRD at _bmad-output/prd.md contains NO NFR-X numbered requirements. The PRD has NFRs described only as prose under the 'Non-Functional Requirements' header (lines 309-336) with no FR/NFR numbering whatsoever. Every NFR-X citation across all 7 container narratives (NFR1 through NFR5) references non-existent IDs. FR citations (FR2, FR3, FR5, FR6, FR7, FR10, FR36, FR37, FR38, FR42, FR43, FR44, FR51, FR52) are valid. This means roughly 40% of all citations are invalid. Every container narrative cites NFR2, NFR3, NFR4, or NFR5 — all phantom references."
+    },
+    {
+      "criterion": "Connector Label Standardization",
+      "score": 4.0,
+      "severity": "High",
+      "details": "6 of 9 edge labels violate the strict Verb-Noun pattern requirement. Lines 32, 34, 37 use 'via' instead of hyphenated Verb-Noun format. Lines 32 ('Relays messages to/from'), 34 ('Reads/writes plant records via file I/O'), 36 ('Returns QR code image (PNG)'), and 37 ('Sends print job (image)') all contain special characters (/, (, )) which are explicitly forbidden. Only 3 edges (lines 30 'Uses via mobile app', 31 'Chats via Telegram', 38 'Prints label via Bluetooth') follow any recognizable verb-initial pattern, though even these use 'via' instead of strict hyphenated Verb-Noun format. The contract requires 'POST-qr-request' style labels."
+    },
+    {
+      "criterion": "Markdown Document Structure",
+      "score": 5.5,
+      "severity": "High",
+      "details": "The sprint contract mandates 'H2 for each container section' but all 7 container narrative sections use H3 (###) — lines 43, 50, 57, 64, 71, 78, 85. The H2 at line 41 ('Container Narratives') is a wrapper section, not a container section. This is a heading hierarchy violation. Additionally, trailing whitespace exists on 28 lines (44-47, 51-54, 58-61, 65-68, 72-75, 79-82, 86-89). Frontmatter YAML is valid with title, sprint: 2, and author fields. Code block is correctly labeled 'mermaid'."
+    },
+    {
+      "criterion": "Viewport & Layout Constraint",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "7 nodes and 9 edges — well within the ≤25 nodes and ≤40 edges limits. Diagram fits within standard rendering bounds. One minor note: the diagram title appears twice (once in frontmatter YAML at line 3 of the file and again in the Mermaid YAML block at lines 12-14), which is redundant but not a violation."
+    },
+    {
+      "criterion": "Bi-Directional Node-Narrative Consistency",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "All 7 mandatory container names appear as narrative H3 section headings and as mermaid node definitions. Node IDs (gardener, telegram, hermes, mobile, printer, db, qr) correspond to narrative containers. Minor gap: the 'db' node ID (Markdown Data Storage) is not referenced by its display name 'Markdown Data Storage' in the narrative body text — it is referenced only in the section heading. The 'hermes' node is labeled '(External)' in the diagram but is listed as a mandatory container in the sprint contract, which creates a scope ambiguity: is Hermes Agent a container within the system or an external system the system depends on?"
+    }
+  ],
+  "overall_summary": "The most critical issue is the PRD Traceability criterion: every NFR-X citation across all 7 container narratives references non-existent requirement IDs, as the PRD contains no numbered NFR requirements — only prose descriptions. This fundamentally invalidates approximately 40% of all citations. The Connector Label Standardization criterion is severely impacted by 6 of 9 edge labels containing special characters (/, (, )) and failing the strict Verb-Noun format. The Markdown Document Structure criterion fails on two counts: container sections use H3 instead of the required H2, and 28 lines have trailing whitespace. The diagram renders cleanly (mmdc exit 0) and all 7 mandatory containers are present in both diagram and narrative, but the external system designation of Hermes Agent creates ambiguity about its classification as a mandatory container.",
+  "average_score": 7.375,
+  "passed": false
+}
