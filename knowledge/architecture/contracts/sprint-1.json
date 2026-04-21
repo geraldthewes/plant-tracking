@@ -1,0 +1,39 @@
+{
+  "sprint_number": 1,
+  "sprint_name": "C1 System Context",
+  "files_to_produce": [
+    "c1-context.md"
+  ],
+  "criteria": [
+    {
+      "name": "Mermaid Syntax & Render Compliance",
+      "description": "The Mermaid diagram must parse without errors using mermaid-cli v10+, render correctly in GitHub-flavored markdown, and escape special characters (e.g., &, <, >) via HTML entities or quotes to prevent parser injection.",
+      "threshold": 9.5
+    },
+    {
+      "name": "C4 Actor & System Completeness",
+      "description": "Diagram must explicitly include: User, Plant Tracking System, Hermes Agent (Telegram), Phomemo M120 Printer, Seed Packet Data Source, and Weather Service (conditional). Omission of any required entity or inclusion of undefined actors fails the criterion.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Narrative Structure & PRD Traceability",
+      "description": "Document must contain fixed sections: '1. Scope', '2. Assumptions & Constraints', '3. Component Definitions'. Every component in the diagram must be defined in section 3 with a direct mapping to specific PRD requirement IDs. Ambiguous prose is rejected.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Relationship Specification",
+      "description": "All diagram connections must include a typed label specifying interaction protocol and directionality (e.g., 'QR Code Scan [User -> System]', 'MQTT Telemetry [System -> Printer]'). Vague verbs like 'uses' or 'talks to' are insufficient.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Markdown Linting & Formatting",
+      "description": "File must pass markdownlint with zero warnings. Enforce H1 root heading, H2/H3 hierarchy, consistent 2-space indentation, explicit fenced code blocks tagged with mermaid, and no trailing whitespace or mixed tabs/spaces.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Adversarial Edge Case Logging",
+      "description": "Must explicitly document handling for: 1) Network partition scenarios, 2) Hardware failure (Phomemo offline), 3) Data latency/consistency expectations. Each case must state whether it falls in or out of C1 scope.",
+      "threshold": 9.0
+    }
+  ]
+}

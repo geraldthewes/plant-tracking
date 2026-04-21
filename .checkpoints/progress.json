@@ -1,0 +1,81 @@
+{
+  "status": "running",
+  "current_sprint": 1,
+  "total_sprints": 7,
+  "completed_sprints": 0,
+  "total_rounds": 0,
+  "started_at": "2026-04-21T09:42:13.815362Z",
+  "seed": 1776764533,
+  "sprint_statuses": [
+    {
+      "sprint_number": 1,
+      "sprint_name": "C1 System Context",
+      "status": "building",
+      "rounds_completed": 0,
+      "consecutive_passes": 0,
+      "final_score": null,
+      "best_round": null,
+      "best_scores": null
+    },
+    {
+      "sprint_number": 2,
+      "sprint_name": "C2 Container Overview",
+      "status": "pending",
+      "rounds_completed": 0,
+      "consecutive_passes": 0,
+      "final_score": null,
+      "best_round": null,
+      "best_scores": null
+    },
+    {
+      "sprint_number": 3,
+      "sprint_name": "Frontend Container",
+      "status": "pending",
+      "rounds_completed": 0,
+      "consecutive_passes": 0,
+      "final_score": null,
+      "best_round": null,
+      "best_scores": null
+    },
+    {
+      "sprint_number": 4,
+      "sprint_name": "Backend / Orchestration Container",
+      "status": "pending",
+      "rounds_completed": 0,
+      "consecutive_passes": 0,
+      "final_score": null,
+      "best_round": null,
+      "best_scores": null
+    },
+    {
+      "sprint_number": 5,
+      "sprint_name": "Database + Knowledge Base",
+      "status": "pending",
+      "rounds_completed": 0,
+      "consecutive_passes": 0,
+      "final_score": null,
+      "best_round": null,
+      "best_scores": null
+    },
+    {
+      "sprint_number": 6,
+      "sprint_name": "Edge Functions / Deployment / Auth / Scaling / Observability",
+      "status": "pending",
+      "rounds_completed": 0,
+      "consecutive_passes": 0,
+      "final_score": null,
+      "best_round": null,
+      "best_scores": null
+    },
+    {
+      "sprint_number": 7,
+      "sprint_name": "ADRs + Cross-Cutting Concerns",
+      "status": "pending",
+      "rounds_completed": 0,
+      "consecutive_passes": 0,
+      "final_score": null,
+      "best_round": null,
+      "best_scores": null
+    }
+  ]
+}
