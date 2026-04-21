@@ -21,7 +21,7 @@ A simple, easy-to-use plant tracking system designed for home gardeners that min
 
 ### What Makes This Special
 
-Lower effort to use while providing more insights, offering a better value proposition than commercial plant apps that feel too focused on monetization. The core insight is a better implementation of plant tracking concepts that improves upon previous approaches, delivering greater value with less work required.
+The core insight is a better implementation of plant tracking concepts that improves upon previous approaches, delivering greater value with less work required.
 
 ## Project Classification
 
@@ -84,9 +84,9 @@ The dream version of the system:
 ### Primary User - Success Path: Core Experience Journey
 We meet Alex, a home gardener who's just opened a new packet of Yellow Habanero seeds. They're excited to start growing but frustrated from past seasons where they lost track of planting dates, forgot specific care requirements, and couldn't remember which varieties performed best.
 
-Alex takes a clear photo of the seed packet front and back. Using their ID system (VARIETY-YYYY-SEQ), they assign HABY-2026-001 to this plant. They open their plants.md markdown file and enter all the data from the packet: variety name, Latin name, brand, days to maturity, germination time, planting depth, spacing, sun requirements, and indoor start time. They also add their planned planting date (2026-04-15) and note that they'll start indoors 8-10 weeks before last frost.
+Alex takes a clear photo of the seed packet front and back. Using their ID system (VARIETY-YYYY-SEQ), they assign HABY-2026-001 to this plant. Alex uploads the seed packet information, the systems validates the data and adds it to plants.md markdown file and enter all the data from the packet: variety name, Latin name, brand, days to maturity, germination time, planting depth, spacing, sun requirements, and indoor start time. They also add their planned planting date (2026-04-15) and note that they'll start indoors 8-10 weeks before last frost.
 
-Using the Phomemo M120 app, they generate a label with the variety name at the top, QR code encoding HABY-2026-001 in the middle, and "Planted 2026" + Latin name at the bottom. They print the label via Bluetooth and attach it to the pot where they've planted the seeds indoors.
+Using the Phomemo M120 app, they generate a label with the variety name at the top, QR code encoding HABY-2026-001 in the middle, and "Planted 2026" + Latin name at the bottom. They print the label  and attach it to the pot where they've planted the seeds indoors.
 
 Two weeks later, Alex notices germination and begins tracking: they record the germination date (2026-04-01), note they used a seed starting mix, and record indoor growing conditions (70°F temp, 60% humidity). As the seedlings grow, they track fertilizer applications: "2026-04-15: Applied 1/4 strength liquid fertilizer (NPK 5-5-5)" and "2026-04-29: Applied 1/2 strength liquid fertilizer."
 
@@ -181,8 +181,8 @@ Cross-platform approach preferred for accessibility, starting with Android since
 - **Integration Approach**: Direct integration with Hermes agent via Telegram for AI-powered analysis and natural language interface
 
 ### Implementation Considerations
-- **Development Approach**: Start with a simple Android app focused on core QR scanning and data entry functionality
-- **Technology Stack**: Consider Kotlin/Android Studio for native development or Flutter for cross-platform if iOS support becomes needed
+- **Development Approach**: Start with a telegram integration and simple web app focused on core QR scanning and data entry functionality
+- **Technology Stack**: Make heavy use of hermes and Next.js (React) + Tailwind CSS + TypeScript for front end, python for backend.
 - **Data Storage**: Begin with local markdown/JSON storage as planned, with migration path to Postgres
 - **AI Integration**: Plan for Hermes agent integration via Telegram bot interface for natural language querying and analysis
 
@@ -191,7 +191,7 @@ Cross-platform approach preferred for accessibility, starting with Android since
 ### MVP Strategy & Philosophy
 **MVP Approach:** Problem-solving MVP focused on delivering core value: enabling gardeners to track individual plants and derive actionable insights through QR labeling and Hermes agent analysis.
 
-**Resource Requirements:** Single developer capable of Android app development, familiar with Hermes agent integration via Telegram, and basic data storage/markdown handling.
+**Resource Requirements:** Single developer capable of mobile web app development, familiar with Hermes agent integration via Telegram, and basic data storage/markdown handling.
 
 ### MVP Feature Set (Phase 1)
 **Core User Journeys Supported:**
