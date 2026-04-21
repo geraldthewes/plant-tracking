@@ -1,0 +1,51 @@
+{
+  "scores": {
+    "Adversarial Edge Case Logging": 7.0,
+    "C4 Actor & System Completeness": 10.0,
+    "Mermaid Syntax & Render Compliance": 9.0,
+    "Narrative Structure & PRD Traceability": 9.5,
+    "Relationship Specification": 7.5,
+    "Markdown Linting & Formatting": 9.5
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Syntax & Render Compliance",
+      "score": 9.0,
+      "severity": "Medium",
+      "details": "mmdc validates successfully (exit 0). However, line 92 contains a self-referencing edge `sys --> ...| sys` inside the C1 context diagram — the Plant Tracking System pointing to itself is architecturally inappropriate at C1 scope and is a visual artifact (an internal detail leaking into context view). Additionally, the YAML frontmatter title on line 2 ('C1 System Context for Plant Tracking System') differs from the H1 heading on line 5 (identical text, but the double-title pattern is redundant and can confuse renderers)."
+    },
+    {
+      "criterion": "C4 Actor & System Completeness",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All six required entities are present: User (line 82), Plant Tracking System (line 83), Hermes Agent/Telegram (line 84), Phomemo M120 Printer (line 85), Seed Packet Data Source (line 86), and Weather Service (line 87). No undefined actors included. Correct use of cylinder notation [['...']] for external systems and round-bracket ['...'] for internal system."
+    },
+    {
+      "criterion": "Narrative Structure & PRD Traceability",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All three fixed sections present: '1. Scope' (line 7), '2. Assumptions & Constraints' (line 21), '3. Component Definitions' (line 36). All six diagram components are defined in section 3 with PRD requirement ID mappings. The Plant Tracking System maps to an unusually broad range (FR1–FR35, line 44-47), which is technically correct but makes the traceability difficult to audit. No H4 or deeper headings, consistent 2-space indentation."
+    },
+    {
+      "criterion": "Relationship Specification",
+      "score": 7.5,
+      "severity": "Medium",
+      "details": "All nine edges have typed labels with directionality (lines 89-97). However, several issues: (1) Lines 89-91 use verbose parenthetical direction tags like '(User to System)' and '(User to Hermes)' which are redundant given the arrow direction already encodes this — the labels should be concise (e.g., 'QR Code Scan' rather than 'Scans QR code (User to System)'). (2) Edge labels lack specific protocol/technology annotations per C4 conventions — e.g., line 89 'Scans QR code' does not specify 'Camera/URL Scheme'; line 95 'Requests weather data via API (optional)' does not name the protocol (HTTPS/REST). (3) Line 90's label 'Sends natural language query to Hermes via Telegram (User to Hermes)' is 11 words — excessive for a diagram edge label."
+    },
+    {
+      "criterion": "Markdown Linting & Formatting",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "H1 root heading present (line 5), H2/H3 hierarchy maintained (lines 7, 21, 36, 61, 75, 100). No trailing whitespace, no tabs, consistent 2-space indentation. Mermaid fenced code block properly tagged. The YAML frontmatter title on line 2 duplicates the H1 heading on line 5, which is redundant and could cause linting warnings with strict frontmatter checks. No H4 or deeper headings — structure is flat and appropriate for C1 scope."
+    },
+    {
+      "criterion": "Adversarial Edge Case Logging",
+      "score": 7.0,
+      "severity": "High",
+      "details": "All three required scenarios are documented in Section 4 (lines 63-73): Network Partition (line 63), Hardware Failure — Phomemo Offline (line 68), and Data Latency/Consistency (line 71). However, the sprint contract explicitly requires 'Each case must state whether it falls in or out of C1 scope.' None of the three cases include an explicit C1 scope declaration (in-scope / out-of-scope). This is a fundamental omission — without scope declarations, reviewers cannot determine which cases are architectural decisions for C1 versus deferred to later sprints. The Network Partition case implies out-of-scope handling (queued locally, sync on reconnect) but does not state 'This falls out of C1 scope'. The Hardware Failure case says 'No automatic queuing is implemented in MVP' but does not declare whether the handling itself is in or out of C1 scope."
+    }
+  ],
+  "overall_summary": "The C1 context diagram is structurally sound with all six required entities present and mmdc validation passing. The primary issues are: (1) the self-referencing edge on line 92 (sys→sys) is architecturally inappropriate for a C1 context diagram — this is an internal concern better placed in C2; (2) edge labels on lines 89-97 are verbose with redundant parenthetical direction tags and lack specific protocol/technology annotations expected in C4 relationships; (3) Section 4 documents three adversarial edge cases but fails the explicit requirement to declare each case as in-scope or out-of-scope for C1, which is a fundamental gap preventing traceability. The narrative structure with PRD mappings is solid, and markdown formatting passes all structural checks aside from redundant YAML/H1 title duplication.",
+  "average_score": 8.75,
+  "passed": false
+}

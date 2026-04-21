@@ -10,3 +10,9 @@
 **Files modified**: critic-history.md, sprint-1-round-1-log.json, sprint-1-round-1.json, generator-history.md, progress.json, architect-run-20260421-054159.log
 **Token usage**: 0
 ---
+
+## Sprint 1 · Round 3 — 2026-04-21 11:23:04 UTC
+**Feedback addressed**: 6 concern(s) from prior critic round (avg 8.1/10)
+**Files modified**: architecture-decisions.md, c1-context.md, sprint-1-round-2-log.json, sprint-1-round-2.json, generator-learnings.md, progress.json, critic-history.md, generator-history.md, architect-run-20260421-054159.log
+**Token usage**: 0
+---
