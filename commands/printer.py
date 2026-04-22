@@ -76,6 +76,8 @@ def _select_printer(devices):
 
     choice = input("Select printer (1-{}): ".format(len(devices))).strip()
     if not choice:
+        if len(devices) == 1:
+            return devices[0]
         return None
 
     try:
