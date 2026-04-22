@@ -7,7 +7,7 @@ This plan implements the core plant tracking functionality for the plant trackin
 2. `create-label`: Generates a 40x30mm PNG label with QR code encoding the plant ID
 3. `print-label`: Sends the label PNG to the Phomemo M120 Bluetooth printer
 
-Plant records are stored as markdown files in a `database/` directory with structured frontmatter containing all plant attributes.
+Plant records are stored as markdown files in a `database/` directory with structured frontmatter containing all plant attributes, as specified in `docs/specs/database.md`.
 
 ## Current State Analysis
 
@@ -155,7 +155,7 @@ build-backend = "hatchling.build"
 
 #### 2. Plant Data Model
 **File**: `plant_model.py`
-**Changes**: Define plant data structure and validation
+**Changes**: Define plant data structure and validation following the specification in `docs/specs/database.md`
 
 ```python
 """
@@ -261,8 +261,9 @@ def load_plant_from_file(file_path: Path) -> Plant:
 - [ ] Database directory is created: `test -d database`
 - [ ] CLI entry point is executable: `test -x plant_tracking_cli.py`
 - [ ] Dependencies can be installed: `pip install .` (from pyproject.toml)
-- [ ] Plant model validates required fields: `python -c "from plant_model import Plant; Plant({'variety_name': 'Test', ...})"`
+- [ ] Plant model validates required fields per database spec: `python -c "from plant_model import Plant; Plant({'variety_name': 'Test', ...})"`
 - [ ] ID generation follows VARIETY-YYYY-SEQ format: `python -c "from plant_model import Plant; p = Plant({'variety_name': 'Habanero', ...}); assert re.match(r'HAB-\\d{{4}}-\\d{{3}}', p.data['id'])"`
+- [ ] Generated markdown files conform to database spec format
 
 #### Manual Verification:
 - [ ] Project structure is clear and follows Python conventions
@@ -1079,7 +1080,7 @@ plant-tracking = "plant_tracking_cli:main"
 ## Migration Notes
 
 - Database/ directory will be created automatically on first use
-- Plant records are stored as individual markdown files
+- Plant records are stored as individual markdown files following the format in `docs/specs/database.md`
 - Future migration to Postgres would involve:
   1. Parsing existing markdown files
   2. Converting to database records
