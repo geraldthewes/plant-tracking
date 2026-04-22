@@ -163,3 +163,9 @@ that caused the regression. Check critic-history.md for what the critic flagged.
 **Files modified**: sprint-3-round-7-log.json, sprint-3-round-7.json, architect-run-20260421-185900.log, progress.json, architecture-decisions.md, critic-history.md, c2-container.md, generator-history.md, generator-learnings.md
 **Token usage**: 0
 ---
+
+## Sprint 4 · Round 1 — 2026-04-22 00:05:23 UTC
+**Feedback addressed**: First round — no prior feedback
+**Files modified**: c2-container.md, sprint-4.json, sprint-03-documentation.md, progress.json, architecture-decisions.md, generator-learnings.md, architect-run-20260421-185900.log
+**Token usage**: 0
+---

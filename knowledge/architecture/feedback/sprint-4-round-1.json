@@ -1,0 +1,58 @@
+{
+  "scores": {
+    "C4 Container Specification Completeness": 8.0,
+    "Interface & Data Flow Contracts": 6.0,
+    "Markdown Structure & Linting": 2.0,
+    "Mermaid Diagram Validity": 9.5,
+    "Resilience & Edge Case Handling": 8.0,
+    "Security & Credential Management": 8.5,
+    "Traceability & PRD Alignment": 3.0
+  },
+  "feedback": [
+    {
+      "criterion": "C4 Container Specification Completeness",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "All 4 required backend components present with clear responsibility boundaries: Orchestrator/API Gateway (line 38), Plant Data Service (line 53), QR and Print Service (line 78), Hermes Agent (line 94). Each has Primary Responsibility, Technology, Key APIs, Interfaces, and Persistence. All 4 connect to external systems (Telegram, Phomemo M120, Markdown Storage). However: (1) **Message schemas incomplete** — Appendix A (line 76), Appendix B (line 154), Appendix C (line 164) referenced but NEVER DEFINED anywhere in the file. (2) **3 code blocks without language identifiers** (lines 66, 90, 107) trigger MD040 linting warnings."
+    },
+    {
+      "criterion": "Interface & Data Flow Contracts",
+      "score": 6.0,
+      "severity": "High",
+      "details": "Relationship Details section (lines 139-199) provides labels, technology, error mappings, and direction. CRITICAL GAPS: (1) **Appendix A/B/C never defined** — lines 76, 154, 164 cross-reference non-existent sections; the file ends at line 287. (2) **No HTTP headers** specified for any endpoint — criterion requires 'API endpoints must specify HTTP methods, path parameters, headers, and status codes' but only methods and paths appear (e.g., line 42). (3) **No response body schemas** — no JSON Schema or Protobuf despite criterion requirement. (4) **Error mappings use exception names** without HTTP response bodies (e.g., '404 → PlantNotFoundException' line 146). (5) **3 identical generic edge labels** (lines 275-277: 'Routes REST/HTTPS requests via JSON')."
+    },
+    {
+      "criterion": "Markdown Structure & Linting",
+      "score": 2.0,
+      "severity": "Critical",
+      "details": "61 markdownlint errors across ALL specified rules. Recurring from Sprints 1-8: (1) **MD025** (line 4): two top-level headings — YAML frontmatter title (line 2) + H1 (line 4). (2) **MD013** line-length: 12+ lines exceed 80 chars — worst: line 6 at 460 chars, line 39 at 208 chars, line 54 at 145 chars. (3) **MD022** blanks-around-headings: 19 instances without surrounding blank lines (lines 38, 53, 78, 94, 115, 122, 131, 141, 151, 161, 171, 181, 191, 203, 212, 222, 232, 241, 251). (4) **MD032** blanks-around-lists: 18+ instances. (5) **MD031** blanks-around-fences: 5 instances (lines 66, 75, 90, 107, 252). (6) **MD040** fenced-code-language: 3 prose blocks lack language tag (lines 66, 90, 107). (7) **MD009** trailing spaces: lines 145, 205. (8) **MD047** no trailing newline: line 287."
+    },
+    {
+      "criterion": "Mermaid Diagram Validity",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "Diagram passes mmdc validation (exit 0) with valid flowchart LR syntax (line 253). All 7 edges connect: frontend→api (274), api→plant/qrprint/hermes (275-277), plant→mdstore (278), qrprint→printer (279), hermes→telegram (280). All actual nodes participate in at least one edge. Minor: diagram title appears twice — YAML frontmatter title (line 2) AND subgraph label (line 265). No raw <, >, & in diagram block."
+    },
+    {
+      "criterion": "Resilience & Edge Case Handling",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "Covers all required scenarios: (1) **Hermes unavailability** (line 206): circuit breaker 5s timeout, cached fallback max 24h, 503 with Retry-After. (2) **Printer offline** (lines 213-219): Bluetooth timeout 10s, persistent queue /data/print_queue/, retry 30s with exponential backoff max 10 attempts. (3) **Data consistency** (lines 223-230): atomic writes, fcntl locking, read-after-write consistency, fsync 5s. (4) **Rate limiting** (lines 233-239): token bucket Telegram 1 msg/sec burst 5, print throttling max 2/min, global 100 req/sec per IP. MISSING: (1) **No idempotency guarantees** — criterion explicitly requires 'idempotency guarantees for external calls'; grep confirms zero matches. (2) Circuit breaker lacks failure threshold, recovery period, half-open state. (3) Telegram rate limiting only in error mapping (line 197) — no client-side implementation for Hermes→Telegram."
+    },
+    {
+      "criterion": "Security & Credential Management",
+      "score": 8.5,
+      "severity": "Low",
+      "details": "Good credential lifecycle: Docker secrets/env vars (line 244), AES-256-GCM (line 245), Vault sidecar rotation (line 246), no hardcoded creds (line 247), audit logging (line 248). Telegram Bot token via Authorization header (line 120). GAPS: (1) **No TLS version specified** anywhere — criterion prohibits 'insecure transmission protocols'. (2) **No certificate pinning** for api.telegram.org. (3) **Plant data encryption not addressed** — Plant Data Service writes records to /data/plants/ (line 65) but no encryption of data-at-rest is specified for these files."
+    },
+    {
+      "criterion": "Traceability & PRD Alignment",
+      "score": 3.0,
+      "severity": "Critical",
+      "details": "CRITICAL — same fatal error from all Sprint 2 evaluations (critic-history.md lines 68, 83, 97): (1) **All NFR citations invalid** — document cites NFR1, NFR2, NFR3, NFR5 (lines 210, 239, 249, 230) but PRD (_bmad-output/prd.md) contains ZERO NFR-X numbered requirements. PRD uses prose headings: 'Performance' (line 311), 'Reliability' (line 316), 'Usability' (line 322), 'Data Portability' (line 328), 'Maintainability' (line 333). (2) **No traceability matrix** — contract mandates 'A traceability matrix or explicit cross-references are mandatory. Missing mappings fail the criterion.' (3) **Unmapped FRs**: FR1-FR5, FR12-FR15, FR17-FR21, FR22-FR30, FR31-FR35, FR46-FR55 never referenced. (4) **Misattribution**: line 136 cites FR16 for backup but FR16 is about filtering records (FR46-48 handle backup)."
+    }
+  ],
+  "overall_summary": "The c2-container.md for Sprint 4 contains a structurally sound C2 diagram passing mmdc validation with all 4 backend components properly connected in a subgraph boundary. Resilience documentation is comprehensive — circuit breakers, printer queue management, rate limiting, and credential lifecycle are well-specified. However, three critical failures prevent contract approval: (1) **Traceability & PRD Alignment (3/10)** — all NFR-X citations (NFR1-NFR5) reference non-existent requirement IDs since the PRD uses prose-only headings; no structured traceability matrix exists; several FR references are misattributed (FR16 cited for backup when FR16 is filtering); (2) **Markdown Structure & Linting (2/10)** — 61 markdownlint errors across MD013 (12+ lines >80 chars), MD022 (19+ missing blank lines around headings), MD032 (18+ missing blank lines around lists), MD025 (duplicate title), MD031 (5 fence spacing errors), MD040 (3 unfenced code blocks), MD009 (trailing spaces), MD047 (no trailing newline); (3) **Interface Contracts (6/10)** — Appendix A/B/C payload schemas referenced at lines 76/154/164 are never defined; no HTTP headers or response body schemas specified; no idempotency guarantees documented.\"}",
+  "average_score": 6.428571428571429,
+  "passed": false
+}
