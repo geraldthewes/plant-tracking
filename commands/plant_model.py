@@ -59,11 +59,6 @@ class Plant:
             except ValueError:
                 raise ValueError("planned_planting_date must be in YYYY-MM-DD format")
 
-        # Validate days_to_maturity is positive integer if provided
-        if 'days_to_maturity' in self.data:
-            if not isinstance(self.data['days_to_maturity'], int) or self.data['days_to_maturity'] <= 0:
-                raise ValueError("days_to_maturity must be a positive integer")
-
     def to_markdown(self) -> str:
         """Convert plant data to markdown with YAML frontmatter"""
         now = datetime.now(timezone.utc)

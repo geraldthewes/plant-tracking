@@ -139,11 +139,17 @@ class TestPlantModel(unittest.TestCase):
             self.Plant({})
         self.assertIn('Missing required field', str(ctx.exception))
 
-    def test_plant_invalid_days_to_maturity(self):
-        """Test that non-positive days_to_maturity raises ValueError"""
-        plant_data = self._required_plant_data(days_to_maturity=-5)
-        with self.assertRaises(ValueError):
-            self.Plant(plant_data)
+    def test_plant_days_to_maturity_range(self):
+        """Test that days_to_maturity accepts range strings"""
+        plant_data = self._required_plant_data(days_to_maturity='60-75')
+        plant = self.Plant(plant_data)
+        self.assertEqual(plant.data['days_to_maturity'], '60-75')
+
+    def test_plant_days_to_maturity_string(self):
+        """Test that days_to_maturity accepts single value strings"""
+        plant_data = self._required_plant_data(days_to_maturity='90')
+        plant = self.Plant(plant_data)
+        self.assertEqual(plant.data['days_to_maturity'], '90')
 
     def test_plant_invalid_date_format(self):
         """Test that invalid date format raises ValueError"""
@@ -155,11 +161,11 @@ class TestPlantModel(unittest.TestCase):
         """Test that record-only fields are accepted without error"""
         plant_data = self._required_plant_data(
             brand='Test Brand',
-            days_to_maturity=90,
+            days_to_maturity='90',
         )
         plant = self.Plant(plant_data)
         self.assertEqual(plant.data['brand'], 'Test Brand')
-        self.assertEqual(plant.data['days_to_maturity'], 90)
+        self.assertEqual(plant.data['days_to_maturity'], '90')
 
     def test_id_sequencing(self):
         """Test that sequence numbers increment correctly"""

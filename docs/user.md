@@ -40,7 +40,7 @@ The interactive prompt is divided into two sections:
 | Field | Example | Description |
 |-------|---------|-------------|
 | Brand | Burpee | Seed company name |
-| Days to maturity | 90 | Integer, days from planting to harvest |
+| Days to maturity | 60-75 | Range or single value, days from planting to harvest |
 | Germination time | 7-14 days | Expected germination period |
 | Planting depth | 0.25 inches | Recommended depth |
 | Spacing | 18 inches | Recommended plant spacing |
