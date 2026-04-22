@@ -193,6 +193,9 @@ def print_label(plant_id_or_path: str) -> bool:
             print(f"Printing failed: {stderr}")
             return False
 
+        # Strip ESC d 02 paper feed commands from filter output
+        output = result.stdout.replace(b'\x1b\x64\x02', b'')
+
         # Resolve the USB device path
         device_path = _resolve_device_path(
             selected["bus"], selected["address"], selected.get("serial", "")
@@ -213,7 +216,7 @@ def print_label(plant_id_or_path: str) -> bool:
         # Write ESC/POS commands to the USB printer device
         print(f"Sending label to {device_path} ({selected['model']})...")
         with open(device_path, "wb") as device:
-            device.write(result.stdout)
+            device.write(output)
             device.flush()
 
         # Wait for USB data to fully transmit to the printer
