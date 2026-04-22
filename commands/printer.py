@@ -182,7 +182,7 @@ def print_label(plant_id_or_path: str) -> bool:
     try:
         # Run phomemo-filter which outputs printer commands to stdout
         result = subprocess.run(
-            [sys.executable, str(phomemo_filter), str(label_path)],
+            [sys.executable, str(phomemo_filter), "--no-rotate", str(label_path)],
             capture_output=True,
             text=False,
         )
