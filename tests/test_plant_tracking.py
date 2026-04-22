@@ -32,8 +32,14 @@ class TestPlantModel(unittest.TestCase):
         # Clean up test directory
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
-    def _make_plant_data(self, variety_name="Test Plant", **overrides):
-        """Create standard plant data with optional overrides."""
+    def _minimal_plant_data(self, **overrides):
+        """Create minimal plant data (only variety_name required)."""
+        data = {'variety_name': 'Test Plant'}
+        data.update(overrides)
+        return data
+
+    def _full_plant_data(self, variety_name="Test Plant", **overrides):
+        """Create plant data with all optional fields."""
         data = {
             'variety_name': variety_name,
             'latin_name': 'Testus plantus',
@@ -49,36 +55,44 @@ class TestPlantModel(unittest.TestCase):
         data.update(overrides)
         return data
 
+    def test_plant_creation_minimal_data(self):
+        """Test creating a plant with only required field"""
+        plant_data = self._minimal_plant_data(variety_name="Habanero")
+        plant = self.Plant(plant_data)
+        self.assertEqual(plant.data['variety_name'], 'Habanero')
+        self.assertTrue(plant.data['id'].startswith('HA'))
+
     def test_plant_creation_valid_data(self):
-        """Test creating a plant with valid data"""
-        plant_data = self._make_plant_data(variety_name="Yellow Habanero")
+        """Test creating a plant with all data"""
+        plant_data = self._full_plant_data(variety_name="Yellow Habanero", brand="Burpee")
         plant = self.Plant(plant_data)
         self.assertEqual(plant.data['variety_name'], 'Yellow Habanero')
         self.assertTrue(plant.data['id'].startswith('YEHA'))
+        self.assertEqual(plant.data['brand'], 'Burpee')
 
     def test_plant_id_generation_format(self):
         """Test that plant IDs follow VARIETY-YYYY-SEQ format"""
         import re
-        plant_data = self._make_plant_data(variety_name="Habanero")
+        plant_data = self._minimal_plant_data(variety_name="Habanero")
         plant = self.Plant(plant_data)
         pattern = r'^[A-Z]{2,4}-\d{4}-\d{3}$'
         self.assertRegex(plant.data['id'], pattern)
 
     def test_plant_id_generation_haby(self):
         """Test ID abbreviation for multi-word variety names"""
-        plant_data = self._make_plant_data(variety_name="Yellow Habanero")
+        plant_data = self._minimal_plant_data(variety_name="Yellow Habanero")
         plant = self.Plant(plant_data)
         self.assertTrue(plant.data['id'].startswith('YEHA'))
 
     def test_plant_id_generation_single_word(self):
         """Test ID abbreviation for single-word variety names"""
-        plant_data = self._make_plant_data(variety_name="Habanero")
+        plant_data = self._minimal_plant_data(variety_name="Habanero")
         plant = self.Plant(plant_data)
         self.assertTrue(plant.data['id'].startswith('HA'))
 
     def test_plant_markdown_output(self):
         """Test that plant converts to markdown correctly"""
-        plant_data = self._make_plant_data(variety_name="Test Plant")
+        plant_data = self._full_plant_data(variety_name="Test Plant")
         plant = self.Plant(plant_data)
         markdown = plant.to_markdown()
 
@@ -89,36 +103,57 @@ class TestPlantModel(unittest.TestCase):
         self.assertIn('created_at:', markdown)
         self.assertIn('updated_at:', markdown)
 
+    def test_plant_markdown_minimal(self):
+        """Test markdown output with minimal data"""
+        plant_data = self._minimal_plant_data(variety_name="Basic Plant")
+        plant = self.Plant(plant_data)
+        markdown = plant.to_markdown()
+
+        self.assertIn('---', markdown)
+        self.assertIn('variety_name: Basic Plant', markdown)
+        self.assertIn(f'*ID: {plant.data["id"]}*', markdown)
+
     def test_plant_missing_required_field(self):
-        """Test that missing required fields raise ValueError"""
-        plant_data = self._make_plant_data()
-        del plant_data['variety_name']
+        """Test that missing required field raises ValueError"""
         with self.assertRaises(ValueError) as ctx:
-            self.Plant(plant_data)
+            self.Plant({})
         self.assertIn('Missing required field', str(ctx.exception))
 
     def test_plant_invalid_days_to_maturity(self):
         """Test that non-positive days_to_maturity raises ValueError"""
-        plant_data = self._make_plant_data(days_to_maturity=-5)
+        plant_data = self._minimal_plant_data(days_to_maturity=-5)
         with self.assertRaises(ValueError):
             self.Plant(plant_data)
 
     def test_plant_invalid_date_format(self):
         """Test that invalid date format raises ValueError"""
-        plant_data = self._make_plant_data(planned_planting_date='05-01-2026')
+        plant_data = self._minimal_plant_data(planned_planting_date='05-01-2026')
         with self.assertRaises(ValueError):
             self.Plant(plant_data)
 
+    def test_plant_optional_fields_accepted(self):
+        """Test that optional fields are accepted without error"""
+        plant_data = self._minimal_plant_data(
+            latin_name='Testus plantus',
+            planned_planting_date='2026-06-01',
+            brand='Test Brand',
+            days_to_maturity=90,
+        )
+        plant = self.Plant(plant_data)
+        self.assertEqual(plant.data['latin_name'], 'Testus plantus')
+        self.assertEqual(plant.data['planned_planting_date'], '2026-06-01')
+        self.assertEqual(plant.data['days_to_maturity'], 90)
+
     def test_id_sequencing(self):
         """Test that sequence numbers increment correctly"""
-        data1 = self._make_plant_data(variety_name="Test Plant")
+        data1 = self._minimal_plant_data(variety_name="Test Plant")
         plant1 = self.Plant(data1)
         # Save to database so next plant sees it
         filepath = self.test_db / f"{plant1.data['id']}.md"
         with open(filepath, 'w') as f:
             f.write(plant1.to_markdown())
 
-        data2 = self._make_plant_data(variety_name="Test Plant")
+        data2 = self._minimal_plant_data(variety_name="Test Plant")
         plant2 = self.Plant(data2)
 
         seq1 = int(plant1.data['id'].split('-')[2])
@@ -127,7 +162,7 @@ class TestPlantModel(unittest.TestCase):
 
     def test_load_plant_from_file(self):
         """Test loading a plant record from a markdown file"""
-        plant_data = self._make_plant_data(variety_name="Loaded Plant")
+        plant_data = self._full_plant_data(variety_name="Loaded Plant")
         plant = self.Plant(plant_data)
         filepath = self.test_db / f"{plant.data['id']}.md"
 
@@ -137,6 +172,20 @@ class TestPlantModel(unittest.TestCase):
         from commands.plant_model import load_plant_from_file
         loaded = load_plant_from_file(filepath)
         self.assertEqual(loaded.data['variety_name'], 'Loaded Plant')
+        self.assertEqual(loaded.data['id'], plant.data['id'])
+
+    def test_load_minimal_plant_from_file(self):
+        """Test loading a plant record with minimal data"""
+        plant_data = self._minimal_plant_data(variety_name="Minimal Plant")
+        plant = self.Plant(plant_data)
+        filepath = self.test_db / f"{plant.data['id']}.md"
+
+        with open(filepath, 'w') as f:
+            f.write(plant.to_markdown())
+
+        from commands.plant_model import load_plant_from_file
+        loaded = load_plant_from_file(filepath)
+        self.assertEqual(loaded.data['variety_name'], 'Minimal Plant')
         self.assertEqual(loaded.data['id'], plant.data['id'])
 
     def test_load_invalid_file(self):
@@ -162,7 +211,7 @@ class TestLabelGeneration(unittest.TestCase):
         from commands.plant_model import Plant
         self.Plant = Plant
 
-        # Create a test plant record
+        # Create a test plant with full data
         plant_data = {
             'variety_name': 'Test Variety',
             'latin_name': 'Testus varietyus',

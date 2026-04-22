@@ -27,12 +27,22 @@ Create a new plant record by entering information from your seed packet. The sys
 python -m commands.plant_tracking_cli create-plant
 ```
 
-The interactive prompt asks for:
+The interactive prompt is divided into three sections:
 
+**Required fields (needed for label):**
 | Field | Example | Description |
 |-------|---------|-------------|
-| Variety name | Yellow Habanero | Common name of the plant |
+| Variety name | Yellow Habanero | Common name of the plant (required) |
+
+**Optional label fields (enhance the label):**
+| Field | Example | Description |
+|-------|---------|-------------|
 | Latin name | Capsicum chinense | Scientific name |
+| Planned planting date | 2026-05-01 | Date in YYYY-MM-DD format |
+
+**Optional record fields (not on label):**
+| Field | Example | Description |
+|-------|---------|-------------|
 | Brand | Burpee | Seed company name |
 | Days to maturity | 90 | Integer, days from planting to harvest |
 | Germination time | 7-14 days | Expected germination period |
@@ -40,9 +50,8 @@ The interactive prompt asks for:
 | Spacing | 18 inches | Recommended plant spacing |
 | Sun requirements | Full sun | Sunlight needs |
 | Indoor start time | 8 weeks before last frost | When to start indoors |
-| Planned planting date | 2026-05-01 | Date in YYYY-MM-DD format |
 
-All fields are required. The `days_to_maturity` field must be a positive integer.
+The `days_to_maturity` field must be a positive integer. All other fields can be skipped by pressing Enter.
 
 After saving, the output shows the generated plant ID and file path, plus commands to generate and print a label.
 
@@ -108,7 +117,7 @@ The `created_at` and `updated_at` fields use ISO 8601 format.
 By default, records are stored in `database/` relative to the project root. Override with the `PLANT_DATABASE_DIR` environment variable:
 
 ```bash
-PLANT_DATABASE_DIR=/path/to/db python plant_tracking_cli.py create-plant
+PLANT_DATABASE_DIR=/path/to/db python -m commands.plant_tracking_cli create-plant
 ```
 
 This is useful for testing or organizing records across projects.

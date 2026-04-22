@@ -6,7 +6,7 @@ import argparse
 import sys
 import os
 from pathlib import Path
-from .plant_model import Plant, get_database_dir
+from .plant_model import Plant, get_database_dir, ALL_FIELDS, LABEL_FIELDS, RECORD_ONLY
 
 # Ensure database directory exists
 DATABASE_DIR = get_database_dir()
@@ -40,16 +40,63 @@ def main():
         parser.print_help()
 
 
+def _prompt_field(field, description, plant_data):
+    """Prompt user for a single field value with validation."""
+    while True:
+        value = input(f"{description}: ").strip()
+        if value:
+            # Special handling for numeric fields
+            if field == 'days_to_maturity':
+                try:
+                    value = int(value)
+                    if value <= 0:
+                        print("Please enter a positive number")
+                        continue
+                except ValueError:
+                    print("Please enter a valid integer")
+                    continue
+            plant_data[field] = value
+            break
+        else:
+            print("This field is required")
+
+
+def _prompt_optional_field(field, description, plant_data):
+    """Prompt user for an optional field value."""
+    value = input(f"{description} (optional): ").strip()
+    if value:
+        if field == 'days_to_maturity':
+            try:
+                value = int(value)
+                if value <= 0:
+                    print("Please enter a positive number")
+                    return
+            except ValueError:
+                print("Please enter a valid integer")
+                return
+        plant_data[field] = value
+
+
 def create_plant(args):
     """Create a new plant record through interactive prompts"""
     print("=== Create New Plant Record ===")
-    print("Please enter the following information from your seed packet:")
+    print("Fields not needed for the label are optional.")
     print()
 
-    # Define plant fields with descriptions
-    fields = [
+    # Define fields in logical order
+    # Phase 1: Required label fields
+    required_fields = [
         ('variety_name', 'Variety name (e.g., Yellow Habanero)'),
+    ]
+
+    # Phase 2: Optional label fields
+    label_fields = [
         ('latin_name', 'Latin name (e.g., Capsicum chinense)'),
+        ('planned_planting_date', 'Planned planting date (YYYY-MM-DD)'),
+    ]
+
+    # Phase 3: Record-keeping fields (not on label)
+    record_fields = [
         ('brand', 'Brand/company name'),
         ('days_to_maturity', 'Days to maturity (integer)'),
         ('germination_time', 'Germination time (e.g., 7-14 days)'),
@@ -57,29 +104,23 @@ def create_plant(args):
         ('spacing', 'Plant spacing (e.g., 18 inches)'),
         ('sun_requirements', 'Sun requirements (e.g., Full sun)'),
         ('indoor_start_time', 'Indoor start time (e.g., 8 weeks before last frost)'),
-        ('planned_planting_date', 'Planned planting date (YYYY-MM-DD)'),
     ]
 
     plant_data = {}
 
-    for field, description in fields:
-        while True:
-            value = input(f"{description}: ").strip()
-            if value:
-                # Special handling for numeric fields
-                if field == 'days_to_maturity':
-                    try:
-                        value = int(value)
-                        if value <= 0:
-                            print("Please enter a positive number")
-                            continue
-                    except ValueError:
-                        print("Please enter a valid integer")
-                        continue
-                plant_data[field] = value
-                break
-            else:
-                print("This field is required")
+    print("--- Required fields (needed for label) ---")
+    for field, description in required_fields:
+        _prompt_field(field, description, plant_data)
+
+    print()
+    print("--- Optional label fields ---")
+    for field, description in label_fields:
+        _prompt_optional_field(field, description, plant_data)
+
+    print()
+    print("--- Optional record fields (not on label) ---")
+    for field, description in record_fields:
+        _prompt_optional_field(field, description, plant_data)
 
     try:
         # Create plant record

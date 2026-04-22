@@ -41,17 +41,19 @@ updated_at: "2026-04-22T10:30:00Z"
 |-------|------|----------|-------------|
 | `id` | string | Yes (auto-generated) | Unique identifier in VARIETY-YYYY-SEQ format |
 | `variety_name` | string | Yes | Common name of the plant variety (e.g., "Yellow Habanero") |
-| `latin_name` | string | Yes | Scientific/Latin name (e.g., "Capsicum chinense") |
-| `brand` | string | Yes | Seed brand/company name |
-| `days_to_maturity` | integer | Yes | Days from planting to harvest |
-| `germination_time` | string | Yes | Expected germination period (e.g., "7-14 days") |
-| `planting_depth` | string | Yes | Recommended planting depth (e.g., "0.25 inches") |
-| `spacing` | string | Yes | Recommended plant spacing (e.g., "18 inches") |
-| `sun_requirements` | string | Yes | Sunlight needs (e.g., "Full sun", "Partial shade") |
-| `indoor_start_time` | string | Yes | When to start indoors before last frost (e.g., "8 weeks") |
-| `planned_planting_date` | string (YYYY-MM-DD) | Yes | Date when planting is planned |
+| `latin_name` | string | No | Scientific/Latin name (e.g., "Capsicum chinense") |
+| `brand` | string | No | Seed brand/company name |
+| `days_to_maturity` | integer | No | Days from planting to harvest |
+| `germination_time` | string | No | Expected germination period (e.g., "7-14 days") |
+| `planting_depth` | string | No | Recommended planting depth (e.g., "0.25 inches") |
+| `spacing` | string | No | Recommended plant spacing (e.g., "18 inches") |
+| `sun_requirements` | string | No | Sunlight needs (e.g., "Full sun", "Partial shade") |
+| `indoor_start_time` | string | No | When to start indoors before last frost (e.g., "8 weeks") |
+| `planned_planting_date` | string (YYYY-MM-DD) | No | Date when planting is planned |
 | `created_at` | string (ISO 8601) | Yes | Timestamp when record was created |
 | `updated_at` | string (ISO 8601) | Yes | Timestamp when record was last updated |
+
+Only `variety_name` is required. All other fields (except auto-generated `id`, `created_at`, and `updated_at`) are optional and can be skipped during record creation.
 
 ### Content Section
 
