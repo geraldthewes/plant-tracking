@@ -4,7 +4,7 @@ Printing functionality for plant labels
 import subprocess
 import sys
 from pathlib import Path
-from label_generator import create_label
+from .label_generator import create_label
 
 
 def print_label(plant_id_or_path: str) -> bool:

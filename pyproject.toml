@@ -15,7 +15,7 @@ test = [
 ]
 
 [project.scripts]
-plant-tracking = "plant_tracking_cli:main"
+plant-tracking = "commands.plant_tracking_cli:main"
 
 [build-system]
 requires = ["hatchling"]

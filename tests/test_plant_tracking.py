@@ -19,7 +19,7 @@ class TestPlantModel(unittest.TestCase):
         os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
 
         # Import after setting env var so modules pick up the test dir
-        from plant_model import Plant
+        from commands.plant_model import Plant
         self.Plant = Plant
 
     def tearDown(self):
@@ -134,7 +134,7 @@ class TestPlantModel(unittest.TestCase):
         with open(filepath, 'w') as f:
             f.write(plant.to_markdown())
 
-        from plant_model import load_plant_from_file
+        from commands.plant_model import load_plant_from_file
         loaded = load_plant_from_file(filepath)
         self.assertEqual(loaded.data['variety_name'], 'Loaded Plant')
         self.assertEqual(loaded.data['id'], plant.data['id'])
@@ -145,7 +145,7 @@ class TestPlantModel(unittest.TestCase):
         with open(invalid_file, 'w') as f:
             f.write("no frontmatter here")
 
-        from plant_model import load_plant_from_file
+        from commands.plant_model import load_plant_from_file
         with self.assertRaises(ValueError):
             load_plant_from_file(invalid_file)
 
@@ -159,7 +159,7 @@ class TestLabelGeneration(unittest.TestCase):
         self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
         os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
 
-        from plant_model import Plant
+        from commands.plant_model import Plant
         self.Plant = Plant
 
         # Create a test plant record
@@ -190,7 +190,7 @@ class TestLabelGeneration(unittest.TestCase):
 
     def test_label_dimensions(self):
         """Test that generated label has correct dimensions"""
-        from label_generator import create_label
+        from commands.label_generator import create_label
         from PIL import Image
 
         label_path = self.test_dir / "test_label.png"
@@ -212,7 +212,7 @@ class TestLabelGeneration(unittest.TestCase):
 
     def test_label_qr_code(self):
         """Test that QR code is rendered on the label"""
-        from label_generator import create_label
+        from commands.label_generator import create_label
         from PIL import Image
 
         label_path = self.test_dir / "test_qr_label.png"
@@ -230,7 +230,7 @@ class TestLabelGeneration(unittest.TestCase):
 
     def test_label_missing_plant(self):
         """Test that missing plant raises FileNotFoundError"""
-        from label_generator import create_label
+        from commands.label_generator import create_label
         with self.assertRaises(FileNotFoundError):
             create_label("NONEXISTENT-2026-001")
 
@@ -244,7 +244,7 @@ class TestPrinter(unittest.TestCase):
         self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
         os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
 
-        from plant_model import Plant
+        from commands.plant_model import Plant
         self.Plant = Plant
 
     def tearDown(self):
@@ -256,13 +256,13 @@ class TestPrinter(unittest.TestCase):
 
     def test_print_missing_plant(self):
         """Test that printing a missing plant returns False"""
-        from printer import print_label
+        from commands.printer import print_label
         result = print_label("NONEXISTENT-2026-001")
         self.assertFalse(result)
 
     def test_print_nonexistent_file(self):
         """Test that printing a nonexistent file returns False"""
-        from printer import print_label
+        from commands.printer import print_label
         result = print_label("/tmp/does_not_exist.png")
         self.assertFalse(result)
 

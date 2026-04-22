@@ -6,7 +6,7 @@ import argparse
 import sys
 import os
 from pathlib import Path
-from plant_model import Plant, get_database_dir
+from .plant_model import Plant, get_database_dir
 
 # Ensure database directory exists
 DATABASE_DIR = get_database_dir()
@@ -96,8 +96,8 @@ def create_plant(args):
         print(f"ID: {plant.data['id']}")
         print(f"Saved to: {filepath}")
         print(f"\nNext steps:")
-        print(f"  1. Generate label: plant-tracking create-label {plant.data['id']}")
-        print(f"  2. Print label: plant-tracking print-label {plant.data['id']}")
+        print(f"  1. Generate label: python -m commands.plant_tracking_cli create-label {plant.data['id']}")
+        print(f"  2. Print label: python -m commands.plant_tracking_cli print-label {plant.data['id']}")
 
     except Exception as e:
         print(f"\n\u2717 Error creating plant record: {e}")
@@ -106,17 +106,17 @@ def create_plant(args):
 
 def create_label(args):
     """Create a label for a plant"""
-    from label_generator import create_label
+    from .label_generator import create_label
 
     try:
         label_path = create_label(args.plant_id)
         print(f"\u2713 Label created successfully: {label_path}")
         print(f"  Review the label before printing:")
-        print(f"    plant-tracking print-label {args.plant_id}")
+        print(f"    python -m commands.plant_tracking_cli print-label {args.plant_id}")
     except FileNotFoundError as e:
         print(f"\u2717 Error: {e}")
         print(f"  Make sure you've created a plant record first:")
-        print(f"    plant-tracking create-plant")
+        print(f"    python -m commands.plant_tracking_cli create-plant")
         sys.exit(1)
     except Exception as e:
         print(f"\u2717 Error creating label: {e}")
@@ -125,7 +125,7 @@ def create_label(args):
 
 def print_label(args):
     """Print a label for a plant"""
-    from printer import print_label
+    from .printer import print_label
 
     try:
         success = print_label(args.plant_id)

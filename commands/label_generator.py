@@ -4,7 +4,7 @@ Label generation for plant tracking system
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
-from plant_model import load_plant_from_file, get_database_dir
+from .plant_model import load_plant_from_file, get_database_dir
 
 # Label specifications (40x30mm at 300 DPI)
 LABEL_WIDTH_MM = 40

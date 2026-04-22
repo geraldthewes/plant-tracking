@@ -24,7 +24,7 @@ The first time you run any command, a `database/` directory is created automatic
 Create a new plant record by entering information from your seed packet. The system generates a unique ID automatically.
 
 ```bash
-python plant_tracking_cli.py create-plant
+python -m commands.plant_tracking_cli create-plant
 ```
 
 The interactive prompt asks for:
@@ -51,12 +51,12 @@ After saving, the output shows the generated plant ID and file path, plus comman
 Generate a 40x30mm PNG label with a QR code encoding the plant ID.
 
 ```bash
-python plant_tracking_cli.py create-label <plant_id>
+python -m commands.plant_tracking_cli create-label <plant_id>
 ```
 
 Example:
 ```bash
-python plant_tracking_cli.py create-label YEHA-2026-001
+python -m commands.plant_tracking_cli create-label YEHA-2026-001
 ```
 
 The label is saved to `database/<plant_id>_label.png` and contains:
@@ -70,10 +70,10 @@ Send a label to the Phomemo M120 Bluetooth printer via the phomemo-tools pipelin
 
 ```bash
 # Generate label and print in one step
-python plant_tracking_cli.py print-label <plant_id>
+python -m commands.plant_tracking_cli print-label <plant_id>
 
 # Print an existing label file
-python plant_tracking_cli.py print-label database/YEHA-2026-001_label.png
+python -m commands.plant_tracking_cli print-label database/YEHA-2026-001_label.png
 ```
 
 The command accepts either a plant ID (generates the label first) or a direct path to a label PNG file.
