@@ -326,14 +326,18 @@ class TestPrinter(unittest.TestCase):
             os.environ.pop("PLANT_DATABASE_DIR", None)
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
-    def test_print_missing_plant(self):
+    @unittest.mock.patch("commands.printer._select_printer")
+    def test_print_missing_plant(self, mock_select):
         """Test that printing a missing plant returns False"""
+        mock_select.return_value = None
         from commands.printer import print_label
         result = print_label("NONEXISTENT-2026-001")
         self.assertFalse(result)
 
-    def test_print_nonexistent_file(self):
+    @unittest.mock.patch("commands.printer._select_printer")
+    def test_print_nonexistent_file(self, mock_select):
         """Test that printing a nonexistent file returns False"""
+        mock_select.return_value = None
         from commands.printer import print_label
         result = print_label("/tmp/does_not_exist.png")
         self.assertFalse(result)

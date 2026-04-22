@@ -67,8 +67,10 @@ class find_class(object):
         return False
 
 def scan_usb():
-    printers = usb.core.find(find_all=1, custom_match=find_class(7), idVendor=0x0493)
-    for printer in printers:
+    vendor_ids = [0x0493, 0x0483]
+    for vendor_id in vendor_ids:
+        printers = usb.core.find(find_all=1, custom_match=find_class(7), idVendor=vendor_id)
+        for printer in printers:
             for cfg in printer:
                 intf = usb.util.find_descriptor(cfg, bInterfaceClass=7)
                 if intf is None:
@@ -79,6 +81,8 @@ def scan_usb():
                 model = 'M02'
             elif printer.idProduct == 0x8760:
                 model = 'M110'
+            elif printer.idProduct == 0x5740:
+                model = 'M120/M220'
             else:
                 model = 'Unknown(0x%04x)' % (printer.idProduct)
             usb.util.get_langids(printer)
