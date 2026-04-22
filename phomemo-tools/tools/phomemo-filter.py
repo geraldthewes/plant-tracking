@@ -12,7 +12,8 @@ from PIL import Image
 
 def print_header():
     with os.fdopen(sys.stdout.fileno(), "wb", closefd=False) as stdout:
-        stdout.write(b'\x1b\x40')
+        stdout.write(b'\x1b\x40\x1b\x61\x01')  # ESC @, ESC a 01
+        stdout.write(b'\x1f\x11\x02\x04')      # vendor init
     return
 
 def print_marker(lines=0x100):
@@ -24,7 +25,10 @@ def print_marker(lines=0x100):
 
 def print_footer():
     with os.fdopen(sys.stdout.fileno(), "wb", closefd=False) as stdout:
-        stdout.write(b'\x1b\x40')
+        stdout.write(b'\x1f\x11\x08')
+        stdout.write(b'\x1f\x11\x0e')
+        stdout.write(b'\x1f\x11\x07')
+        stdout.write(b'\x1f\x11\x09')
     return
 
 def print_line(image, line):
