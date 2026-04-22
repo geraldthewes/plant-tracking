@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 import yaml
 
-# Fields needed for label generation
+# Fields needed for label generation (all required)
 LABEL_FIELDS = ['variety_name', 'latin_name', 'planned_planting_date']
 
 # All available fields (record-keeping)
@@ -18,11 +18,8 @@ ALL_FIELDS = [
     'indoor_start_time', 'planned_planting_date'
 ]
 
-# Fields only needed for the label
-REQUIRED_FIELDS = ['variety_name']
-
-# Fields optional but label-enhancing
-LABEL_OPTIONAL = ['latin_name', 'planned_planting_date']
+# All label fields are required
+REQUIRED_FIELDS = ['variety_name', 'latin_name', 'planned_planting_date']
 
 # Fields for record-keeping only (not used in labels)
 RECORD_ONLY = [
@@ -55,7 +52,7 @@ class Plant:
             if field not in self.data:
                 raise ValueError(f"Missing required field: {field}")
 
-        # Validate date format if present
+        # Validate date format
         if 'planned_planting_date' in self.data:
             try:
                 datetime.strptime(self.data['planned_planting_date'], '%Y-%m-%d')

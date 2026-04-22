@@ -80,22 +80,18 @@ def _prompt_optional_field(field, description, plant_data):
 def create_plant(args):
     """Create a new plant record through interactive prompts"""
     print("=== Create New Plant Record ===")
-    print("Fields not needed for the label are optional.")
+    print("Fields needed for the label are required; record-keeping fields are optional.")
     print()
 
     # Define fields in logical order
     # Phase 1: Required label fields
     required_fields = [
         ('variety_name', 'Variety name (e.g., Yellow Habanero)'),
-    ]
-
-    # Phase 2: Optional label fields
-    label_fields = [
         ('latin_name', 'Latin name (e.g., Capsicum chinense)'),
         ('planned_planting_date', 'Planned planting date (YYYY-MM-DD)'),
     ]
 
-    # Phase 3: Record-keeping fields (not on label)
+    # Phase 2: Record-keeping fields (not on label)
     record_fields = [
         ('brand', 'Brand/company name'),
         ('days_to_maturity', 'Days to maturity (integer)'),
@@ -111,11 +107,6 @@ def create_plant(args):
     print("--- Required fields (needed for label) ---")
     for field, description in required_fields:
         _prompt_field(field, description, plant_data)
-
-    print()
-    print("--- Optional label fields ---")
-    for field, description in label_fields:
-        _prompt_optional_field(field, description, plant_data)
 
     print()
     print("--- Optional record fields (not on label) ---")

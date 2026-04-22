@@ -27,16 +27,12 @@ Create a new plant record by entering information from your seed packet. The sys
 python -m commands.plant_tracking_cli create-plant
 ```
 
-The interactive prompt is divided into three sections:
+The interactive prompt is divided into two sections:
 
 **Required fields (needed for label):**
 | Field | Example | Description |
 |-------|---------|-------------|
-| Variety name | Yellow Habanero | Common name of the plant (required) |
-
-**Optional label fields (enhance the label):**
-| Field | Example | Description |
-|-------|---------|-------------|
+| Variety name | Yellow Habanero | Common name of the plant |
 | Latin name | Capsicum chinense | Scientific name |
 | Planned planting date | 2026-05-01 | Date in YYYY-MM-DD format |
 
@@ -51,7 +47,7 @@ The interactive prompt is divided into three sections:
 | Sun requirements | Full sun | Sunlight needs |
 | Indoor start time | 8 weeks before last frost | When to start indoors |
 
-The `days_to_maturity` field must be a positive integer. All other fields can be skipped by pressing Enter.
+The `days_to_maturity` field must be a positive integer. All record fields can be skipped by pressing Enter.
 
 After saving, the output shows the generated plant ID and file path, plus commands to generate and print a label.
 
