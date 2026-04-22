@@ -1,0 +1,44 @@
+{
+  "sprint_number": 4,
+  "sprint_name": "Backend / Orchestration Container",
+  "files_to_produce": [
+    "backend/c2-container.md"
+  ],
+  "criteria": [
+    {
+      "name": "Mermaid Diagram Validity",
+      "description": "All Mermaid syntax blocks must pass strict validation via the project's documented Mermaid CLI tool (mmdc) or render identically in the specified viewer without warnings or layout shifts. Invalid or broken links constitute a fail.",
+      "threshold": 9.8
+    },
+    {
+      "name": "C4 Container Specification Completeness",
+      "description": "Document must explicitly define ≥3 distinct backend components with clear responsibility boundaries. Each component must list required APIs (REST/gRPC), message schemas, and persistence mechanisms. Explicitly map to Telegram, Hermes, Phomemo, and markdown storage with integration points.",
+      "threshold": 9.8
+    },
+    {
+      "name": "Traceability & PRD Alignment",
+      "description": "Every functional requirement (FR) and non-functional requirement (NFR) cited in the sprint scope must have a direct 1:1 mapping to a section in c2-container.md. A traceability matrix or explicit cross-references are mandatory. Missing mappings fail the criterion.",
+      "threshold": 9.9
+    },
+    {
+      "name": "Interface & Data Flow Contracts",
+      "description": "Document all inter-component communication with explicit payload schemas (JSON Schema/Protobuf) and error code mappings. API endpoints must specify HTTP methods, path parameters, headers, and status codes. Ambiguous data flows are rejected.",
+      "threshold": 9.8
+    },
+    {
+      "name": "Resilience & Edge Case Handling",
+      "description": "Must explicitly document fallback mechanisms for Hermes unavailability (circuit breaker/retry policy with backoff), offline data synchronization strategy, and printer error handling (payload truncation/retry). Rate limiting and idempotency guarantees for external calls must be specified.",
+      "threshold": 9.8
+    },
+    {
+      "name": "Security & Credential Management",
+      "description": "Must specify how API keys/secrets for external services are injected, encrypted at rest, and rotated. Hardcoded credentials or insecure transmission protocols are strictly prohibited.",
+      "threshold": 9.7
+    },
+    {
+      "name": "Markdown Structure & Linting",
+      "description": "Strict adherence to project README linting rules: sequential heading levels (no skips), lists properly indented, all code blocks fenced with language identifiers, and no inline HTML. Fails if automated linting reports warnings.",
+      "threshold": 9.5
+    }
+  ]
+}

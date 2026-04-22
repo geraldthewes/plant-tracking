@@ -153,7 +153,7 @@
   
 - **Critical - Edge Case: Hermes Degradation & Fallback**:
   - Issue: Zero documentation of Hermes degradation mechanisms
-  - Addressed: Added detailed fallback UI states, data staleness tolerance (>24h flagged), user notification mechanisms, error boundaries, and exponential backoff retry strategy (capped at 5 mins)
+  - Addressed: Added detailed fallback UI states, data stalenes tolerance (>24h flagged), user notification mechanisms, error boundaries, and exponential backoff retry strategy (capped at 5 mins)
   - What worked: Edge case documentation now provides complete graceful degradation paths for all frontend containers
   
 - **Critical - Edge Case: Offline Queue & Sync**:
@@ -369,3 +369,52 @@
 - Post-MVP features must be explicitly tagged to maintain PRD scope accuracy
 - Every architectural claim must cite direct PRD quotes or section headers
 - Structured mapping table must link containers to FR41-FR45 IDs and NFRs
+
+# Generator Learnings - Sprint 4: Backend / Orchestration Container (C2 Diagram)
+
+## Architecture Decisions Made
+- Confirmed the 4 mandatory backend containers for the Plant Tracking System: Orchestrator (API Gateway), Plant Data Service, QR and Print Service, and Hermes Agent
+- Established that the backend uses a containerized microservices architecture with Docker for all services
+- Determined that REST over HTTPS is used for all internal service communications
+- Verified that the Phomemo M120 printer is accessed via Bluetooth using Python libraries
+- Confirmed that the Hermes agent is accessed via Telegram Bot API for natural language querying and analysis
+- Established that data integrity is maintained through atomic file operations on local markdown storage
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper Mermaid syntax using double quotes and \n for line breaks (passed validation)
+- Clear relationship labels specifying action AND technology/protocol (e.g., "Routes REST/HTTPS requests via JSON")
+- Correct use of C4 diagram shapes: stadium for external actors, rectangles for internal containers, subroutines for external systems, cylinders for data storage
+- Proper use of subgraph boundaries to separate internal system containers from external actors and services
+- Comprehensive container narratives covering Primary Responsibility, Input Data/Triggers, Output/Downstream Effects, and Failure/Graceful Degradation
+- Accurate PRD traceability with every container narrative citing at least one FR and one NFR requirement from the PRD
+- Clean markdown document structure with proper YAML frontmatter, heading hierarchy (H1 title, H2 sections), and fenced code blocks with language tag
+
+## Issues Addressed from Sprint Contract Requirements
+- **Mermaid Diagram Validity**: Diagram validates successfully with mmdc (exit code 0)
+- **C4 Container Specification Completeness**: Defined 4 distinct backend components with clear responsibility boundaries, listing required APIs, message schemas, and persistence mechanisms
+- **Traceability & PRD Alignment**: Every functional requirement (FR) and non-functional requirement (NFR) cited in the sprint scope has direct mapping to sections in c2-container.md
+- **Interface & Data Flow Contracts**: Documented all inter-component communication with explicit payload schemas and error code mappings
+- **Resilience & Edge Case Handling**: Explicitly documented fallback mechanisms for Hermes unavailability, offline data synchronization strategy, and printer error handling
+- **Security & Credential Management**: Specified how API keys/secrets are injected, encrypted at rest, and rotated
+- **Markdown Structure & Linting**: Strict adherence to project README linting rules with sequential heading levels, proper lists, and fenced code blocks
+
+## Domain Insights about the System Gleaned from the PRD
+- The backend follows a microservices architecture where each concern (API gateway, data storage, QR generation/printing, AI agent) is separated into independently deployable containers
+- Docker containerization provides consistency across development and deployment environments while enabling independent scaling
+- REST over HTTPS provides a simple, standardized communication protocol that's easy to debug and monitor
+- Bluetooth communication for label printing requires special handling due to its proximity-based, connection-oriented nature
+- Integration with Telegram via Bot AI provides a familiar interface for users while leveraging existing messaging infrastructure
+- Data integrity is critical for plant tracking success and is maintained through atomic file operations and file locking
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include action AND technology/protocol (e.g., "via camera", "via Telegram")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents

@@ -28,3 +28,17 @@
 - Communication Protocol: HTTPS/REST with JSON and Bearer token — standardized authentication for frontend-Hermes communication
 - Device Camera Access: Native module interface (mobile) / Browser Media API (web) — consistent cross-platform camera utilization
 - Telegram Integration: HTTPS/Telegram Bot API with Bot token — enables natural language interaction via familiar messaging interface
+
+## Sprint 4: Backend / Orchestration Container
+
+- **API Gateway**: Node.js/Express — lightweight, fast routing for microservices orchestration
+- **Plant Data Service**: Python/FastAPI — excellent for data validation and CRUD operations with automatic OpenAPI docs
+- **QR and Print Service**: Python — mature libraries for QR code generation and Bluetooth communication
+- **Hermes Agent**: Python — seamless integration with python-telegram-bot library for Telegram API
+- **Communication Protocol**: REST over HTTPS — standardized, cacheable, and easy to debug for internal service communications
+- **Printer Interface**: Bluetooth Serial Port Profile (SPP) — reliable connectivity to Phomemo M120 via Python libraries
+- **Data Storage**: Local markdown files — human-readable, atomic operations with file locking for data integrity
+- **Containerization**: Docker — consistent deployment across environments, independent scaling of services
+- **Authentication**: Environment variables and Docker secrets — secure injection of API keys/secrets, encrypted at rest
+- **Error Handling**: Circuit breaker pattern — graceful degradation for Hermes agent unavailability with fallback to cached results
+- **Rate Limiting**: Token bucket algorithm — protects external services (Telegram) from abuse while allowing bursts
