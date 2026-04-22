@@ -129,14 +129,28 @@ if __name__ == "__main__":
     main()
 ```
 
-**File**: `requirements.txt`
-**Changes**: Define Python dependencies
+**File**: `pyproject.toml`
+**Changes**: Define Python dependencies using modern pyproject.toml standard (2026 approach)
 
-```txt
-qrcode[pil]>=7.4
-Pillow>=10.0.0
-PyYAML>=6.0
-click>=8.0.0
+```toml
+[project]
+name = "plant-tracking-cli"
+version = "0.1.0"
+description = "CLI for plant tracking with QR label generation"
+authors = [{name = "Gardener", email = "gardener@example.com"}]
+dependencies = [
+    "qrcode[pil]>=7.4",
+    "Pillow>=10.0.0",
+    "PyYAML>=6.0",
+    "click>=8.0.0"
+]
+
+[project.scripts]
+plant-tracking = "plant_tracking_cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 ```
 
 #### 2. Plant Data Model
@@ -246,7 +260,7 @@ def load_plant_from_file(file_path: Path) -> Plant:
 #### Automated Verification:
 - [ ] Database directory is created: `test -d database`
 - [ ] CLI entry point is executable: `test -x plant_tracking_cli.py`
-- [ ] Requirements can be installed: `pip install -r requirements.txt`
+- [ ] Dependencies can be installed: `pip install .` (from pyproject.toml)
 - [ ] Plant model validates required fields: `python -c "from plant_model import Plant; Plant({'variety_name': 'Test', ...})"`
 - [ ] ID generation follows VARIETY-YYYY-SEQ format: `python -c "from plant_model import Plant; p = Plant({'variety_name': 'Habanero', ...}); assert re.match(r'HAB-\\d{{4}}-\\d{{3}}', p.data['id'])"`
 
@@ -962,16 +976,34 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-#### 2. Update Requirements for Testing
-**File**: `requirements.txt`
-**Changes**: Add testing dependencies
+#### 2. Update Dependencies for Testing
+**File**: `pyproject.toml`
+**Changes**: Add testing dependencies to pyproject.toml
 
-```txt
-qrcode[pil]>=7.4
-Pillow>=10.0.0
-PyYAML>=6.0
-click>=8.0.0
-pytest>=7.0.0
+```toml
+[project]
+name = "plant-tracking-cli"
+version = "0.1.0"
+description = "CLI for plant tracking with QR label generation"
+authors = [{name = "Gardener", email = "gardener@example.com"}]
+dependencies = [
+    "qrcode[pil]>=7.4",
+    "Pillow>=10.0.0",
+    "PyYAML>=6.0",
+    "click>=8.0.0"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+plant-tracking = "plant_tracking_cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 ```
 
 #### 3. Make CLI Executable and Add Entry Point
@@ -1000,7 +1032,7 @@ plant-tracking = "plant_tracking_cli:main"
 #### Automated Verification:
 - [ ] All unit tests pass: `python -m pytest tests/ -v`
 - [ ] Integration tests validate end-to-end workflow
-- [ ] CLI commands are accessible after installation
+- [ ] CLI commands are accessible after installation (`pip install .`)
 - [ ] Type checking passes (if using mypy): `mypy plant_tracking_cli.py`
 - [ ] Linting passes: `flake8 plant_tracking_cli.py` or similar
 
