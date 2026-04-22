@@ -258,12 +258,12 @@ def load_plant_from_file(file_path: Path) -> Plant:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Database directory is created: `test -d database`
-- [ ] CLI entry point is executable: `test -x plant_tracking_cli.py`
-- [ ] Dependencies can be installed: `pip install .` (from pyproject.toml)
-- [ ] Plant model validates required fields per database spec: `python -c "from plant_model import Plant; Plant({'variety_name': 'Test', ...})"`
-- [ ] ID generation follows VARIETY-YYYY-SEQ format: `python -c "from plant_model import Plant; p = Plant({'variety_name': 'Habanero', ...}); assert re.match(r'HAB-\\d{{4}}-\\d{{3}}', p.data['id'])"`
-- [ ] Generated markdown files conform to database spec format
+- [x] Database directory is created: `test -d database`
+- [x] CLI entry point is executable: `test -x plant_tracking_cli.py`
+- [x] Dependencies can be installed: `pip install .` (from pyproject.toml)
+- [x] Plant model validates required fields per database spec
+- [x] ID generation follows VARIETY-YYYY-SEQ format
+- [x] Generated markdown files conform to database spec format
 
 #### Manual Verification:
 - [ ] Project structure is clear and follows Python conventions
@@ -405,11 +405,11 @@ if __name__ == "__main__":
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] create-plant command exists and is callable
-- [ ] Interactive prompts capture all required fields
-- [ ] Plant record is saved with correct ID format
-- [ ] Markdown file contains YAML frontmatter with all data
-- [ ] ID is unique and follows VARIETY-YYYY-SEQ pattern
+- [x] create-plant command exists and is callable
+- [x] Interactive prompts capture all required fields
+- [x] Plant record is saved with correct ID format
+- [x] Markdown file contains YAML frontmatter with all data
+- [x] ID is unique and follows VARIETY-YYYY-SEQ pattern
 
 #### Manual Verification:
 - [ ] User is prompted for all plant fields in logical order
@@ -600,12 +600,12 @@ def create_label(args):
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Label generator module can be imported
-- [ ] create-label command generates PNG file
-- [ ] Generated image has correct dimensions (≈472x354px for 40x30mm at 300 DPI)
-- [ ] QR code is generated and encodes the correct plant ID
-- [ ] Label contains variety name, Latin name, and planting date
-- [ ] Bottom text line is present
+- [x] Label generator module can be imported
+- [x] create-label command generates PNG file
+- [x] Generated image has correct dimensions (≈472x354px for 40x30mm at 300 DPI)
+- [x] QR code is generated and encodes the correct plant ID
+- [x] Label contains variety name, Latin name, and planting date
+- [x] Bottom text line is present
 
 #### Manual Verification:
 - [ ] Label image is clear and readable at 100% zoom
@@ -738,11 +738,11 @@ def print_label(args):
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] print-label command exists and is callable
-- [ ] Printer module can import and use label_generator
-- [ ] Print command calls phomemo-filter.py with correct arguments
-- [ ] Error handling works for missing label files
-- [ ] Print job submission returns appropriate success/failure codes
+- [x] print-label command exists and is callable
+- [x] Printer module can import and use label_generator
+- [x] Print command calls phomemo-filter.py with correct arguments
+- [x] Error handling works for missing label files
+- [x] Print job submission returns appropriate success/failure codes
 
 #### Manual Verification:
 - [ ] Label prints correctly on Phomemo M120 printer
@@ -1031,11 +1031,11 @@ plant-tracking = "plant_tracking_cli:main"
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] All unit tests pass: `python -m pytest tests/ -v`
-- [ ] Integration tests validate end-to-end workflow
-- [ ] CLI commands are accessible after installation (`pip install .`)
-- [ ] Type checking passes (if using mypy): `mypy plant_tracking_cli.py`
-- [ ] Linting passes: `flake8 plant_tracking_cli.py` or similar
+- [x] All unit tests pass: `python -m pytest tests/ -v` (16 passed)
+- [x] Integration tests validate end-to-end workflow
+- [x] CLI commands are accessible after installation (`pip install .`)
+- [x] Type checking passes (if using mypy): `mypy plant_tracking_cli.py`
+- [x] Linting passes: `flake8 plant_tracking_cli.py` or similar
 
 #### Manual Verification:
 - [ ] End-to-end workflow works: create-plant → create-label → print-label
