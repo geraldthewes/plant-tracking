@@ -5,6 +5,7 @@ import glob
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 from .label_generator import create_label
 
@@ -212,13 +213,11 @@ def print_label(plant_id_or_path: str) -> bool:
         # Write ESC/POS commands to the USB printer device
         print(f"Sending label to {device_path} ({selected['model']})...")
         with open(device_path, "wb") as device:
-            # Clear any buffered data from previous jobs
-            try:
-                os.fsync(device.fileno())
-            except Exception:
-                pass
             device.write(result.stdout)
             device.flush()
+
+        # Wait for USB data to fully transmit to the printer
+        time.sleep(0.5)
 
         print(f"\u2713 Label printed: {label_path}")
         return True
