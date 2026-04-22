@@ -13,58 +13,41 @@ DPI = 300
 LABEL_WIDTH_PX = int(LABEL_WIDTH_MM * DPI / 25.4)  # 472px
 LABEL_HEIGHT_PX = int(LABEL_HEIGHT_MM * DPI / 25.4)  # 354px
 
-# Layout constants
-TEXT_AREA_WIDTH_RATIO = 0.4  # 40% for text, 60% for QR code
-TEXT_AREA_WIDTH = int(LABEL_WIDTH_PX * TEXT_AREA_WIDTH_RATIO)
-MARGIN = int(10 * DPI / 25.4)  # 10mm
-BOTTOM_TEXT_HEIGHT = int(15 * DPI / 25.4)  # 15mm for bottom text area
-
 
 def _get_font():
     """Load fonts with fallback to default."""
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     bold_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
     try:
-        font_large = ImageFont.truetype(bold_path, 24)
-        font_medium = ImageFont.truetype(font_path, 18)
-        font_small = ImageFont.truetype(font_path, 14)
+        font_name = ImageFont.truetype(bold_path, 24)
+        font_date = ImageFont.truetype(font_path, 14)
+        font_latin = ImageFont.truetype(font_path, 18)
     except (IOError, OSError):
-        font_large = ImageFont.load_default()
-        font_medium = ImageFont.load_default()
-        font_small = ImageFont.load_default()
-    return font_large, font_medium, font_small
+        font_name = ImageFont.load_default()
+        font_date = ImageFont.load_default()
+        font_latin = ImageFont.load_default()
+    return font_name, font_date, font_latin
 
 
-def _text_height(font):
-    """Get approximate text height for a font."""
-    if hasattr(font, 'getbbox'):
-        bbox = font.getbbox('Ag')
-        return bbox[3] - bbox[1] + 2
-    return 20  # fallback estimate
-
-
-def _text_width(font, text):
-    """Get text width for a font."""
-    if hasattr(font, 'getlength'):
-        return font.getlength(text)
-    if hasattr(font, 'getbbox'):
-        bbox = font.getbbox(text)
-        return bbox[2] - bbox[0]
-    return len(text) * 6  # rough fallback
+def _size(font, text):
+    """Get (width, height) for text with given font."""
+    bb = font.getbbox(text)
+    ag = font.getbbox('Ag')
+    return (bb[2] - bb[0], ag[3] - ag[1] + 2)
 
 
 def create_label(plant_id: str, output_path: Path = None) -> Path:
     """
-    Create a 40x30mm label for a plant
+    Create a 40x30mm label for a plant.
 
-    Args:
-        plant_id: The plant ID to encode in QR code
-        output_path: Optional output path, defaults to database/{plant_id}_label.png
-
-    Returns:
-        Path to the generated label image
+    Layout:
+        [Plant Name (large)]                      │
+        [ID]              [ QR CODE ]             │
+        [Planted: date]   [ QR CODE ]             │
+                          [ QR CODE ]             │
+                          [ QR CODE ]             │
+        [Latin Name (medium)]                     │
     """
-    # Load plant data
     database_dir = get_database_dir()
     plant_file = database_dir / f"{plant_id}.md"
 
@@ -73,15 +56,48 @@ def create_label(plant_id: str, output_path: Path = None) -> Path:
 
     plant = load_plant_from_file(plant_file)
 
-    # Set output path
     if output_path is None:
         output_path = database_dir / f"{plant_id}_label.png"
 
-    # Create label image (white background)
+    variety_text = plant.data.get('variety_name', 'Unknown Variety')
+    planting_date = plant.data.get('planned_planting_date', '')
+    latin_text = plant.data.get('latin_name', '')
+
+    font_name, font_date, font_latin = _get_font()
+
     label_image = Image.new('RGB', (LABEL_WIDTH_PX, LABEL_HEIGHT_PX), 'white')
     draw = ImageDraw.Draw(label_image)
 
-    font_large, font_medium, font_small = _get_font()
+    # Measure all text
+    name_w, name_h = _size(font_name, variety_text)
+    id_w, id_h = _size(font_date, plant_id)
+    latin_w, latin_h = _size(font_latin, latin_text) if latin_text else (0, 0)
+    date_w, date_h = _size(font_date, f"Planted: {planting_date}") if planting_date else (0, 0)
+
+    # Layout constants
+    MARGIN = 8
+    ROW_SPACING = 4
+    TEXT_START_X = MARGIN
+
+    # Calculate total height needed for text block on left
+    text_h = name_h
+    if planting_date:
+        text_h += id_h + ROW_SPACING + date_h
+    else:
+        text_h += id_h
+    text_h += ROW_SPACING  # bottom padding
+
+    # Position QR code to fill the height of the text block
+    qr_top = MARGIN
+    qr_bottom = LABEL_HEIGHT_PX - MARGIN - latin_h if latin_text else LABEL_HEIGHT_PX - MARGIN
+    qr_height = qr_bottom - qr_top
+
+    # QR code width: use remaining space after left column
+    max_left_width = max(name_w, id_w, date_w if planting_date else 0, latin_w)
+    left_col_width = max_left_width + 2 * MARGIN
+    gap = 8
+    qr_width = LABEL_WIDTH_PX - left_col_width - gap - MARGIN
+    qr_width = max(qr_width, 50)  # minimum width
 
     # Generate QR code
     qr = qrcode.QRCode(
@@ -92,51 +108,36 @@ def create_label(plant_id: str, output_path: Path = None) -> Path:
     )
     qr.add_data(plant_id)
     qr.make(fit=True)
-
     qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
+    qr_img = qr_img.resize((qr_width, qr_height))
 
-    # Calculate QR code size to fit right side
-    qr_max_size = LABEL_WIDTH_PX - TEXT_AREA_WIDTH - 2 * MARGIN
-    qr_img = qr_img.resize((qr_max_size, qr_max_size))
+    # Draw text on left
+    y = MARGIN
+    draw.text((TEXT_START_X, y), variety_text, fill='black', font=font_name)
+    y += name_h + ROW_SPACING
 
-    # Position QR code on right side, centered vertically
-    qr_x = TEXT_AREA_WIDTH + (LABEL_WIDTH_PX - TEXT_AREA_WIDTH - qr_img.size[0]) // 2
-    qr_y = (LABEL_HEIGHT_PX - BOTTOM_TEXT_HEIGHT - qr_img.size[1]) // 2
-    label_image.paste(qr_img, (qr_x, qr_y))
+    draw.text((TEXT_START_X, y), plant_id, fill='black', font=font_date)
+    id_y = y
 
-    # Add text on left side
-    text_x = MARGIN
-    text_y = MARGIN
-
-    # Variety name (large)
-    variety_text = plant.data.get('variety_name', 'Unknown Variety')
-    draw.text((text_x, text_y), variety_text, fill='black', font=font_large)
-    text_y += _text_height(font_large) + 5
-
-    # Latin name (medium)
-    latin_text = plant.data.get('latin_name', '')
-    if latin_text:
-        draw.text((text_x, text_y), latin_text, fill='black', font=font_medium)
-        text_y += _text_height(font_medium) + 5
-
-    # Planting date (small)
-    planting_date = plant.data.get('planned_planting_date', '')
     if planting_date:
-        date_text = f"Planted: {planting_date}"
-        draw.text((text_x, text_y), date_text, fill='black', font=font_small)
-        text_y += _text_height(font_small) + 5
+        y += id_h + ROW_SPACING
+        draw.text((TEXT_START_X, y), f"Planted: {planting_date}", fill='black', font=font_date)
+        date_y = y
 
-    # Add bottom text line
-    bottom_y = LABEL_HEIGHT_PX - BOTTOM_TEXT_HEIGHT + MARGIN
-    bottom_text = f"{variety_text} \u2022 {planting_date}"
-    max_chars = int((TEXT_AREA_WIDTH - 2 * MARGIN) / (_text_width(font_small, 'x') * 0.6))
-    if len(bottom_text) > max_chars:
-        bottom_text = bottom_text[:max_chars - 3] + "..."
-    draw.text((MARGIN, bottom_y), bottom_text, fill='black', font=font_small)
+    # Draw QR code: starts at same vertical position as text block top
+    qr_x = left_col_width + gap
+    label_image.paste(qr_img, (qr_x, qr_top))
 
-    # Save the label
+    # Draw latin name at bottom
+    if latin_text:
+        latin_y = LABEL_HEIGHT_PX - MARGIN - latin_h
+        draw.text((TEXT_START_X, latin_y), latin_text, fill='black', font=font_latin)
+
+    # Latin name at bottom-left
+    if latin_text:
+        draw.text((8, latin_y), latin_text, fill='black', font=font_latin)
+
     label_image.save(output_path, 'PNG', dpi=(DPI, DPI))
-
     return output_path
 
 

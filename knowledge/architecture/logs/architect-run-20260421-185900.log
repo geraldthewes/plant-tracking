@@ -722,3 +722,5 @@ Error output: Check stderr output for details
 2026-04-22 00:14:20,618 DEBUG    Popen(['git', 'diff', '--abbrev=40', '--full-index', '-M', '--raw', '-z', '--no-color'], cwd=/home/gerald/repos/plant-tracking, stdin=None, shell=False, universal_newlines=False)
 2026-04-22 00:14:20,627 DEBUG    get_modified_files: 7 files
 2026-04-22 00:14:20,627 INFO     [Sprint 4] Generator wrote 7 files: sprint-4-round-1-log.json, sprint-4-round-1.json, progress.json, critic-history.md, generator-history.md, architect-run-20260421-185900.log, config
+2026-04-22 00:14:20,659 DEBUG    Popen(['git', 'diff', '-R', '8650bd960b4aae54337e8c0a313f1ff798db9bb1', '--cached', '--abbrev=40', '--full-index', '-M', '--raw', '-z', '--no-color'], cwd=/home/gerald/repos/plant-tracking, stdin=None, shell=False, universal_newlines=False)
+2026-04-22 00:14:20,685 INFO     Git commit: Generator pass 2 - sprint 4 (Backend / Orchestration Container) (7 files)
