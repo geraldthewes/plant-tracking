@@ -91,47 +91,6 @@ def _select_printer(devices):
     return None
 
 
-def _resolve_device_path(bus, address, serial=""):
-    """Find the /dev/usb/lpX device node for a USB printer.
-
-    Matches by scanning /sys/class/usbmisc/lp* device/uevent for bus/dev numbers.
-    Falls back to the single lp device if only one exists and no serial is given.
-    """
-    lp_devices = sorted(glob.glob("/dev/usb/lp*"))
-    if not lp_devices:
-        return None
-
-    for dev_path in lp_devices:
-        base = Path(dev_path).name  # lp0
-        dev_link = Path(f"/sys/class/usbmisc/{base}/device")
-        if not dev_link.exists():
-            continue
-
-        # dev_link points to the USB interface (e.g. 3-1:1.0)
-        # parent is the USB device (e.g. 3-1) which has busnum/devnum files
-        usb_device = dev_link.resolve().parent
-        busnum_file = usb_device / "busnum"
-        devnum_file = usb_device / "devnum"
-
-        if not busnum_file.exists() or not devnum_file.exists():
-            continue
-
-        try:
-            sys_bus = busnum_file.read_text().strip()
-            sys_dev = devnum_file.read_text().strip()
-
-            if int(bus) == int(sys_bus) and int(address) == int(sys_dev):
-                return dev_path
-        except Exception:
-            continue
-
-    # Fallback: if only one lp device and no serial, assume it's the printer
-    if len(lp_devices) == 1 and not serial:
-        return lp_devices[0]
-
-    return None
-
-
 def print_label(plant_id_or_path: str) -> bool:
     """
     Print a label for a plant
@@ -142,7 +101,7 @@ def print_label(plant_id_or_path: str) -> bool:
     Returns:
         True if print job was submitted successfully, False otherwise
     """
-    # Discover and select USB printer
+    # Discover and select USB printer (for model info)
     devices = _find_usb_phomemo_devices()
     if not devices:
         print("Error: No Phomemo USB printer found.")
@@ -174,18 +133,18 @@ def print_label(plant_id_or_path: str) -> bool:
         print(f"Label file not found: {label_path}")
         return False
 
-    # Find phomemo-filter
-    phomemo_filter = Path("phomemo-tools/tools/phomemo-filter.py")
-
-    if not phomemo_filter.exists():
-        print(f"Error: phomemo-filter not found at {phomemo_filter}")
-        print("Make sure phomemo-tools is available in the project")
-        return False
+    # Use lp command with media=w40h30 (works for M120)
+    # Extract model from selected description, default to M120
+    model = selected.get('model', 'M120')
+    # Normalize model name to queue name (e.g., "M120/M220" -> "M120")
+    if '/' in model:
+        model = model.split('/')[0]
+    queue_name = model  # assuming queue name matches model; adjust if needed
 
     try:
-        # Run phomemo-filter which outputs printer commands to stdout
+        # Print using lp with media=w40h30 option
         result = subprocess.run(
-            [sys.executable, str(phomemo_filter), "--no-rotate", str(label_path)],
+            ['lp', '-d', queue_name, '-o', 'media=w40h30', str(label_path)],
             capture_output=True,
             text=False,
         )
@@ -195,48 +154,11 @@ def print_label(plant_id_or_path: str) -> bool:
             print(f"Printing failed: {stderr}")
             return False
 
-        # Strip ESC d 02 paper feed commands from filter output
-        output = result.stdout.replace(b'\x1b\x64\x02', b'')
-
-        # Resolve the USB device path
-        device_path = _resolve_device_path(
-            selected["bus"], selected["address"], selected.get("serial", "")
-        )
-
-        if not device_path:
-            print(f"Error: Could not find USB device for {selected['description']}")
-            print("Make sure the printer is connected and you have write permissions.")
-            print("Run: newgrp lp   (or log out and back in)")
-            return False
-
-        # Verify device is writable
-        if not os.path.exists(device_path) or not os.access(device_path, os.W_OK):
-            print(f"Error: Cannot write to {device_path}")
-            print("Run: newgrp lp   (or log out and back in)")
-            return False
-
-        # Write ESC/POS commands to the USB printer device
-        print(f"Sending label to {device_path} ({selected['model']})...")
-        with open(device_path, "wb") as device:
-            device.write(output)
-            device.flush()
-
-        # Wait for USB data to fully transmit to the printer
-        time.sleep(0.5)
-
-        print(f"\u2713 Label printed: {label_path}")
+        print(f"\u2713 Label printed via lp: {label_path}")
         return True
 
     except FileNotFoundError:
-        print(f"Error: phomemo-filter not found at {phomemo_filter}")
-        print("Make sure phomemo-tools is available in the project")
-        return False
-    except PermissionError as e:
-        print(f"Error: Permission denied writing to USB device: {e}")
-        print("Run: newgrp lp   (or log out and back in)")
-        return False
-    except OSError as e:
-        print(f"Error writing to USB device: {e}")
+        print(f"Error: lp command not found. Ensure CUPS is installed.")
         return False
     except Exception as e:
         print(f"Error during printing: {e}")
