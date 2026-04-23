@@ -2,8 +2,8 @@
   "status": "running",
   "current_sprint": 4,
   "total_sprints": 7,
-  "completed_sprints": 3,
-  "total_rounds": 18,
+  "completed_sprints": 4,
+  "total_rounds": 19,
   "started_at": "2026-04-21T09:42:13.815362Z",
   "seed": 1776764533,
   "sprint_statuses": [
@@ -67,10 +67,10 @@
     {
       "sprint_number": 4,
       "sprint_name": "Backend / Orchestration Container",
-      "status": "building",
-      "rounds_completed": 2,
+      "status": "passed",
+      "rounds_completed": 3,
       "consecutive_passes": 0,
-      "final_score": null,
+      "final_score": 6.642857142857143,
       "best_round": 2,
       "best_scores": {
         "C4 Container Specification Completeness": 7.5,

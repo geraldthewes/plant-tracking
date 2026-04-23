@@ -1,0 +1,58 @@
+{
+  "scores": {
+    "Mermaid Diagram Validity": 8.5,
+    "C4 Container Specification Completeness": 7.0,
+    "Traceability & PRD Alignment": 3.5,
+    "Interface & Data Flow Contracts": 5.5,
+    "Resilience & Edge Case Handling": 6.5,
+    "Security & Credential Management": 8.0,
+    "Markdown Structure & Linting": 7.5
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Diagram Validity",
+      "score": 8.5,
+      "severity": "Medium",
+      "details": "Diagram passes mmdc validation (EXIT_CODE=0) ✓. Uses flowchart LR which is the required format ✓. YAML frontmatter title present ✓. All 8 nodes have inbound or outbound edges — no orphans ✓. External systems (Telegram, Phomemo) correctly placed outside the subgraph boundary ✓. ISSUE: Three identical edge labels 'Routes REST/HTTPS requests via JSON' for api→plant (line 356), api→qrprint (line 357), and api→hermes (line 358) — these are architecturally distinct relationships that should carry differentiated labels. ISSUE: Node mdstore[()] uses cylinder notation for data store (line 343) — acceptable but not annotated with technology choice per C4 rule."
+    },
+    {
+      "criterion": "C4 Container Specification Completeness",
+      "score": 7.0,
+      "severity": "High",
+      "details": "Four distinct backend components present meeting ≥3 requirement ✓: Orchestrator (line 64), Plant Data Service (line 87), QR and Print Service (line 124), Hermes Agent (line 148). Each has clear responsibility boundaries ✓. Key APIs listed with HTTP methods and paths ✓. EXTERNAL SYSTEMS mapped: Telegram (line 177), Hermes (line 150), Phomemo M120 (line 186), markdown storage (line 196). CRITICAL GAP: No message schemas are provided — each container section references 'see Appendix A/B/C' (lines 122, 211, 222, 233) but no Appendices A, B, or C exist anywhere in the 368-line file. This means zero payload schema definitions per the criterion requirement. CRITICAL GAP: Persistence mechanisms for Plant Data Service are vaguely described as 'Local markdown files' without format specification or schema (line 108). QR and Print Service and Hermes Agent both state 'None (stateless)' without clarifying whether transient state is tracked. Diagram node labels for api, plant, qrprint, hermes include technology annotations ✓."
+    },
+    {
+      "criterion": "Traceability & PRD Alignment",
+      "score": 3.5,
+      "severity": "Critical",
+      "details": "CRITICAL: The document cites NFR1, NFR2, NFR3, NFR5 (lines 286, 297, 308, 318, 329) in the adversarial edge case section, but these numbered requirements do NOT exist in the PRD. The PRD expresses non-functional requirements as prose headings only — 'Performance', 'Reliability', 'Usability', 'Data Portability', 'Maintainability' — with no NFR-X numbering. This is the same fatal error reported in Sprint 1 through Sprint 4 Round 2 evaluations (critic-history.md lines 68, 83, 97, 114, 125, 174, 190, 206, 242). NFR1 is cited as 'Data Integrity' at line 308 but the PRD's NFR is titled 'Performance'. NFR5 is cited as 'Security & Credential Management' at line 329 but the PRD's NFR5 is 'Maintainability'. These are mislabelled references. There is no formal traceability matrix table linking requirements to containers/relationships as the criterion mandates. The sprint scope mentions 'Orchestrator, Plant Data Service, QR/Print Service, Hermes Agent' — only 4 items are addressed. No explicit 1:1 cross-references from FR/NFR to document sections."
+    },
+    {
+      "criterion": "Interface & Data Flow Contracts",
+      "score": 5.5,
+      "severity": "High",
+      "details": "API endpoints listed with HTTP methods and paths ✓ (e.g., POST /plants line 73). CRITICAL GAP: The criterion explicitly requires 'JSON Schema/Protobuf' payload schemas — NONE are provided. References to 'see Appendix A/B/C' (lines 122, 211, 222, 233) point to non-existent appendices. CRITICAL GAP: API endpoints do NOT specify required headers (Content-Type, Authorization, Idempotency-Key, X-Request-ID), path parameters beyond simple {id}, or error response bodies. Relationship Details section (lines 207-271) provides error codes as HTTP status numbers with exception class names, but no structured error response format. Diagram edges at lines 356-358 all use identical 'Routes REST/HTTPS requests via JSON' labels — no differentiation of payload types or protocols. No content-type headers, authorization headers, or pagination parameters documented anywhere."
+    },
+    {
+      "criterion": "Resilience & Edge Case Handling",
+      "score": 6.5,
+      "severity": "High",
+      "details": "COVERED: Circuit breaker for Hermes unavailability with concrete parameters (5-second timeout, cached results max 24h, 503 with Retry-After — line 279). COVERED: Printer offline retry with exponential backoff (30s interval, max 10 attempts — line 294). COVERED: Rate limiting with token bucket (1 msg/sec burst 5, 2/min print throttling, 100 req/sec global — lines 314-316). COVERED: Atomic writes with file locking for data consistency (lines 303-307). ISSUE: The criterion requires 'offline data synchronization strategy' but line 33 lists this as 'Out of Scope' and line 38 defers it to Post-MVP. The criterion explicitly requires this to be documented — deferral is not acceptance. ISSUE: Printer error handling lacks 'payload truncation' specification — only general retry is mentioned. ISSUE: No idempotency guarantees documented (criterion explicitly requires this). ISSUE: Orchestrator has no graceful degradation strategy described — it is a single point of failure but no redundancy or failover is specified."
+    },
+    {
+      "criterion": "Security & Credential Management",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "COVERED: API keys/secrets injected via Docker secrets and environment variables (line 324). COVERED: Encryption at rest using AES-256-GCM (line 325). COVERED: Automatic rotation via HashiCorp Vault agent sidecar (line 326). COVERED: No hardcoded credentials (line 327). COVERED: Audit logging of credential access (line 328). GOOD IMPROVEMENT from Round 2 (which scored 4.0). ISSUE: The PRD reference at line 329 cites 'NFR5 (Security & Credential Management)' — but NFR5 in the PRD is 'Maintainability', not security. This is a mislabelled citation. ISSUE: No specific mention of how mTLS or JWT is used for inter-service authentication (the Orchestrator section mentions 'authentication' at line 67 but provides no mechanism). ISSUE: Telegram Bot Token is mentioned as 'Authorization header' (line 184) but no mention of how the token itself is protected in transit or rotation procedure."
+    },
+    {
+      "criterion": "Markdown Structure & Linting",
+      "score": 7.5,
+      "severity": "Medium",
+      "details": "HEADING HIERARCHY: Sequential — ## Scope → ### subheadings → ## Relationship Details → ## Adversarial Edge Case Logging → ### subsections → ## Diagram ✓. No heading skips detected ✓. CODE BLOCKS: Three unfenced code blocks violate MD040 (markdownlint flagged at lines 111, 144, 169 — the frontmatter YAML snippet at line 111, ZPL command at line 144, and Telegram command format at line 169 all use ``` without a language identifier). TRAILING SPACES: markdownlint flagged trailing spaces at line 212 (error MD009) and line 278. MD025: Two top-level headings detected — YAML frontmatter title (line 2) and H1 heading (line 5) creates 'single-title/single-h1' conflict. INLINE HTML: None detected ✓. The file does end with a single newline ✓. LINTING ERRORS SUMMARY (from actual markdownlint run): 6 errors total — MD025 (1), MD040 (3), MD009 (2). Notably: no MD013 line-length violations detected, unlike all prior rounds."
+    }
+  ],
+  "overall_summary": "Round 3 represents mixed progress from Round 2. The diagram passes mmdc validation and the document's markdownlint errors have reduced significantly (from 61+ in Round 2 to only 6 errors), with no MD013 line-length violations. Security documentation is substantially improved from Round 2's 4.0 score to 8.0, with concrete details on Docker secrets, AES-256-GCM, Vault rotation, and audit logging. However, three critical failures persist: (1) Traceability & PRD Alignment scores 3.5 — NFR-X numbered references (NFR1, NFR2, NFR3, NFR5) are cited throughout but these do not exist in the PRD, and NFR labels are misapplied; this is a recurring fatal error documented across all prior rounds. (2) Interface & Data Flow Contracts scores 5.5 — appendices referenced at lines 122/211/222/233 do not exist in the 368-line file, leaving zero actual payload schemas or Protobuf definitions, and API endpoints lack headers/status codes/error bodies. (3) Resilience defers offline data synchronization as 'Out of Scope' per line 33, directly failing the criterion's requirement for an offline sync strategy. Additional issues include three identical diagram edge labels (lines 356-358) and no idempotency guarantees despite the criterion explicitly requiring them.\"}",
+  "average_score": 6.642857142857143,
+  "passed": false
+}
