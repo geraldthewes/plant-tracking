@@ -1,524 +1,279 @@
-# C2 Container Diagram for Database + Knowledge Base
+---
+title: C2 Container Diagram for Plant Tracking System
+---
+
+# Plant Tracking System - C2 Container Diagram
 
 ## Scope
 
-This document describes the Container (C2) level architecture for the Plant Tracking System's backend services, specifically focusing on the database and knowledge base components as specified in Sprint 5: Database + Knowledge Base. The diagram includes exactly the four containers mandated by the sprint contract: User, API Gateway, Database (PostgreSQL), and Knowledge Base Vector Store (Pinecone). External systems such as Telegram are shown outside the system boundary for completeness but are not considered part of the four required containers.
+This diagram shows the container-level architecture for the Plant Tracking System's backend services, focusing on the Database + Knowledge Base sprint. It includes the User (actor), API Gateway, Database (PostgreSQL), and Knowledge Base Vector Store (Pinecone) containers, along with the external Telegram service used by the Hermes agent. The diagram illustrates how these components interact to support plant data storage, retrieval, and AI-powered insights.
 
 ## Architecture Overview
 
-The Plant Tracking System backend follows a containerized microservices architecture. The API Gateway acts as the single entry point, handling authentication, rate limiting, and request/response transformation. It communicates with the PostgreSQL database for structured data storage and retrieval, and with the Pinecone vector store for semantic search and natural language querying capabilities. The User container represents the gardener interacting with the system via the API Gateway. All internal services are containerized using Docker for consistency and independent scaling.
+The system follows a containerized microservices architecture where the API Gateway acts as the single entry point for all client requests. The API Gateway handles authentication, rate limiting, and request/response transformation. It communicates with the PostgreSQL database for structured plant data storage and retrieval using the libpq protocol, and with the Pinecone vector store for semantic search and natural language querying via REST/HTTPS. The Hermes agent (accessed via Telegram) interacts with the API Gateway to provide natural language querying and analysis capabilities. All internal services are containerized using Docker for consistency and independent scaling.
 
-### Component Details
+## Component Details
 
-#### User
-- **Primary Responsibility**: Represents the gardener who interacts with the plant tracking system through the API Gateway to manage plant records and retrieve insights.
-- **Input Data/Triggers**: User actions such as scanning QR codes, submitting plant data, or querying plant insights via natural language.
-- **Output/Downstream Effects**: Sends HTTP requests to the API Gateway and receives responses containing plant data or analytical insights.
-- **Failure/Graceful Degradation**: If the API Gateway is unavailable, the user receives connection errors and may retry after a timeout. Local caching of recently accessed data may be implemented to improve resilience.
+### User
+- **Technology**: Human actor
+- **Description**: The gardener who interacts with the system via mobile/web interfaces and Telegram for natural language queries
+- **Primary Responsibility**: Initiates requests to the system (QR scanning, data entry, Telegram queries) and receives responses
+- **Input Data/Triggers**: User actions (scanning QR codes, entering plant data, sending Telegram messages)
+- **Output/Downstream Effects**: Receives plant records, insights, and system responses
+- **Failure/Graceful Degradation**: If the system is unavailable, the user cannot access plant data or receive insights; manual tracking may be used as fallback
 
-#### API Gateway
-- **Primary Responsibility**: Acts as the main entry point for all client requests, providing authentication, rate limiting, input validation, and request routing to appropriate backend services.
-- **Input Data/Triggers**: HTTP requests from the User container (representing the gardener's interactions) and internal service communications.
-- **Output/Downstream Effects**: Routes requests to the Database or Knowledge Base Vector Store, aggregates responses, and returns formatted data to the caller.
-- **Failure/Graceful Degradation**: Implements circuit breaker patterns for downstream service failures. Returns appropriate HTTP error codes (503) when services are unavailable. Uses request queuing and retry mechanisms with exponential backoff for transient failures.
+### API Gateway
+- **Technology**: Python/FastAPI running in Docker
+- **Description**: Central orchestration service handling all external requests
+- **Primary Responsibility**: Routes requests to appropriate services, manages authentication, and transforms data
+- **Input Data/Triggers**: HTTP requests from users/webhooks, Telegram bot messages
+- **Output/Downstream Effects**: Database queries, vector store operations, responses to clients
+- **Failure/Graceful Degradation**: Implements circuit breaker pattern; if downstream services fail, returns appropriate error responses with retry-after headers
 
-#### Database (PostgreSQL)
-- **Primary Responsibility**: Provides reliable, ACID-compliant storage for structured plant data including plant records, care activities, observations, and metadata. Supports complex queries for reporting and data analysis.
-- **Input Data/Triggers**: SQL queries and commands from the API Gateway for CRUD operations on plant data.
-- **Output/Downstream Effects**: Returns query results to the API Gateway. Ensures data persistence, integrity, and consistency through transactions.
-- **Failure/Graceful Degradation**: Utilizes connection pooling with timeout and retry mechanisms. Implements fallback to cached data for read operations during database unavailability. Provides clear error messages for write failures requiring user intervention.
+### Database
+- **Technology**: PostgreSQL 15
+- **Description**: Primary relational database for structured plant data
+- **Primary Responsibility**: Stores plant records, care activities, observations, and metadata with ACID compliance (Atomicity, Consistency, Isolation, Durability)
+- **Input Data/Triggers**: SQL queries from API Gateway (INSERT, SELECT, UPDATE, DELETE)
+- **Output/Downstream Effects**: Query results, transaction confirmations
+- **Failure/Graceful Degradation**: Uses connection pooling with timeout and retry mechanisms; fallback to read-only mode if write operations fail
 
-#### Knowledge Base Vector Store (Pinecone)
-- **Primary Responsibility**: Enables semantic search and similarity matching for natural language querying and analytical insights. Stores vector embeddings of plant care notes, observations, and metadata for similarity-based retrieval.
-- **Input Data/Triggers**: Vector upsert and query requests from the API Gateway containing text data to be embedded or searched.
-- **Output/Downstream Effects**: Returns similarity search results and vector storage confirmations to the API Gateway.
-- **Failure/Graceful Degradation**: Implements retry mechanisms with exponential backoff for transient failures. Falls back to PostgreSQL-based text search (using ILIKE) for semantic search when the vector store is unavailable. Provides degraded but functional search capabilities.
+### Knowledge Base Vector Store
+- **Technology**: Pinecone managed vector database
+- **Description**: External service for semantic search and similarity matching
+- **Primary Responsibility**: Stores vector embeddings of plant care notes and observations for natural language querying
+- **Input Data/Triggers**: Vector upsert and query requests via REST/HTTPS
+- **Output/Downstream Effects**: Similarity search results, vector status
+- **Failure/Graceful Degradation**: Implements health checks; falls back to PostgreSQL ILIKE (case-insensitive SQL LIKE)-based text search if unavailable
 
-## Traceability
-
-| PRD ID | Requirement Summary | Document Section |
-|--------|---------------------|------------------|
-| DB-001 | FR11: Users can store multiple plants in a searchable database format | Component Details → Database |
-| DB-001 | FR12: Users can retrieve complete plant records by scanning QR codes | Component Details → API Gateway, Database |
-| DB-001 | FR15: Users can filter plant records by various criteria (date, variety, location, etc.) | Component Details → Database |
-| DB-001 | FR16: Users can export plant data for backup or analysis | Component Details → Database |
-| DB-001 | FR19: Users can track plant progress over time (growth, flowering, fruiting) | Component Details → Database |
-| DB-001 | FR32: Users can import data from external sources (weather stations, etc.) | Component Details → Database |
-| DB-001 | FR33: Users can reconstruct missing data points from historical records | Component Details → Database |
-| DB-001 | FR34: Users can validate data quality and correct erroneous entries | Component Details → Database |
-| DB-001 | FR35: Users can gap-identify missing data periods in plant histories | Component Details → Database |
-| DB-001 | FR46: Users can export plant data to CSV format for backup and analysis | Component Details → Database |
-| DB-001 | FR47: Users can import plant data from CSV or JSON formats | Component Details → Database |
-| DB-001 | FR48: Users can backup and restore plant databases | Component Details → Database |
-| DB-001 | FR50: Users can migrate data from markdown to Postgres database format | Component Details → Database |
-| KB-002 | FR13: Users can query plant data using natural language via Hermes agent | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR14: Users can compare data between different plants | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR17: Users can receive data-driven insights about plant health and care patterns | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR18: Users can identify root causes of plant issues through data analysis | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR20: Users can receive personalized care recommendations based on plant history | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR21: Users can detect patterns and correlations in plant care data | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR36: Users can interact with Hermes agent via Telegram for natural language queries | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR37: Users can request analysis of specific plant data and conditions | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR38: Users can ask for comparisons between different plants or time periods | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR39: Users can receive predictive insights and recommendations from Hermes | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR40: Users can use Hermes for multimodal interactions (text, image, voice when available) | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR49: Users can share plant insights and data with others (optional) | Component Details → API Gateway, Knowledge Base Vector Store |
+## Traceability Matrix
+| PRD ID | Requirement Type | Requirement Summary | Status | Traceability (Section/Line) |
+|--------|------------------|---------------------|--------|-----------------------------|
+| DB-001 | Functional       | Create plant records with core attributes from seed packet information | Architected | Component Details (Database) |
+| FR7    | Functional       | Store plant data in markdown files with structured format | Deferred | Deferred Requirements |
+| DB-001 | Functional       | Add notes and observations to plant records with timestamps | Architected | Component Details (Database) |
+| FR9    | Functional       | Attach photos to plant records for visual documentation | Deferred | Deferred Requirements |
+| DB-001 | Functional       | Update plant records with new information over time | Architected | Component Details (Database) |
+| DB-001 | Functional       | Store multiple plants in a searchable database format | Architected | Component Details (Database) |
+| DB-001 | Functional       | Retrieve complete plant records by scanning QR codes | Architected | Component Details (API Gateway) |
+| KB-002 | Functional       | Query plant data using natural language via Hermes agent | Architected | Component Details (Knowledge Base Vector Store) |
+| KB-002 | Functional       | Compare data between different plants | Architected | Component Details (Knowledge Base Vector Store) |
+| DB-001 | Functional       | Filter plant records by various criteria (date, variety, location, etc.) | Architected | Component Details (Database) |
+| FR16   | Functional       | Export plant data for backup or analysis | Deferred | Deferred Requirements |
+| KB-002 | Functional       | Receive data-driven insights about plant health and care patterns | Architected | Component Details (Knowledge Base Vector Store) |
+| KB-002 | Functional       | Identify root causes of plant issues through data analysis | Architected | Component Details (Knowledge Base Vector Store) |
+| DB-001 | Functional       | Track plant progress over time (growth, flowering, fruiting) | Architected | Component Details (Database) |
+| KB-002 | Functional       | Receive personalized care recommendations based on plant history | Architected | Component Details (Knowledge Base Vector Store) |
+| KB-002 | Functional       | Detect patterns and correlations in plant care data | Architected | Component Details (Knowledge Base Vector Store) |
+| DB-001 | Functional       | Record watering schedules and amounts | Architected | Component Details (Database) |
+| DB-001 | Functional       | Record fertilizer applications (type, amount, frequency) | Architected | Component Details (Database) |
+| DB-001 | Functional       | Track indoor/outdoor status changes | Architected | Component Details (Database) |
+| DB-001 | Functional       | Monitor temperature and humidity conditions | Architected | Component Details (Database) |
+| DB-001 | Functional       | Record rainfall and precipitation data | Architected | Component Details (Database) |
+| DB-001 | Functional       | Track sunlight exposure and shade conditions | Architected | Component Details (Database) |
+| DB-001 | Functional       | Record soil amendments and treatments | Architected | Component Details (Database) |
+| DB-001 | Functional       | Document pruning, staking, and support activities | Architected | Component Details (Database) |
+| DB-001 | Functional       | Note pest observations and treatments | Architected | Component Details (Database) |
+| FR31   | Functional       | Combine manual data entry with automated sensor data | Deferred | Deferred Requirements |
+| FR32   | Functional       | Import data from external sources (weather stations, etc.) | Deferred | Deferred Requirements |
+| DB-001 | Functional       | Reconstruct missing data points from historical records | Architected | Component Details (Database) |
+| DB-001 | Functional       | Validate data quality and correct erroneous entries | Architected | Component Details (Database) |
+| DB-001 | Functional       | Gap-identify missing data periods in plant histories | Architected | Component Details (Database) |
+| KB-002 | Functional       | Interact with Hermes agent via Telegram for natural language queries | Architected | Component Details (Telegram) |
+| KB-002 | Functional       | Request analysis of specific plant data and conditions | Architected | Component Details (Knowledge Base Vector Store) |
+| KB-002 | Functional       | Ask for comparisons between different plants or time periods | Architected | Component Details (Knowledge Base Vector Store) |
+| FR39   | Functional       | Receive predictive insights and recommendations from Hermes | Deferred | Deferred Requirements |
+| FR40   | Functional       | Use Hermes for multimodal interactions (text, image, voice when available) | Deferred | Deferred Requirements |
+| FR41   | Functional       | Access the plant tracking system via mobile device interface | Deferred | Deferred Requirements |
+| FR42   | Functional       | Capture photos directly through the mobile app | Deferred | Deferred Requirements |
+| FR43   | Functional       | Scan QR codes using mobile device camera | Deferred | Deferred Requirements |
+| FR44   | Functional       | Enter and edit plant data through mobile interface | Deferred | Deferred Requirements |
+| FR45   | Functional       | View plant histories and analytics on mobile device | Deferred | Deferred Requirements |
+| FR46   | Functional       | Export plant data to CSV format for backup and analysis | Deferred | Deferred Requirements |
+| FR47   | Functional       | Import plant data from CSV or JSON formats | Deferred | Deferred Requirements |
+| FR48   | Functional       | Backup and restore plant databases | Deferred | Deferred Requirements |
+| FR49   | Functional       | Share plant insights and data with others (optional) | Deferred | Deferred Requirements |
+| DB-001 | Functional       | Migrate data from markdown to Postgres database format | Architected | Component Details (Database) |
+| NFR1   | Non-Functional   | QR code scanning and plant data retrieval within 3 seconds | Architected | Architecture Overview |
+| NFR2   | Non-Functional   | Hermes agent queries return insights within 10 seconds | Architected | Architecture Overview |
+| NFR3   | Non-Functional   | Data entry and saving operations within 2 seconds | Architected | Architecture Overview |
+| NFR4   | Non-Functional   | Zero lost or corrupted plant records under normal usage | Architected | Component Details (Database) |
+| NFR5   | Non-Functional   | QR code scanning works in 95%+ of attempts under typical garden lighting | Deferred | Deferred Requirements |
+| NFR6   | Non-Functional   | Label printing via Phomemo M120 succeeds in 90%+ of attempts | Deferred | Deferred Requirements |
+| NFR7   | Non-Functional   | Data recoverable from backups in case of device failure or corruption | Architected | Component Details (Database) |
+| NFR8   | Non-Functional   | Usable in outdoor garden conditions with varying light levels | Deferred | Deferred Requirements |
+| NFR9   | Non-Functional   | Core functions accessible within 2 taps from main screen | Deferred | Deferred Requirements |
+| NFR10  | Non-Functional   | Text readable without zoom in typical outdoor lighting | Deferred | Deferred Requirements |
+| NFR11  | Non-Functional   | Touch targets appropriately sized for gardening gloves | Deferred | Deferred Requirements |
+| NFR12  | Non-Functional   | Export complete plant database in standard formats (CSV, JSON) | Architected | Component Details (Database) |
+| NFR13  | Non-Functional   | Import functionality supports standard data formats for migration/recovery | Deferred | Deferred Requirements |
+| NFR14  | Non-Functional   | Data migratable from markdown to Postgres without loss of information | Architected | Component Details (Database) |
+| NFR15  | Non-Functional   | Support easy label reprinting when originals wear out or get damaged | Deferred | Deferred Requirements |
+| NFR16  | Non-Functional   | Data format human-readable and editable for manual correction | Architected | Component Details (Database) |
+| NFR17  | Non-Functional   | Graceful degradation when optional features (like Hermes agent) are unavailable | Architected | Architecture Overview |
 
 ### Deferred Requirements
-The following Functional Requirements are deferred to future sprints as they fall outside the scope of Sprint 5 (Database + Knowledge Base):
-
-- **FR6, FR7, FR8, FR9, FR10**: Core plant record creation and management (handled in earlier sprints)
-  - *Impact*: Medium - These requirements are foundational but not blocking for database/KB functionality
-  - *Likelihood*: Low - Well understood with clear implementation paths in sprints 1-4
-  - *Mitigation*: Clear data models and interfaces ensure seamless integration
-
-- **FR22-FR30**: Environmental and care tracking data points (stored in Database but specific capture mechanisms handled elsewhere)
-  - *Impact*: Medium - Data storage ready, capture mechanisms deferred
-  - *Likelihood*: Low - Straightforward to implement when needed
-  - *Mitigation*: Database schema designed to accommodate these data types
-
-- **FR41-FR45**: Mobile interface specifics (handled in frontend sprints)
-  - *Impact*: Low - Backend services independent of frontend implementation
-  - *Likelihood*: Low - Clearly scoped to frontend work
-  - *Mitigation*: API contracts remain stable regardless of frontend implementation
+- **FR7, FR9, FR16, FR31, FR32, FR39, FR40, FR41, FR42, FR43, FR44, FR45, FR46, FR47, FR48, FR49, FR50, FR51, FR52, FR53, FR54, FR55**: Data storage format migration, photo attachment, export functionality, multi-source data integration, predictive insights, multimodal Hermes interactions, mobile interface, and label customization - Deferred to future sprints as they require additional infrastructure, advanced ML models, or mobile-specific development beyond the MVP scope focused on backend services and Telegram/Hermes integration.
+- **NFR5, NFR6, NFR8-NFR13**: Camera performance, label printing, outdoor usability, core function accessibility, text readability, touch target sizing, import format support - Deferred as they depend on mobile-specific hardware and UI; web/Telegram MVP focuses on core data flows.
 
 ## Interface Contract Documentation
 
 ### Database Connection String Format
-- **Template**: `postgresql://username:password@host:port/database`
-- **Example**: `postgresql://plantuser:securepass@db-host:5432/plantdb`
+- **Format**: `postgresql://username:password@host:port/database`
+- **Example**: `postgresql://plantuser:securepassword@postgres-db:5432/plantdb`
 - **Environment Variable**: `DATABASE_URL`
-- **Pool Configuration**: 
-  - Minimum connections: 2
-  - Maximum connections: 20
-  - Connection timeout: 10 seconds
-  - Idle timeout: 30 seconds
-  - Max lifetime: 60 minutes
+- **Notes**: Uses libpq protocol for communication; connection pooling configured with min=2, max=20 connections
 
 ### Knowledge Base API Endpoint Schemas
-
-#### Vector Upsert Endpoint
-- **URL**: `/api/v1/vectors/upsert`
-- **Method**: `POST`
-- **Headers**: 
+#### Upsert Vector Embedding
+- **Endpoint**: `POST /api/v1/vectors/upsert`
+- **Headers**:
+  - `Authorization: Bearer <pinecone_api_key>`
   - `Content-Type: application/json`
-  - `Authorization: Bearer <pinecone-api-key>`
 - **Request Body**:
   ```json
   {
-    "vectors": [
-      {
-        "id": "plant-record-123",
-        "values": [0.1, 0.2, 0.3, ...],  // 1500-dimensional embedding vector
-        "metadata": {
-          "plantId": "HABY-2026-001",
-          "text": "Applied 1/2 strength liquid fertilizer on 2026-04-29",
-          "timestamp": "2026-04-29T10:30:00Z"
-        }
-      }
-    ],
-    "namespace": "plant-tracking"
-  }
-  ```
-- **Success Response**:
-  ```json
-  {
-    "upsertedCount": 1,
-    "namespace": "plant-tracking"
-  }
-  ```
-- **Error Responses**:
-  - `400`: Invalid request payload (malformed JSON, missing required fields)
-  - `401`: Unauthorized (invalid or missing API key)
-  - `429`: Rate limit exceeded (too many requests)
-  - `500`: Internal server error (vector store failure)
-  - `503`: Service unavailable (temporary vector store outage)
-
-#### Vector Query Endpoint
-- **URL**: `/api/v1/vectors/query`
-- **Method**: `POST`
-- **Headers**: 
-  - `Content-Type: application/json`
-  - `Authorization: Bearer <pinecone-api-key>`
-- **Request Body**:
-  ```json
-  {
-    "vector": [0.1, 0.2, 0.3, ...],  // 1500-dimensional query vector
-    "topK": 10,
-    "includeMetadata": true,
-    "namespace": "plant-tracking"
-  }
-  ```
-- **Success Response**:
-  ```json
-  {
-    "matches": [
-      {
-        "id": "plant-record-123",
-        "score": 0.92,
-        "metadata": {
-          "plantId": "HABY-2026-001",
-          "text": "Applied 1/2 strength liquid fertilizer on 2026-04-29",
-          "timestamp": "2026-04-29T10:30:00Z"
-        }
-      }
-    ],
-    "namespace": "plant-tracking",
-    "usage": {
-      "readUnits": 10
+    "vector": [0.1, 0.2, 0.3, ...],
+    "id": "plant_HABY-2026-001_observation_2026-06-10",
+    "metadata": {
+      "plantId": "HABY-2026-001",
+      "type": "observation",
+      "timestamp": "2026-06-10T14:30:00Z",
+      "content": "Leaf yellowing observed during heat wave"
     }
   }
   ```
+- **Success Response**:
+  - Status: 200 OK
+  - Body: `{"upserted": true, "vectorId": "plant_HABY-2026-001_observation_2026-06-10"}`
 - **Error Responses**:
-  - `400`: Invalid request payload (malformed JSON, missing required fields)
-  - `401`: Unauthorized (invalid or missing API key)
-  - `429`: Rate limit exceeded (too many requests)
-  - `500`: Internal server error (vector store failure)
-  - `503`: Service unavailable (temporary vector store outage)
+  - 400 Bad Request: Invalid vector dimensions or missing metadata
+  - 401 Unauthorized: Invalid or missing API key
+  - 429 Too Many Requests: Rate limit exceeded
+  - 500 Internal Server Error: Vector store service failure
+  - 503 Service Unavailable: Vector store temporarily unavailable
+
+#### Query Similar Vectors
+- **Endpoint**: `POST /api/v1/vectors/query`
+- **Headers**:
+  - `Authorization: Bearer <pinecone_api_key>`
+  - `Content-Type: application/json`
+- **Request Body**:
+  ```json
+  {
+    "vector": [0.1, 0.2, 0.3, ...],
+    "topK": 5,
+    "includeMetadata": true,
+    "filter": {
+      "plantId": {"$eq": "HABY-2026-001"}
+    }
+  }
+  ```
+- **Success Response**:
+  - Status: 200 OK
+  - Body:
+    ```json
+    {
+      "matches": [
+        {
+          "id": "plant_HABY-2026-001_observation_2026-06-10",
+          "score": 0.92,
+          "metadata": {
+            "plantId": "HABY-2026-001",
+            "type": "observation",
+            "timestamp": "2026-06-10T14:30:00Z",
+            "content": "Leaf yellowing observed during heat wave"
+          }
+        }
+      ]
+    }
+    ```
+- **Error Responses**:
+  - 400 Bad Request: Invalid vector dimensions or missing parameters
+  - 401 Unauthorized: Invalid or missing API key
+  - 429 Too Many Requests: Rate limit exceeded
+  - 500 Internal Server Error: Vector store service failure
+  - 503 Service Unavailable: Vector store temporarily unavailable
 
 ### Authentication Mechanisms
-- **PostgreSQL**: 
-  - Uses libpq with MD5 or SCRAM-SHA-256 authentication
-  - Credentials managed via Docker secrets or environment variables
-  - Connection encrypted via TLS when required
-- **Pinecone Vector Store**:
-  - Uses Bearer token authentication with API key
-  - API key stored as environment variable (`PINECONE_API_KEY`)
-  - All API calls must include `Authorization: Bearer <token>` header
-- **API Gateway**:
-  - Uses JWT (JSON Web Token) for stateless authentication
-  - Tokens issued upon successful login with sufficient expiration (24 hours)
-  - Secret key managed via Docker secrets or environment variables
-  - Tokens validated on each protected route
+- **PostgreSQL**:
+  - Credentials managed via Docker secrets; API Gateway reads username/password from environment variables
+  - Connection uses libpq with MD5 authentication; SSL enabled for production deployments
+- **Pinecone**:
+  - Bearer token authentication using API key stored as environment variable `PINECONE_API_KEY`
+  - Token validated per request; rotated periodically via secret management
+- **API Gateway (Client Authentication)**:
+  - JWT-based authentication for web/mobile clients; tokens issued upon successful login
+  - Token validation: signature verification, expiration check, audience validation
+  - Secret key stored as environment variable `JWT_SECRET`; rotated every 30 days
 
 ## Adversarial Edge Case Coverage
 
 ### 1. DB Connection Pool Exhaustion
-- **Mitigation Strategy**: 
-  - Connection pool sizing (min=2, max=20) based on load testing
-  - 30-second timeout for connection acquisition
-  - Exponential backoff retry (max 3 attempts) with jitter
-- **Fallback Path**: 
-  - HTTP 503 (Service Unavailable) response with Retry-After header
-  - Redis L2 cache fallback for read-only operations
-- **Monitoring Metrics/Alerts**:
-  - Active connection count (Critical >90%, Warning >70%)
-  - Average connection wait time (Alert >100ms)
-  - Failed connection attempts per minute (Alert >10)
-  - Alert notification via Slack webhook and email
+- **Mitigation**: Connection pool sized (min=2, max=20) with 30-second timeout; exponential backoff retry (max 3 attempts)
+- **Fallback Path**: API returns HTTP 503 with `Retry-After` header; cached read-only responses served from Redis L2 cache for frequent queries
+- **Monitoring Metrics**:
+  - Active connection count (alert > 80% of max for 5 minutes)
+  - Connection wait time (alert > 100ms p95)
+  - Failed connection attempts (alert > 5/minute)
+- **Alert Thresholds**:
+  - Critical: >90% pool utilization for 10 minutes → PagerDuty alert
+  - Warning: >70% pool utilization for 5 minutes → Slack notification
 
 ### 2. KB Vector Index Corruption/Drift
-- **Mitigation Strategy**:
-  - Hourly health checks via Pinecone describe_index_stats
-  - 6-hour snapshot backups to Amazon S3
-  - Automatic index recreation from backups if corruption detected
-- **Fallback Path**: 
-  - PostgreSQL ILIKE-based text search for semantic queries
-  - Stale cached results from previous successful queries
-- **Monitoring Metrics/Alerts**:
-  - Vector count drift (Alert >5% deviation from expected)
-  - Query latency p95 (Alert >2x baseline)
-  - Backup success/failure status
-  - Alert notification via Slack webhook
+- **Mitigation**: Hourly health checks via Pinecone describe_index_stats; automatic snapshot backup every 6 hours
+- **Fallback Path**: Switch to PostgreSQL ILIKE-based text search for metadata filtering; degrade to exact-match queries
+- **Monitoring Metrics**:
+  - Vector count drift (alert > 5% deviation from expected)
+  - Query latency increase (alert > 50ms p95 degradation)
+  - Health check failure rate (alert > 2 consecutive failures)
+- **Alert Thresholds**:
+  - Critical: Index unusable (0 vectors) → PagerDuty + email
+  - Warning: Performance degraded >20% baseline → Slack notification
 
 ### 3. Schema Migration Rollback
-- **Mitigation Strategy**:
-  - Flyway versioned migrations with checksum validation
-  - Blue-green deployment for zero-downtime schema updates
-  - Pre-migration backup of entire database
-- **Fallback Path**: 
-  - Automatic rollback to previous schema version on failure
-  - Read-only mode during migration window
-- **Monitoring Metrics/Alerts**:
-  - Migration duration (Alert >30 minutes, 5x normal baseline of 6 minutes)
-  - Migration success/failure status
-  - Database connection errors during migration
-  - Alert notification via Slack webhook and email
+- **Mitigation**: Flyway with version-controlled migrations; blue-green deployment schema switching
+- **Fallback Path**: Automatic rollback to previous schema version on failure; traffic shifted to stable version
+- **Monitoring Metrics**:
+  - Migration duration (alert > 5x normal baseline)
+  - Rollback frequency (alert > 1/week)
+  - Post-migration error rate (alert > 0.1% increase)
+- **Alert Thresholds**:
+  - Critical: Migration failure requiring manual intervention → PagerDuty + email + SMS
+  - Warning: Rollback executed → Slack notification
 
 ### 4. High Latency Fallback (Cache Miss)
-- **Mitigation Strategy**:
-  - L1/L2 cache layers (Caffeine in-memory + Redis)
-  - Stale-while-revalidate cache strategy
-  - Cache warming for frequently accessed plant data
-- **Fallback Path**:
-  - Return stale cached data with X-Stale header set to true
-  - Fallback to direct database/vector store request with timeout
-- **Monitoring Metrics/Alerts**:
-  - Cache hit ratio (Critical <50%, Warning <70%)
-  - 95th percentile latency (Alert >2x baseline)
-  - Cache eviction rate (Alert >1000 evictions/minute)
-  - Alert notification via Slack webhook
+- **Mitigation**: L1 (in-memory) and L2 (Redis) cache layers; stale-while-revalidate strategy with 5-minute grace period
+- **Fallback Path**: Serve stale data while fetching fresh; if backend slow, return cached data with `X-Stale: true` header
+- **Monitoring Metrics**:
+  - Cache hit ratio (alert < 80% for 10 minutes)
+  - 95th percentile latency (alert > 500ms)
+  - Backend request rate (alert > 2x baseline indicating thundering herd)
+- **Alert Thresholds**:
+  - Critical: Sustained high latency >1 second → PagerDuty alert
+  - Warning: Cache hit ratio < 60% → Slack notification
 
-# C2 Container Diagram for Database + Knowledge Base
-
-## Scope
-
-This document describes the Container (C2) level architecture for the Plant Tracking System's backend services, specifically focusing on the database and knowledge base components as specified in Sprint 5: Database + Knowledge Base. The diagram includes exactly the four containers mandated by the sprint contract: User, API Gateway, Database (PostgreSQL), and Knowledge Base Vector Store (Pinecone). External systems such as Telegram are shown outside the system boundary for completeness but are not considered part of the four required containers.
-
-## Architecture Overview
-
-The Plant Tracking System backend follows a containerized microservices architecture. The API Gateway acts as the single entry point, handling authentication, rate limiting, and request/response transformation. It communicates with the PostgreSQL database for structured data storage and retrieval, and with the Pinecone vector store for semantic search and natural language querying capabilities. The User container represents the gardener interacting with the system via the API Gateway. All internal services are containerized using Docker for consistency and independent scaling.
-
-### Component Details
-
-#### User
-- **Primary Responsibility**: Represents the gardener who interacts with the plant tracking system through the API Gateway to manage plant records and retrieve insights.
-- **Input Data/Triggers**: User actions such as scanning QR codes, submitting plant data, or querying plant insights via natural language.
-- **Output/Downstream Effects**: Sends HTTP requests to the API Gateway and receives responses containing plant data or analytical insights.
-- **Failure/Graceful Degradation**: If the API Gateway is unavailable, the user receives connection errors and may retry after a timeout. Local caching of recently accessed data may be implemented to improve resilience.
-
-#### API Gateway
-- **Primary Responsibility**: Acts as the main entry point for all client requests, providing authentication, rate limiting, input validation, and request routing to appropriate backend services.
-- **Input Data/Triggers**: HTTP requests from the User container (representing the gardener's interactions) and internal service communications.
-- **Output/Downstream Effects**: Routes requests to the Database or Knowledge Base Vector Store, aggregates responses, and returns formatted data to the caller.
-- **Failure/Graceful Degradation**: Implements circuit breaker patterns for downstream service failures. Returns appropriate HTTP error codes (503) when services are unavailable. Uses request queuing and retry mechanisms with exponential backoff for transient failures.
-
-#### Database (PostgreSQL)
-- **Primary Responsibility**: Provides reliable, ACID-compliant storage for structured plant data including plant records, care activities, observations, and metadata. Supports complex queries for reporting and data analysis.
-- **Input Data/Triggers**: SQL queries and commands from the API Gateway for CRUD operations on plant data.
-- **Output/Downstream Effects**: Returns query results to the API Gateway. Ensures data persistence, integrity, and consistency through transactions.
-- **Failure/Graceful Degradation**: Utilizes connection pooling with timeout and retry mechanisms. Implements fallback to cached data for read operations during database unavailability. Provides clear error messages for write failures requiring user intervention.
-
-#### Knowledge Base Vector Store (Pinecone)
-- **Primary Responsibility**: Enables semantic search and similarity matching for natural language querying and analytical insights. Stores vector embeddings of plant care notes, observations, and metadata for similarity-based retrieval.
-- **Input Data/Triggers**: Vector upsert and query requests from the API Gateway containing text data to be embedded or searched.
-- **Output/Downstream Effects**: Returns similarity search results and vector storage confirmations to the API Gateway.
-- **Failure/Graceful Degradation**: Implements retry mechanisms with exponential backoff for transient failures. Falls back to PostgreSQL-based text search (using ILIKE) for semantic search when the vector store is unavailable. Provides degraded but functional search capabilities.
-
-## Traceability
-
-| PRD ID | Requirement Summary | Document Section |
-|--------|---------------------|------------------|
-| DB-001 | FR11: Users can store multiple plants in a searchable database format | Component Details → Database |
-| DB-001 | FR12: Users can retrieve complete plant records by scanning QR codes | Component Details → API Gateway, Database |
-| DB-001 | FR15: Users can filter plant records by various criteria (date, variety, location, etc.) | Component Details → Database |
-| DB-001 | FR16: Users can export plant data for backup or analysis | Component Details → Database |
-| DB-001 | FR19: Users can track plant progress over time (growth, flowering, fruiting) | Component Details → Database |
-| DB-001 | FR32: Users can import data from external sources (weather stations, etc.) | Component Details → Database |
-| DB-001 | FR33: Users can reconstruct missing data points from historical records | Component Details → Database |
-| DB-001 | FR34: Users can validate data quality and correct erroneous entries | Component Details → Database |
-| DB-001 | FR35: Users can gap-identify missing data periods in plant histories | Component Details → Database |
-| DB-001 | FR46: Users can export plant data to CSV format for backup and analysis | Component Details → Database |
-| DB-001 | FR47: Users can import plant data from CSV or JSON formats | Component Details → Database |
-| DB-001 | FR48: Users can backup and restore plant databases | Component Details → Database |
-| DB-001 | FR50: Users can migrate data from markdown to Postgres database format | Component Details → Database |
-| KB-002 | FR13: Users can query plant data using natural language via Hermes agent | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR14: Users can compare data between different plants | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR17: Users can receive data-driven insights about plant health and care patterns | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR18: Users can identify root causes of plant issues through data analysis | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR20: Users can receive personalized care recommendations based on plant history | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR21: Users can detect patterns and correlations in plant care data | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR36: Users can interact with Hermes agent via Telegram for natural language queries | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR37: Users can request analysis of specific plant data and conditions | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR38: Users can ask for comparisons between different plants or time periods | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR39: Users can receive predictive insights and recommendations from Hermes | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR40: Users can use Hermes for multimodal interactions (text, image, voice when available) | Component Details → API Gateway, Knowledge Base Vector Store |
-| KB-002 | FR49: Users can share plant insights and data with others (optional) | Component Details → API Gateway, Knowledge Base Vector Store |
-
-### Deferred Requirements
-The following Functional Requirements are deferred to future sprints as they fall outside the scope of Sprint 5 (Database + Knowledge Base):
-
-- **FR6, FR7, FR8, FR9, FR10**: Core plant record creation and management (handled in earlier sprints)
-  - *Impact*: Medium - These requirements are foundational but not blocking for database/KB functionality
-  - *Likelihood*: Low - Well understood with clear implementation paths in sprints 1-4
-  - *Mitigation*: Clear data models and interfaces ensure seamless integration
-
-- **FR22-FR30**: Environmental and care tracking data points (stored in Database but specific capture mechanisms handled elsewhere)
-  - *Impact*: Medium - Data storage ready, capture mechanisms deferred
-  - *Likelihood*: Low - Straightforward to implement when needed
-  - *Mitigation*: Database schema designed to accommodate these data types
-
-- **FR41-FR45**: Mobile interface specifics (handled in frontend sprints)
-  - *Impact*: Low - Backend services independent of frontend implementation
-  - *Likelihood*: Low - Clearly scoped to frontend work
-  - *Mitigation*: API contracts remain stable regardless of frontend implementation
-
-## Interface Contract Documentation
-
-### Database Connection String Format
-- **Template**: `postgresql://username:password@host:port/database`
-- **Example**: `postgresql://plantuser:securepass@db-host:5432/plantdb`
-- **Environment Variable**: `DATABASE_URL`
-- **Pool Configuration**: 
-  - Minimum connections: 2
-  - Maximum connections: 20
-  - Connection timeout: 10 seconds
-  - Idle timeout: 30 seconds
-  - Max lifetime: 60 minutes
-
-### Knowledge Base API Endpoint Schemas
-
-#### Vector Upsert Endpoint
-- **URL**: `/api/v1/vectors/upsert`
-- **Method**: `POST`
-- **Headers**: 
-  - `Content-Type: application/json`
-  - `Authorization: Bearer <pinecone-api-key>`
-- **Request Body**:
-  ```json
-  {
-    "vectors": [
-      {
-        "id": "plant-record-123",
-        "values": [0.1, 0.2, 0.3, ...],  // 1500-dimensional embedding vector
-        "metadata": {
-          "plantId": "HABY-2026-001",
-          "text": "Applied 1/2 strength liquid fertilizer on 2026-04-29",
-          "timestamp": "2026-04-29T10:30:00Z"
-        }
-      }
-    ],
-    "namespace": "plant-tracking"
-  }
-  ```
-- **Success Response**:
-  ```json
-  {
-    "upsertedCount": 1,
-    "namespace": "plant-tracking"
-  }
-  ```
-- **Error Responses**:
-  - `400`: Invalid request payload (malformed JSON, missing required fields)
-  - `401`: Unauthorized (invalid or missing API key)
-  - `429`: Rate limit exceeded (too many requests)
-  - `500`: Internal server error (vector store failure)
-  - `503`: Service unavailable (temporary vector store outage)
-
-#### Vector Query Endpoint
-- **URL**: `/api/v1/vectors/query`
-- **Method**: `POST`
-- **Headers**: 
-  - `Content-Type: application/json`
-  - `Authorization: Bearer <pinecone-api-key>`
-- **Request Body**:
-  ```json
-  {
-    "vector": [0.1, 0.2, 0.3, ...],  // 1500-dimensional query vector
-    "topK": 10,
-    "includeMetadata": true,
-    "namespace": "plant-tracking"
-  }
-  ```
-- **Success Response**:
-  ```json
-  {
-    "matches": [
-      {
-        "id": "plant-record-123",
-        "score": 0.92,
-        "metadata": {
-          "plantId": "HABY-2026-001",
-          "text": "Applied 1/2 strength liquid fertilizer on 2026-04-29",
-          "timestamp": "2026-04-29T10:30:00Z"
-        }
-      }
-    ],
-    "namespace": "plant-tracking",
-    "usage": {
-      "readUnits": 10
-    }
-  }
-  ```
-- **Error Responses**:
-  - `400`: Invalid request payload (malformed JSON, missing required fields)
-  - `401`: Unauthorized (invalid or missing API key)
-  - `429`: Rate limit exceeded (too many requests)
-  - `500`: Internal server error (vector store failure)
-  - `503`: Service unavailable (temporary vector store outage)
-
-### Authentication Mechanisms
-- **PostgreSQL**: 
-  - Uses libpq with MD5 or SCRAM-SHA-256 authentication
-  - Credentials managed via Docker secrets or environment variables
-  - Connection encrypted via TLS when required
-- **Pinecone Vector Store**:
-  - Uses Bearer token authentication with API key
-  - API key stored as environment variable (`PINECONE_API_KEY`)
-  - All API calls must include `Authorization: Bearer <token>` header
-- **API Gateway**:
-  - Uses JWT (JSON Web Token) for stateless authentication
-  - Tokens issued upon successful login with sufficient expiration (24 hours)
-  - Secret key managed via Docker secrets or environment variables
-  - Tokens validated on each protected route
-
-## Adversarial Edge Case Coverage
-
-### 1. DB Connection Pool Exhaustion
-- **Mitigation Strategy**: 
-  - Connection pool sizing (min=2, max=20) based on load testing
-  - 30-second timeout for connection acquisition
-  - Exponential backoff retry (max 3 attempts) with jitter
-- **Fallback Path**: 
-  - HTTP 503 (Service Unavailable) response with Retry-After header
-  - Redis L2 cache fallback for read-only operations
-- **Monitoring Metrics/Alerts**:
-  - Active connection count (Critical >90%, Warning >70%)
-  - Average connection wait time (Alert >100ms)
-  - Failed connection attempts per minute (Alert >10)
-  - Alert notification via Slack webhook and email
-
-### 2. KB Vector Index Corruption/Drift
-- **Mitigation Strategy**:
-  - Hourly health checks via Pinecone describe_index_stats
-  - 6-hour snapshot backups to Amazon S3
-  - Automatic index recreation from backups if corruption detected
-- **Fallback Path**: 
-  - PostgreSQL ILIKE-based text search for semantic queries
-  - Stale cached results from previous successful queries
-- **Monitoring Metrics/Alerts**:
-  - Vector count drift (Alert >5% deviation from expected)
-  - Query latency p95 (Alert >2x baseline)
-  - Backup success/failure status
-  - Alert notification via Slack webhook
-
-### 3. Schema Migration Rollback
-- **Mitigation Strategy**:
-  - Flyway versioned migrations with checksum validation
-  - Blue-green deployment for zero-downtime schema updates
-  - Pre-migration backup of entire database
-- **Fallback Path**: 
-  - Automatic rollback to previous schema version on failure
-  - Read-only mode during migration window
-- **Monitoring Metrics/Alerts**:
-  - Migration duration (Alert >30 minutes, 5x normal baseline of 6 minutes)
-  - Migration success/failure status
-  - Database connection errors during migration
-  - Alert notification via Slack webhook and email
-
-### 4. High Latency Fallback (Cache Miss)
-- **Mitigation Strategy**:
-  - L1/L2 cache layers (Caffeine in-memory + Redis)
-  - Stale-while-revalidate cache strategy
-  - Cache warming for frequently accessed plant data
-- **Fallback Path**:
-  - Return stale cached data with X-Stale header set to true
-  - Fallback to direct database/vector store request with timeout
-- **Monitoring Metrics/Alerts**:
-  - Cache hit ratio (Critical <50%, Warning <70%)
-  - 95th percentile latency (Alert >2x baseline)
-  - Cache eviction rate (Alert >1000 evictions/minute)
-  - Alert notification via Slack webhook
-
----
-title: C2 Container Diagram for Database + Knowledge Base
----
 ```mermaid
 flowchart LR
-    %% External system (outside system boundary)
-    telegram[["Telegram\n(External System)"]]
+    %% Define containers and external systems
+    user(["User\n(Actor)"])
+    api_gateway["API Gateway\n(Python/FastAPI, Docker)"]
+    db[("PostgreSQL\n(Primary DB)")]
+    kb[["Pinecone\n(Vector Store)"]]
+    telegram[["Telegram\n(External)"]]
 
-    %% System boundary - exactly 4 required containers inside
+    %% Relationships with labels
+    user -->|"Uses via HTTPS"| api_gateway
+    api_gateway -->|"Executes SQL queries via libpq/TCP"| db
+    db -->|"Returns query results via libpq/TCP"| api_gateway
+    api_gateway -->|"Vector operations via REST/HTTPS"| kb
+    kb -->|"Returns vector data via REST/HTTPS"| api_gateway
+    api_gateway -->|"Sends/receives messages via Telegram Bot API"| telegram
+    telegram -->|"Sends user messages via Telegram Bot API"| api_gateway
+
+    %% System boundary
     subgraph sys["Plant Tracking System"]
-        user["User\n(Gardener)"]
-        apiGateway["API Gateway\n(Python/FastAPI)"]
-        database["Database\n(PostgreSQL 15)"]
-        kbStore["Knowledge Base\n(Pinecone)"]
+        api_gateway
+        db
     end
-
-    %% Relationships using standard C4 types with protocol specifics
-    user -->|"Uses via HTTPS"| apiGateway
-    apiGateway -->|"Reads/Writes via libpq/TCP"| database
-    apiGateway -->|"Reads/Writes via REST/HTTPS"| kbStore
-    apiGateway -->|"Uses via REST/HTTPS"| telegram
 ```
