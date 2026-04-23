@@ -687,7 +687,7 @@ In Round 4, I addressed specific critic feedback on the database/c2-container.md
 
 These improvements addressed all critic feedback points and brought the document into full compliance with the Sprint 5 contract requirements.
 
-# Generator Learnings - Sprint 5: Database + Knowledge Base (Round 5 - Current)
+# Generator Learnings - Sprint 5: Database + Knowledge Base (Round 8 - Current)
 
 ## Architecture Decisions Made
 - Confirmed the 4 containers for the Plant Tracking System's backend services: User (Actor), API Gateway, Database (PostgreSQL), and Knowledge Base Vector Store (Pinecone)
@@ -706,8 +706,8 @@ These improvements addressed all critic feedback points and brought the document
 - Comprehensive narrative sections covering scope, architecture overview, component details, traceability, and interface contracts
 - Accurate PRD traceability matrix mapping actual FR IDs to document sections
 - Clean markdown document structure with proper YAML frontmatter, heading hierarchy, and fenced code blocks
-- Specific interface contract documentation with copy-pasteable examples
-- Detailed adversarial edge case coverage with mitigation strategies, fallback paths, and monitoring metrics
+- Specific interface contract documentation with copy-pasteable examples for database connection strings and API endpoints
+- Detailed failure modes section with mitigation strategies, fallback paths, and monitoring metrics
 
 ## Issues Addressed from Critic Feedback in This Round
 - **Critical - C4 Container Completeness**: 
@@ -716,13 +716,13 @@ These improvements addressed all critic feedback points and brought the document
   - What worked: Diagram now correctly represents external systems outside the system boundary, resolving the high-severity antipattern.
   
 - **Critical - Markdown Formatting Standards**: 
-  - Issue: Persistent trailing whitespace violations (18 lines), missing trailing newline, and extreme line lengths (681 chars max).
+  - Issue: Persistent trailing whitespace violations (17 lines), missing trailing newline, and missing blank lines after H2 headings.
   - Addressed: 
     * Removed all trailing whitespace throughout the document
     * Ensured the file ends with a single newline character
-    * Wrapped all lines to ≤120 characters (breaking long paragraphs into readable chunks)
+    * Added blank lines after all H2 headings
     * Fixed inconsistent blank lines around headings
-  - What worked: Document now passes strict formatting requirements with clean, consistent markdown and readable line lengths.
+  - What worked: Document now passes strict formatting requirements with clean, consistent markdown.
   
 - **High - PRD Traceability Matrix**: 
   - Issue: Used FR/NFR IDs instead of the contract-mandated DB-001/KB-002 format, and the Deferred section lacked formal risk assessment.
@@ -733,12 +733,12 @@ These improvements addressed all critic feedback points and brought the document
   - What worked: Traceability matrix now aligns with sprint contract requirements and includes proper justification for deferred items.
   
 - **Medium - Narrative Structure & Style**: 
-  - Issue: Technical terms not defined on first use (libpq, JWT, Flyway, Redis, ILIKE) and excessively long paragraphs.
+  - Issue: Technical terms not defined on first use (libpq, JWT, Flyway, Redis, ILIKE) and passive voice usage exceeding 15% threshold.
   - Addressed: 
     * Added inline definitions for all technical terms on first use (e.g., "libpq/TCP (PostgreSQL wire protocol)")
-    * Broke long paragraphs into readable chunks (3-5 sentences each)
+    * Rewrote passive voice constructions to active voice where possible
     * Ensured proper blank lines around headings, lists, and code blocks
-  - What worked: All technical terms are now defined on first use, and narrative follows readability guidelines.
+  - What worked: All technical terms are now defined on first use, and narrative follows readability guidelines with reduced passive voice.
 
 ## Domain Insights about the System Gleaned from the PRD
 - The system's data layer needs to support both structured data (plant records, care activities) and unstructured data (care notes, observations) for semantic search
@@ -772,4 +772,5 @@ These improvements addressed all critic feedback points and brought the document
 2. **Markdown Hygiene**: Proactively check for trailing whitespace, missing newlines, and excessive line lengths during writing
 3. **Traceability Alignment**: Use ID formats specified in sprint contracts (DB-001/KB-002) rather than inventing or reusing PRD IDs when contract specifies otherwise
 4. **Technical Term Definition**: Define all acronyms and technical terms on first use with parenthetical explanations
-5. **Paragraph Length**: Keep paragraphs to 3-5 sentences for readability in both raw and rendered markdown
+5. **Passive Voice Reduction**: Actively monitor and reduce passive voice usage to stay under 15% threshold
+6. **Paragraph Length**: Keep paragraphs to 3-5 sentences for readability in both raw and rendered markdown

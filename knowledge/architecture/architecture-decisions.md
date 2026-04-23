@@ -44,6 +44,22 @@
 - **Rate Limiting**: Token bucket algorithm — protects external services (Telegram) from abuse while allowing bursts
 
 ## Sprint 5: Database + Knowledge Base
+
+- **API Gateway**: Python/FastAPI (Docker) — handles authentication, routing, and request/response transformation
+- **Database**: PostgreSQL 15 (Docker) — primary data store for structured plant data with ACID transactions
+- **Knowledge Base**: Pinecone managed service — vector database for semantic search and natural language queries
+- **Communication**:
+  - API Gateway ↔ Database: PostgreSQL wire protocol (libpq/TCP)
+  - API Gateway ↔ Knowledge Base: REST over HTTPS
+  - Client ↔ API Gateway: HTTPS/REST with JWT authentication
+- **Data Integrity**: Connection pooling, backup strategies, and migration safeguards
+- **Containerization**: Docker — ensures consistency and enables independent scaling
+- **Authentication**:
+  - API Gateway to Database: Username/password via libpq
+  - API Gateway to Knowledge Base: Pinecone API key via Bearer token
+  - Client to API Gateway: JWT validation (HS256, 1-hour expiry)
+
+## Sprint 5: Database + Knowledge Base
 - **API Gateway**: Python/FastAPI (Docker) — handles authentication, routing, and request/response transformation
 - **Database**: PostgreSQL 15 (Docker) — primary data store for structured plant data with ACID transactions
 - **Knowledge Base**: Pinecone managed service — vector database for semantic search and natural language queries

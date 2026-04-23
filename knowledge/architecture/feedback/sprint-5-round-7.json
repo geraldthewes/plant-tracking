@@ -1,0 +1,58 @@
+{
+  "scores": {
+    "Mermaid C4 Syntax Compliance": 8.5,
+    "C4 Container Completeness": 7.0,
+    "Narrative Structure & Style": 7.5,
+    "PRD Traceability Matrix": 8.5,
+    "Interface Contract Documentation": 9.5,
+    "Markdown Formatting Standards": 4.5,
+    "Adversarial Edge Case Coverage": 9.5
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid C4 Syntax Compliance",
+      "score": 8.5,
+      "severity": "Medium",
+      "details": "Diagram passes mmdc validation (exit 0) and correctly uses `flowchart LR` per critic system rules (C4Container/C4Boundary/C4Context are banned). However, non-standard Mermaid node shapes are used: `[\"...\"]` actor shape for User (c2-container.md:254), `[(\"...\")]` cylinder shape for PostgreSQL (line 256), and `[[\"...\"]]` card shape for Pinecone and Telegram (lines 257-258). These are not C4-aligned container representations. The sprint contract says 'strictly use C4 container syntax extensions' but the critic system bans C4 directives — the current approach satisfies the critic system but deviates from the contract's C4 spirit by using decorative shapes rather than plain rectangles for all containers."
+    },
+    {
+      "criterion": "C4 Container Completeness",
+      "score": 7.0,
+      "severity": "High",
+      "details": "All four required containers are present in the diagram (User line 254, API Gateway line 255, PostgreSQL line 256, Pinecone line 257) and narrative. However, two significant issues persist from Round 4: (1) **Pinecone inside system subgraph** (c2-container.md:273) — Pinecone is described as an 'External service' (line 40) and is a managed SaaS product, yet it sits inside the `subgraph sys[\"Plant Tracking System\"]` boundary. An external system you do not own should not be inside your system boundary. This is a recurring High-severity antipattern flagged in Round 4. (2) **Telegram node** (line 258) is an extra 5th node beyond the 4 required containers — while it adds useful context, the contract specifies 'exactly these containers'. All edges specify protocols correctly (HTTPS, libpq/TCP, REST/HTTPS, Telegram Bot API) ✓. Each container narrative includes Technology and Description fields ✓."
+    },
+    {
+      "criterion": "Narrative Structure & Style",
+      "score": 7.5,
+      "severity": "Medium",
+      "details": "All mandatory sections are present: H1 Title (line 5), H2 Scope (line 7), H2 Architecture Overview (line 10), H3 Component Details (line 13), H2 Traceability (line 46). The H1 heading that was missing in Round 5 is now present ✓. No subjective adjectives ('robust', 'seamless', 'efficient') detected ✓. Technical terms ACID (line 33) and ILIKE (line 44) are defined on first use ✓. However, passive voice usage is approximately 20% (3 passive instances across ~15 prose sentences in Scope, Architecture Overview, and Component Details), which exceeds the contract's <15% threshold. Examples: 'All internal services are containerized' (line 11), 'if downstream services fail, returns appropriate error responses' (line 28)."
+    },
+    {
+      "criterion": "PRD Traceability Matrix",
+      "score": 8.5,
+      "severity": "Medium",
+      "details": "The traceability table (lines 47-110) comprehensively maps FR6-FR50 and NFR1-NFR17. The Deferred Requirements subsection (lines 112-114) provides risk assessment justification for deferred items. However: (1) FR51-FR55 are referenced in the Deferred Requirements text (line 113: 'FR51, FR52, FR53, FR54, FR55') but do NOT appear in the main traceability table — they should be listed with 'Deferred' status in the table itself. (2) The contract specifies PRD ID format 'DB-001, KB-002' but the document uses raw FR/NFR IDs. This was flagged in Rounds 1-6 and remains unresolved. (3) FR36 traces to 'Component Details (Telegram)' (line 79) — Telegram has no dedicated Component Details subsection; the component is listed as 'User', 'API Gateway', 'Database', 'Knowledge Base Vector Store'."
+    },
+    {
+      "criterion": "Interface Contract Documentation",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "Excellent coverage of all three required elements. (1) Database connection string (lines 118-121): format template, concrete example, ENV variable name (DATABASE_URL), pool config (min=2, max=20). (2) KB API schemas (lines 123-192): Vector Upsert and Query endpoints with full JSON request/response bodies, headers, error codes (400, 401, 429, 500, 503). (3) Authentication mechanisms (lines 194-204): PostgreSQL via Docker secrets + libpq MD5, Pinecone via Bearer token, API Gateway via JWT. All examples are copy-pasteable and specific. Minor note: the Pinecone API schema shows `POST /api/v1/vectors/upsert` which appears to be the internal API Gateway proxy endpoint rather than the actual Pinecone REST API format — this is acceptable if the API Gateway is the integration point."
+    },
+    {
+      "criterion": "Markdown Formatting Standards",
+      "score": 4.5,
+      "severity": "Critical",
+      "details": "Multiple persistent formatting violations across three categories: (1) **TRAILING WHITESPACE**: 17 instances at lines 126, 142, 154, 168, 170, 195, 198, 201, 210, 214, 221, 225, 232, 236, 243, 247, 259 — the pattern is consistent: list item labels like `- **Headers**: ` and `- **Monitoring Metrics**: ` have trailing spaces. This has been flagged since Round 1 and persists in every Sprint 5 round. (2) **MISSING BLANK LINES AFTER H2 HEADINGS**: All 6 H2 headings lack blank lines immediately after them (lines 7, 10, 13, 46, 116, 206) — the content starts on the very next line without separation. (3) **FILE DOES NOT END WITH NEWLINE**: The last byte is a backtick (```) from the closing mermaid fence — MD047 violation. (4) Line 259 is whitespace-only (trailing spaces after comment). These violations are recurring from Rounds 1-6."
+    },
+    {
+      "criterion": "Adversarial Edge Case Coverage",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All four required failure modes are comprehensively documented in the 'Adversarial Edge Case Coverage' section (lines 206-249): (1) DB Connection Pool Exhaustion (lines 207-216): pool size (min=2, max=20), 30-second timeout, exponential backoff (max 3 attempts), HTTP 503 with Retry-After fallback, Redis L2 cache, specific metrics with alert thresholds. (2) KB Vector Index Corruption/Drift (lines 218-227): hourly health checks, 6-hour snapshots, PostgreSQL ILIKE fallback, vector count drift monitoring. (3) Schema Migration Rollback (lines 229-238): Flyway, blue-green deployment, automatic rollback, migration duration monitoring. (4) High Latency Fallback (lines 240-249): L1/L2 cache layers, stale-while-revalidate, X-Stale header, cache hit ratio monitoring. Each scenario includes mitigation strategy, fallback path, monitoring metrics, and alert thresholds — meets all contract requirements."
+    }
+  ],
+  "overall_summary": "The database/c2-container.md shows steady improvement across Sprint 5 rounds (6.9 → 7.2 → 7.6 → 7.7 → 7.6 → 7.4 → ~7.9 average) with strong Interface Contract Documentation (9.5) and Adversarial Edge Case Coverage (9.5) as anchor strengths. Two critical blockers persist: (1) **Markdown Formatting Standards scored 4.5** — trailing whitespace on 17 lines (the same pattern from every previous round), missing blank lines after all 6 H2 headings, and the file not ending with a newline. This has been a recurring failure since Round 1 and must be mechanically fixed. (2) **C4 Container Completeness scored 7.0** — Pinecone (an external managed service) remains inside the system subgraph boundary (line 273), which is a fundamental C4 ownership-model violation flagged since Round 4. Telegram is an extra 5th node. The PRD Traceability Matrix is solid at 8.5 but FR51-FR55 appear in deferred text without table entries, and FR36 references a non-existent 'Telegram' component subsection. Passive voice (~20%) exceeds the 15% limit.",
+  "average_score": 7.857142857142857,
+  "passed": false
+}
