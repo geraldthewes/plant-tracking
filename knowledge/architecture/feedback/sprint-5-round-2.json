@@ -1,0 +1,58 @@
+{
+  "scores": {
+    "Adversarial Edge Case Coverage": 8.0,
+    "C4 Container Completeness": 6.5,
+    "Interface Contract Documentation": 9.0,
+    "Markdown Formatting Standards": 6.0,
+    "Mermaid C4 Syntax Compliance": 8.0,
+    "Narrative Structure & Style": 8.0,
+    "PRD Traceability Matrix": 5.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid C4 Syntax Compliance",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "Diagram passes mmdc validation (exit 0) ✓. C4Container directive (line 6), C4ContainerDb (line 10), System_Boundary (line 8), Person/Container/Rel types valid C4. Issues: (1) Line 18 `Rel(kbStore, apiGateway, \"Uses\", ...)` implies KB initiates to API Gateway — Pinecone is pull-based only; this is architecturally inverted. (2) Lines 15-16: `Rel(database, apiGateway, \"Writes\", ...)` conflates response direction with data flow — the database does not write to the gateway. (3) Line 17 label \"Vector operations via HTTPS/REST\" is vague — contract requires specific protocol names."
+    },
+    {
+      "criterion": "C4 Container Completeness",
+      "score": 6.5,
+      "severity": "High",
+      "details": "All four required containers present: Gardener (Person, line 7), API Gateway (Container, line 9), Database (ContainerDb, line 10), KB Vector Store (Container, line 11). Each has Technology and Description ✓. Issues: (1) Line 10 uses `ContainerDb` instead of the explicitly required `Container` type. (2) Line 15 label \"SQL via libpq\" mixes technology with protocol — should be 'PostgreSQL/TCP'. (3) Line 17 \"Vector operations via HTTPS/REST\" fails protocol specificity — 'Vector operations' is not a protocol name. (4) Line 18: `kbStore --> apiGateway` edge is architecturally inverted (no pull-based Pinecone API initiates callbacks to the gateway)."
+    },
+    {
+      "criterion": "Narrative Structure & Style",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "All mandatory sections present: Scope (line 21), Architecture Overview (line 24), Component Details (line 27), Traceability (line 68), Interface Contract (line 106), Failure Modes (line 159) ✓. Passive voice 0% — well under 15% ✓. No subjective adjectives ✓. Issues: (1) No explicit H1 markdown heading — YAML frontmatter title (line 2) serves as diagram title but not document-level H1. (2) Line 37: `- **Responsibility**: ` has trailing whitespace after empty value. (3) Technical terms used without definition: ACID (line 10), libpq (line 43), JWT (line 157)."
+    },
+    {
+      "criterion": "PRD Traceability Matrix",
+      "score": 5.0,
+      "severity": "High",
+      "details": "Table (lines 69-101) maps 31 FR IDs, FR49 Deferred with risk (line 104) ✓. Issues: (1) Contract requires DB-001/KB-002 format IDs but document uses raw FR IDs. (2) CRITICAL: FR22-FR30 (9 care activity requirements — watering, fertilizer, temperature, pruning, pests) entirely absent without Deferred notation. All require PostgreSQL storage and are core Sprint 5 scope. (3) FR41-FR45 (mobile) and FR51-FR55 (labels) out of scope but absent without Deferred notation. (4) Status column uses 'Implemented' for an architecture diagram — should be 'Architected' or 'Covered by Design'."
+    },
+    {
+      "criterion": "Interface Contract Documentation",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "Excellent coverage of all three required elements. (1) Connection string (lines 108-112): `postgresql://...?sslmode=require` with example and `DATABASE_CONNECTION_STRING` ENV var. (2) KB API schemas (lines 116-152): Vector Upsert and Query endpoints with full JSON, headers, namespace — copy-pasteable. (3) Auth mechanisms (lines 155-157): PostgreSQL (Docker secrets), Pinecone (Bearer token via `PINECONE_API_KEY`), API Gateway (JWT via `/auth/login`). Gaps: No HTTP status codes for KB endpoints (lines 117-151), no error response schemas, JWT token format not specified."
+    },
+    {
+      "criterion": "Markdown Formatting Standards",
+      "score": 6.0,
+      "severity": "High",
+      "details": "Multiple violations. (1) TRAILING WHITESPACE: Line 37 ends with trailing space after empty value. (2) BLANK LINES AROUND HEADINGS: Systematic absence — 20+ instances (lines 21, 24, 27, 28, 34, 46, 57, 68, 106, 107, 114, 115, 137, 154, 159, 160, 166, 172, 178). Contract mandates mandatory blank lines around all headings. (3) Code blocks labeled with language ✓. (4) No tabs ✓. (5) No broken internal links ✓. (6) 2-space list indentation ✓. The heading spacing violations are the most impactful — would fail automated markdownlint."
+    },
+    {
+      "criterion": "Adversarial Edge Case Coverage",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "All four required failure modes documented. (1) DB Connection Pool Exhaustion (lines 161-164): Pool size 20, 5s timeout, backoff x3, HTTP 503 fallback, metrics ✓. (2) KB Vector Index Corruption (lines 167-170): Health checks, S3 backups, fallback to keyword search, metrics ✓. (3) Schema Migration Rollback (lines 173-176): Flyway checksums, blue-green, automatic rollback, metrics ✓. (4) High Latency Fallback (lines 179-182): L1/L2 cache, stale data serving, metrics ✓. Issues: (a) Alert notifications identical across all scenarios (lines 164, 170, 176, 182) — production should have differentiated alerting. (b) Lines 179-182 introduce L1/L2 caching infrastructure not reflected in the C2 diagram. (c) Line 181 conflates cache fallback with 'queue non-critical requests via Hermes agent' — architecturally ambiguous."
+    }
+  ],
+  "overall_summary": "The Sprint 5 C2 Container document for database/knowledge base is structurally present with a valid Mermaid diagram (mmdc exit 0), all four required containers, and comprehensive failure mode documentation. However, three critical issues prevent contract approval: (1) The PRD Traceability Matrix is incomplete — FR22-FR30 (9 care activity requirements requiring DB storage) are entirely absent from the table without Deferred notation, violating the 100% coverage requirement for the sprint scope. The document also uses raw FR IDs instead of the DB-001/KB-002 format specified in the contract. (2) Systematic markdown formatting violations — 20+ instances of missing blank lines around headings and trailing whitespace on line 37 — would fail any automated markdownlint check. (3) The C4 diagram has architecturally questionable bidirectional edges: KB Store→API Gateway (line 18) inverts the pull-based Pinecone pattern, and the Database→API Gateway 'Writes' edge (line 16) conflates response direction with data flow direction. Additionally, the ContainerDb node type deviates from the explicitly required Container type for the Database.",
+  "average_score": 7.214285714285714,
+  "passed": false
+}

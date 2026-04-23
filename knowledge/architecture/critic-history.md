@@ -281,3 +281,16 @@
 - [Medium] Adversarial Edge Case Coverage (9.0/10): All four required failure modes are documented in the 'Failure Modes' section (lines 113-161): (1) DB Connection Pool Exhaustion (line 114): Mitigation (pool size 20, 5s timeout, exponential backoff x
 **Summary**: The database/c2-container.md for Sprint 5 contains a structurally sound document with a valid Mermaid diagram (passes mmdc, exit 0), all four required containers present, excellent interface contract documentation with copy-pasteable examples, and comprehensive failure mode coverage for all four req
 ---
+
+## Sprint 5 · Round 2 — 2026-04-23 11:34:24 UTC
+**Score**: 7.2/10  **Passed**: No
+**Concerns**:
+- [Medium] Mermaid C4 Syntax Compliance (8.0/10): Diagram passes mmdc validation (exit 0) ✓. C4Container directive (line 6), C4ContainerDb (line 10), System_Boundary (line 8), Person/Container/Rel types valid C4. Issues: (1) Line 18 `Rel(kbStore, api
+- [High] C4 Container Completeness (6.5/10): All four required containers present: Gardener (Person, line 7), API Gateway (Container, line 9), Database (ContainerDb, line 10), KB Vector Store (Container, line 11). Each has Technology and Descrip
+- [Medium] Narrative Structure & Style (8.0/10): All mandatory sections present: Scope (line 21), Architecture Overview (line 24), Component Details (line 27), Traceability (line 68), Interface Contract (line 106), Failure Modes (line 159) ✓. Passiv
+- [High] PRD Traceability Matrix (5.0/10): Table (lines 69-101) maps 31 FR IDs, FR49 Deferred with risk (line 104) ✓. Issues: (1) Contract requires DB-001/KB-002 format IDs but document uses raw FR IDs. (2) CRITICAL: FR22-FR30 (9 care activity
+- [Low] Interface Contract Documentation (9.0/10): Excellent coverage of all three required elements. (1) Connection string (lines 108-112): `postgresql://...?sslmode=require` with example and `DATABASE_CONNECTION_STRING` ENV var. (2) KB API schemas (
+- [High] Markdown Formatting Standards (6.0/10): Multiple violations. (1) TRAILING WHITESPACE: Line 37 ends with trailing space after empty value. (2) BLANK LINES AROUND HEADINGS: Systematic absence — 20+ instances (lines 21, 24, 27, 28, 34, 46, 57,
+- [Medium] Adversarial Edge Case Coverage (8.0/10): All four required failure modes documented. (1) DB Connection Pool Exhaustion (lines 161-164): Pool size 20, 5s timeout, backoff x3, HTTP 503 fallback, metrics ✓. (2) KB Vector Index Corruption (lines
+**Summary**: The Sprint 5 C2 Container document for database/knowledge base is structurally present with a valid Mermaid diagram (mmdc exit 0), all four required containers, and comprehensive failure mode documentation. However, three critical issues prevent contract approval: (1) The PRD Traceability Matrix is 
+---

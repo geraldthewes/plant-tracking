@@ -527,3 +527,42 @@
 - Database technologies should use cylinder shape
 - Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension
 - Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
+
+## Round 5 Specific Learnings from Critic Feedback
+In Round 5, I addressed specific critic feedback on the database/c2-container.md file:
+
+**Architecture Improvements Made:**
+- Fixed Mermaid diagram syntax by properly escaping parentheses and brackets in node labels
+- Corrected container node shapes: changed Database from incorrect double-closing-parentheses to proper cylinder shape [("Name\n(Tech)")]
+- Removed %%{init}%% directives that are ignored by GitHub's Mermaid renderer
+- Added explicit external systems (Telegram) with proper subroutine shape
+- Improved relationship labels to be more specific about protocols (libpq/TCP, HTTPS/REST)
+- Added missing relationships for response flows (Database→API Gateway, KBStore→API Gateway)
+- Ensured all nodes have at least one relationship (no orphan nodes)
+
+**Markdown Formatting Improvements:**
+- Fixed systematic missing blank lines around headings throughout the document
+- Removed trailing whitespace on line 37 and other locations
+- Ensured proper heading hierarchy (H1, H2, H3) with correct spacing
+- Verified code blocks are properly labeled with language tags
+- Confirmed consistent 2-space list indentation
+
+**PRD Traceability Enhancements:**
+- Corrected PRD ID mapping to use actual FR IDs from the PRD (FR6, FR8, FR10-30, etc.) instead of invented IDs
+- Achieved 100% coverage for Functional Requirements in sprint scope
+- Added formal 'Deferred Requirements' subsection with risk justification for out-of-scope items
+- Changed status column values from 'Implemented' to 'Architected' for architecture diagrams
+
+**Interface Contract Documentation:**
+- Provided copy-pasteable database connection string format with example and environment variable
+- Detailed Knowledge Base API endpoint schemas with full JSON examples for upsert and query operations
+- Specified authentication mechanisms for PostgreSQL (Docker secrets), Pinecone (Bearer token), and API Gateway (JWT)
+- Added HTTP status codes and error response schemas for KB endpoints
+
+**Adversarial Edge Case Coverage:**
+- Documented all four required failure modes with specific mitigation strategies
+- Added differentiated alert notification channels for each failure mode
+- Included specific monitoring metrics for each scenario
+- Ensured fallback paths are architecturally sound and clearly explained
+
+These improvements addressed all critic feedback points and brought the document into full compliance with the Sprint 5 contract requirements.
