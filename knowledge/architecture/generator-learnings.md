@@ -364,7 +364,7 @@
 - Diagram must be wrapped in fenced code block with language tag (```mermaid)
 - Container sections must use H2 headings in markdown documents
 - No trailing whitespace allowed in markdown documents
-- All edge labels must specify protocol, payload format, and authentication method
+- All edge labels must specify protocol, payload format, AND authentication method
 - Bidirectional flows must use <--> edges with explicit labels when contract requires explicit typing
 - Post-MVP features must be explicitly tagged to maintain PRD scope accuracy
 - Every architectural claim must cite direct PRD quotes or section headers
@@ -686,3 +686,90 @@ In Round 4, I addressed specific critic feedback on the database/c2-container.md
 - Ensured fallback paths are architecturally sound and clearly explained
 
 These improvements addressed all critic feedback points and brought the document into full compliance with the Sprint 5 contract requirements.
+
+# Generator Learnings - Sprint 5: Database + Knowledge Base (Round 5 - Current)
+
+## Architecture Decisions Made
+- Confirmed the 4 containers for the Plant Tracking System's backend services: User (Actor), API Gateway, Database (PostgreSQL), and Knowledge Base Vector Store (Pinecone)
+- Established that Pinecone is an external managed service and should be positioned outside the system boundary
+- Determined that relationship labels must be specific, including both action and technology/protocol (e.g., "Executes SQL queries via libpq/TCP")
+- Verified that external systems like Telegram must be shown with proper subroutine shape
+- Confirmed that all technical terms must be defined on first use (e.g., ACID-compliant, JWT, libpq)
+- Established that the diagram must use standard Mermaid flowchart syntax (not C4-specific extensions) as required by the critic system
+- Ensured proper use of subgraph boundaries to separate internal system containers from external actors and services
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper Mermaid syntax using double quotes and \n for line breaks (passed validation)
+- Clear relationship labels specifying action AND technology/protocol (e.g., "Executes SQL queries via libpq/TCP", "Vector operations via REST/HTTPS")
+- Correct use of C4 diagram shapes: stadium for actors, rectangles for internal containers, cylinders for data storage, subroutines for external services
+- Proper use of subgraph boundaries to separate internal system containers from external actors and services
+- Comprehensive narrative sections covering scope, architecture overview, component details, traceability, and interface contracts
+- Accurate PRD traceability matrix mapping actual FR IDs to document sections
+- Clean markdown document structure with proper YAML frontmatter, heading hierarchy, and fenced code blocks
+- Specific interface contract documentation with copy-pasteable examples
+- Detailed adversarial edge case coverage with mitigation strategies, fallback paths, and monitoring metrics
+
+## Issues Addressed from Critic Feedback in This Round
+- **Critical - C4 Container Completeness**: 
+  - Issue: Pinecone (Knowledge Base Vector Store) was incorrectly placed inside the system subgraph boundary, violating C4 ownership model rules for external systems.
+  - Addressed: Moved Pinecone node outside the system subgraph boundary, keeping it as an external system (subroutine shape) alongside Telegram.
+  - What worked: Diagram now correctly represents external systems outside the system boundary, resolving the high-severity antipattern.
+  
+- **Critical - Markdown Formatting Standards**: 
+  - Issue: Persistent trailing whitespace violations (18 lines), missing trailing newline, and extreme line lengths (681 chars max).
+  - Addressed: 
+    * Removed all trailing whitespace throughout the document
+    * Ensured the file ends with a single newline character
+    * Wrapped all lines to ≤120 characters (breaking long paragraphs into readable chunks)
+    * Fixed inconsistent blank lines around headings
+  - What worked: Document now passes strict formatting requirements with clean, consistent markdown and readable line lengths.
+  
+- **High - PRD Traceability Matrix**: 
+  - Issue: Used FR/NFR IDs instead of the contract-mandated DB-001/KB-002 format, and the Deferred section lacked formal risk assessment.
+  - Addressed: 
+    * Created new PRD ID mapping using DB-001/KB-002 format as specified in the sprint contract
+    * Achieved 100% coverage for Functional Requirements in sprint scope with the new ID format
+    * Added formal 'Deferred Requirements' subsection with risk assessment justification (impact, likelihood, mitigation)
+  - What worked: Traceability matrix now aligns with sprint contract requirements and includes proper justification for deferred items.
+  
+- **Medium - Narrative Structure & Style**: 
+  - Issue: Technical terms not defined on first use (libpq, JWT, Flyway, Redis, ILIKE) and excessively long paragraphs.
+  - Addressed: 
+    * Added inline definitions for all technical terms on first use (e.g., "libpq/TCP (PostgreSQL wire protocol)")
+    * Broke long paragraphs into readable chunks (3-5 sentences each)
+    * Ensured proper blank lines around headings, lists, and code blocks
+  - What worked: All technical terms are now defined on first use, and narrative follows readability guidelines.
+
+## Domain Insights about the System Gleaned from the PRD
+- The system's data layer needs to support both structured data (plant records, care activities) and unstructured data (care notes, observations) for semantic search
+- PostgreSQL is appropriate for structured plant data requiring ACID transactions and complex reporting queries
+- Pinecone vector store enables semantic similarity search for natural language querying via the Hermes agent
+- The API Gateway pattern provides a clean separation of concerns and enables independent scaling of services
+- Docker containerization ensures consistency across development and deployment environments
+- Proper connection pooling, backup strategies, and migration safeguards are critical for data integrity in a plant tracking system
+- The system must handle both transactional workloads (CRUD operations) and analytical workloads (similarity search, reporting)
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include action AND technology/protocol (e.g., "via camera", "via Telegram")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify action AND technology/protocol
+- External services (like Pinecone) should use subroutine shape
+- Database technologies should use cylinder shape
+- Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per critic system requirements)
+- Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
+
+## Key Takeaways for Future Sprints
+1. **External Systems Placement**: Always position externally managed services (like Pinecone, Telegram) outside the system boundary in C2 diagrams
+2. **Markdown Hygiene**: Proactively check for trailing whitespace, missing newlines, and excessive line lengths during writing
+3. **Traceability Alignment**: Use ID formats specified in sprint contracts (DB-001/KB-002) rather than inventing or reusing PRD IDs when contract specifies otherwise
+4. **Technical Term Definition**: Define all acronyms and technical terms on first use with parenthetical explanations
+5. **Paragraph Length**: Keep paragraphs to 3-5 sentences for readability in both raw and rendered markdown
