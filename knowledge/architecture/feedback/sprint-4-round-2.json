@@ -1,0 +1,58 @@
+{
+  "scores": {
+    "C4 Container Specification Completeness": 7.5,
+    "Interface & Data Flow Contracts": 6.5,
+    "Markdown Structure & Linting": 9.0,
+    "Mermaid Diagram Validity": 9.5,
+    "Resilience & Edge Case Handling": 7.0,
+    "Security & Credential Management": 4.0,
+    "Traceability & PRD Alignment": 7.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid Diagram Validity",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "Diagram passes mmdc validation (EXIT_CODE=0). All 10 nodes have inbound or outbound edges — no orphans. External systems (Telegram, Phomemo) correctly placed outside the subgraph boundary. Title present in YAML frontmatter. Minor: mdstore[()] and printqueue[()] are data stores rendered as diagram nodes inside the system subgraph — acceptable in C4 but the parentheses notation (implied cylinder) could be more explicit. No blocking issues."
+    },
+    {
+      "criterion": "C4 Container Specification Completeness",
+      "score": 7.5,
+      "severity": "High",
+      "details": "Four containers defined (Orchestrator, Plant Data Service, QR and Print Service, Hermes Agent) meeting the ≥3 requirement. Each has a Primary Responsibility section with clear boundaries. However, message schemas are example JSON blocks (Appendices A–C) rather than formal JSON Schema or Protobuf definitions as the criterion requires. Diagram node mdstore[('Markdown Storage')] and printqueue[('Persistent Print Queue')] lack technology annotations in their labels — both violate the C4 rule that every container must show a specific technology choice. Some interface descriptions are vague ('REST/HTTPS JSON to Orchestrator') without specifying versioning or content types."
+    },
+    {
+      "criterion": "Traceability & PRD Alignment",
+      "score": 7.0,
+      "severity": "High",
+      "details": "A traceability matrix exists spanning all 55 FRs and all NFRs, which is comprehensive. However, several critical issues: (1) Sprint 4 scope is 'Backend/Orchestration Container' yet 8+ FR mappings (FR9, FR31, FR32, FR40, FR42, FR47, FR49, FR50) point to 'Post-MVP' with 'N/A' relationships — these should be explicitly excluded from Sprint 4 traceability, not listed as if mapped. (2) FR4 (line 421) maps to 'Manual process' with 'N/A' relationship — not a real 1:1 mapping. (3) Multiple NFR3 entries (lines 480-483) are mapped to 'Frontend Containers' despite Sprint 4 being a backend-only sprint. (4) FR46 export and FR48 backup endpoints are mapped to 'Orchestrator' but the Orchestrator container definition (lines 40-78) does not define these endpoints in its 'Key APIs' list — a direct cross-reference gap between sections."
+    },
+    {
+      "criterion": "Interface & Data Flow Contracts",
+      "score": 6.5,
+      "severity": "High",
+      "details": "API endpoints are listed with HTTP methods and paths (e.g., POST /plants), but the criterion explicitly requires headers, status codes, and error response bodies per endpoint — none of these are specified. The criterion requires 'JSON Schema/Protobuf' for payload schemas; Appendix A provides a markdown template (not a schema), Appendix B and C provide JSON examples without validation constraints. The Relationship table (lines 211-220) maps error codes but uses generic exception names (e.g., 'ServiceUnavailableException') rather than specific HTTP status codes. Diagram edge labels at lines 515-517 all say 'Routes REST/HTTPS requests via JSON' — three identical labels with no differentiation. No content-type headers (application/json), authorization headers (Bearer, API-Key), or pagination params are documented."
+    },
+    {
+      "criterion": "Resilience & Edge Case Handling",
+      "score": 7.0,
+      "severity": "High",
+      "details": "Circuit breaker for Hermes unavailability is well-specified with concrete parameters (5 failures, 5s timeout, 30s recovery, half-open state — lines 232-236). Printer retry with exponential backoff is detailed (30s initial, 2x multiplier, 5min max, 10 attempts — lines 249-254). Rate limiting token bucket values are provided (lines 279-282). Idempotency guarantees per service are documented (lines 288-301). CRITICAL GAP: The PRD/Assumptions section (line 34) explicitly states 'No offline mode is required for MVP' — the criterion requires an 'offline data synchronization strategy' to be documented. The document addresses this by refusing to document it, which fails the criterion. Additionally, no payload truncation/retry strategy for printer data is specified beyond the general retry mechanism. No mention of graceful degradation for the Orchestrator itself (single point of failure)."
+    },
+    {
+      "criterion": "Security & Credential Management",
+      "score": 4.0,
+      "severity": "Critical",
+      "details": "The Scope section (line 15) mentions 'Security considerations (credential management, encryption)' but provides ZERO actual security documentation anywhere in the 523-line document. Missing entirely: (1) How API keys (Telegram Bot Token, Hermes credentials, Phomemo API keys) are injected — no mention of environment variables, secret managers, or vault integration. (2) Encryption at rest for markdown files in /data/plants/ and /data/print_queue/ — not mentioned. (3) Key rotation procedures for any external service credential. (4) Authentication mechanism between containers (the document says 'REST over HTTPS' but doesn't specify mTLS, shared secrets, or token-based auth for inter-service communication). (5) No mention of credential scanning or prevention of hardcoded secrets in Docker images or configuration files. The omission of an actual security section after calling it out in scope is a fundamental gap."
+    },
+    {
+      "criterion": "Markdown Structure & Linting",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "Heading hierarchy is sequential: ## Scope → ### subheadings → ## Relationship Details → ## Adversarial Edge Case Logging → ### subsections → ## Appendix A → ### subsections. No heading skips detected. All code blocks use language identifiers (```markdown, ```json, ```mermaid). No inline HTML found via grep. Lists are properly indented with hyphens. The large traceability matrix table (475 lines) is properly formatted. Minor: the markdown schema template inside ```markdown (lines 307-340) uses # and ## headings — these are correctly scoped inside a fenced code block and don't affect the document's heading hierarchy."
+    }
+  ],
+  "overall_summary": "The document is structurally sound with a valid Mermaid diagram (passes mmdc) and clean markdown formatting. The C4 container definitions cover 4 backend services with clear responsibility boundaries, and a comprehensive traceability matrix spans all 55 FRs and all NFRs. However, there are two critical deficiencies: (1) Security & Credential Management scores 4.0 — the document mentions security in its scope but provides zero concrete details on credential injection, encryption at rest, or key rotation for any of the three external service integrations. (2) Resilience explicitly defers offline data synchronization with 'No offline mode is required for MVP' (line 34), directly failing the criterion's requirement. Interface contracts lack JSON Schema/Protobuf definitions and endpoint-level details (headers, status codes, error bodies). Several traceability mappings are weak or reference out-of-scope frontend containers for a backend-only sprint.\"}",
+  "average_score": 7.214285714285714,
+  "passed": false
+}

@@ -242,3 +242,16 @@
 - [Critical] Traceability & PRD Alignment (3.0/10): CRITICAL — same fatal error from all Sprint 2 evaluations (critic-history.md lines 68, 83, 97): (1) **All NFR citations invalid** — document cites NFR1, NFR2, NFR3, NFR5 (lines 210, 239, 249, 230) but
 **Summary**: The c2-container.md for Sprint 4 contains a structurally sound C2 diagram passing mmdc validation with all 4 backend components properly connected in a subgraph boundary. Resilience documentation is comprehensive — circuit breakers, printer queue management, rate limiting, and credential lifecycle a
 ---
+
+## Sprint 4 · Round 2 — 2026-04-23 01:39:41 UTC
+**Score**: 7.2/10  **Passed**: No
+**Concerns**:
+- [Low] Mermaid Diagram Validity (9.5/10): Diagram passes mmdc validation (EXIT_CODE=0). All 10 nodes have inbound or outbound edges — no orphans. External systems (Telegram, Phomemo) correctly placed outside the subgraph boundary. Title prese
+- [High] C4 Container Specification Completeness (7.5/10): Four containers defined (Orchestrator, Plant Data Service, QR and Print Service, Hermes Agent) meeting the ≥3 requirement. Each has a Primary Responsibility section with clear boundaries. However, mes
+- [High] Traceability & PRD Alignment (7.0/10): A traceability matrix exists spanning all 55 FRs and all NFRs, which is comprehensive. However, several critical issues: (1) Sprint 4 scope is 'Backend/Orchestration Container' yet 8+ FR mappings (FR9
+- [High] Interface & Data Flow Contracts (6.5/10): API endpoints are listed with HTTP methods and paths (e.g., POST /plants), but the criterion explicitly requires headers, status codes, and error response bodies per endpoint — none of these are speci
+- [High] Resilience & Edge Case Handling (7.0/10): Circuit breaker for Hermes unavailability is well-specified with concrete parameters (5 failures, 5s timeout, 30s recovery, half-open state — lines 232-236). Printer retry with exponential backoff is 
+- [Critical] Security & Credential Management (4.0/10): The Scope section (line 15) mentions 'Security considerations (credential management, encryption)' but provides ZERO actual security documentation anywhere in the 523-line document. Missing entirely: 
+- [Low] Markdown Structure & Linting (9.0/10): Heading hierarchy is sequential: ## Scope → ### subheadings → ## Relationship Details → ## Adversarial Edge Case Logging → ### subsections → ## Appendix A → ### subsections. No heading skips detected.
+**Summary**: The document is structurally sound with a valid Mermaid diagram (passes mmdc) and clean markdown formatting. The C4 container definitions cover 4 backend services with clear responsibility boundaries, and a comprehensive traceability matrix spans all 55 FRs and all NFRs. However, there are two criti
+---
