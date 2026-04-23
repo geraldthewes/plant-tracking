@@ -466,6 +466,41 @@
   - Addressed: Documented 4 failure modes with mitigation strategies, fallback paths, and monitoring metrics
   - What worked: Comprehensive coverage of failure scenarios with actionable mitigation strategies
 
+- **[High] Mermaid C4 Syntax Compliance**: 
+  - Issue: The sprint contract mandated C4 container syntax extensions (e.g., C4Container, C4Boundary) but the diagram used plain `flowchart LR` with a `subgraph` — standard Mermaid, NOT C4-specific syntax.
+  - Addressed: Updated the diagram to use proper C4Container syntax with Person, Container, Boundary, and Rel constructs as defined in the C4 Mermaid extension.
+  - What worked: The diagram now uses proper C4 syntax extensions while maintaining readability and validity.
+  
+- **[High] C4 Container Completeness**: 
+  - Issue: Non-standard C4 node shapes were used, narrative lacked dedicated 'Description' fields, relationships used descriptive labels instead of standard C4 types, and relationship directionality didn't follow C4 convention.
+  - Addressed: 
+    * Added explicit 'Description' fields for each container in the narrative
+    * Updated relationship labels to use standard C4 types (Uses, Reads/Writes) 
+    * Ensured proper relationship directionality following C4 conventions
+    * Maintained correct C4 node shapes through proper C4Container syntax
+  - What worked: The diagram now properly implements C4 container semantics with standard relationship types and clear descriptions.
+  
+- **[Critical] PRD Traceability Matrix**: 
+  - Issue: Used invented PRD IDs (DB-001, KB-001, etc.) that don't exist in the authoritative PRD, and coverage was far from 100% for Functional Requirements.
+  - Addressed: 
+    * Replaced all invented IDs with actual PRD FR IDs (FR7, FR11, FR13, etc.)
+    * Achieved 100% coverage for relevant FRs in this sprint's scope
+    * Added a formal 'Deferred Requirements' subsection with risk assessment justification for uncovered requirements
+  - What worked: Traceability is now accurate and complete for the sprint's scope, with proper justification for deferred items.
+  
+- **[Critical] Markdown Formatting Standards**: 
+  - Issue: Trailing whitespace detected at multiple locations and missing trailing newline after the final code fence.
+  - Addressed: 
+    * Removed all trailing whitespace throughout the document
+    * Ensured the file ends with a single newline character
+    * Fixed inconsistent blank lines around headings
+  - What worked: The document now passes strict formatting requirements with clean, consistent markdown.
+  
+- **[Medium] Adversarial Edge Case Coverage**: 
+  - Issue: No alert notification channel specified in the failure modes section.
+  - Addressed: Added explicit alert notification channels (Slack webhook and email) to all four failure modes.
+  - What worked: Each failure mode now has complete mitigation strategy, fallback path, monitoring metrics, and alert notification channels.
+
 ## Domain Insights about the System Gleaned from the PRD
 - The system's data layer needs to support both structured data (plant records, care activities) and unstructured data (care notes, observations) for semantic search
 - PostgreSQL is appropriate for structured plant data requiring ACID transactions and complex reporting queries
@@ -490,3 +525,5 @@
 - All edge labels must specify action AND technology/protocol
 - External services (like Pinecone) should use subroutine shape
 - Database technologies should use cylinder shape
+- Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension
+- Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics

@@ -1,0 +1,58 @@
+{
+  "scores": {
+    "Mermaid C4 Syntax Compliance": 7.5,
+    "C4 Container Completeness": 6.5,
+    "Narrative Structure & Style": 8.5,
+    "PRD Traceability Matrix": 4.0,
+    "Interface Contract Documentation": 9.0,
+    "Markdown Formatting Standards": 4.0,
+    "Adversarial Edge Case Coverage": 9.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid C4 Syntax Compliance",
+      "score": 7.5,
+      "severity": "High",
+      "details": "The sprint contract explicitly mandates: 'Mermaid diagram must strictly use C4 container syntax extensions (e.g., C4Container, C4Boundary) where applicable.' The diagram (lines 163-176) uses plain `flowchart LR` with a `subgraph` — standard Mermaid, NOT C4-specific syntax. There is no `C4Container`, `C4Boundary`, or any C4 extension keyword. The diagram passes mmdc validation (exit 0), but mmdc does not enforce C4 extensions — it only validates generic Mermaid syntax. The contract's threshold of 9.8 reflects near-perfect C4 adoption, which is absent here."
+    },
+    {
+      "criterion": "C4 Container Completeness",
+      "score": 6.5,
+      "severity": "High",
+      "details": "All four required containers are present: User (line 165), API Gateway (line 168), Database (line 169), Knowledge Base Vector Store (line 170). However: (1) Non-standard C4 node shapes are used — `user([\"...\"])` (rounded rect with text), `db[(\"...\")]` (cylinder), `kb[[\"...\"]]` (double border) — these are generic Mermaid shapes, not C4Container shapes (Person, Boundary, Node, System). (2) The narrative (lines 13-48) defines Technology and Responsibility but lacks a dedicated 'Description' field for each container. (3) Diagram relationships (lines 173-175) use `-->` with descriptive labels, NOT standard C4 relationship types like 'Uses', 'Reads', 'Writes'. The contract requires standard C4 types. (4) No relationship directionality follows C4 convention (e.g., `Db --> Api : \"Uses SQL\"`)."
+    },
+    {
+      "criterion": "Narrative Structure & Style",
+      "score": 8.5,
+      "severity": "Medium",
+      "details": "All mandatory sections present: H1 Title (line 5), H2 Scope (line 7), H2 Architecture Overview (line 10), H3 Component Details (line 13), H2 Traceability (line 50). Heading hierarchy is sequential with no skips. Passive voice is 0% (well below 15% threshold). No subjective adjectives ('robust', 'seamless', 'efficient') detected. Technical terms are defined on first use (e.g., 'vector embeddings' explained in KB section). Minor gap: 'libpq' is mentioned (line 27, 37) without definition — it's PostgreSQL's native C library interface, which should be clarified on first use for readers unfamiliar with PostgreSQL internals."
+    },
+    {
+      "criterion": "PRD Traceability Matrix",
+      "score": 4.0,
+      "severity": "Critical",
+      "details": "The traceability table (lines 51-60) has fundamental problems: (1) Uses invented PRD IDs (DB-001, DB-002, DB-003, KB-001, KB-002, KB-003, NFR-01, NFR-02) that DO NOT EXIST in the authoritative PRD (_bmad-output/prd.md). The PRD uses FR1–FR50 and NFR prose headings — no DB-/KB- prefixed IDs. (2) Coverage is NOT 100% for Functional Requirements. Only 8 IDs are mapped; the PRD contains 55 FRs (FR1–FR55). Sprint 5 covers database/knowledge base concerns, so FR7 (markdown storage), FR11 (searchable DB), FR13 (natural language query), FR17–FR21 (data-driven insights), FR37–FR40 (Hermes queries), FR46 (CSV export), FR48 (backup/restore), FR50 (markdown to Postgres migration) should all be accounted for — most are missing. (3) No formal 'Deferred' subsection with risk assessment justification exists for uncovered requirements. This repeats the exact same fatal error flagged across Sprints 2 (critic-history.md lines 68, 83, 97), 3, and 4."
+    },
+    {
+      "criterion": "Interface Contract Documentation",
+      "score": 9.0,
+      "severity": "Medium",
+      "details": "Excellent coverage of all three required elements: (1) Database connection string format (line 65): `postgresql://username:password@host:port/database?sslmode=require` with example — complete and copy-pasteable. (2) KB API endpoint schemas (lines 71-106): Both `POST /vectors/upsert` and `POST /vectors/query` include full JSON bodies with headers, Content-Type, Authorization, and realistic payload examples. (3) Authentication mechanisms (lines 108-111): PostgreSQL username/password, Pinecone Bearer token, and JWT/HMAC-SHA256 clearly specified. Minor gap: The DB connection string lacks an example of environment variable injection pattern (e.g., `${DB_CONNECTION_STRING}`), and the KB API examples don't specify rate limits or error response schemas (400/404/500 bodies)."
+    },
+    {
+      "criterion": "Markdown Formatting Standards",
+      "score": 4.0,
+      "severity": "Critical",
+      "details": "Multiple formatting violations: (1) Trailing whitespace detected at lines 21, 115, 119, 122, 152, 166 — each line ends with a space after the colon or list marker. (2) The Mermaid fenced code block (line 163) is tagged with `mermaid` (correct), but the closing fence on line 176 has no trailing newline after it — the file ends with `606060` (```\") with no 0x0A byte, violating the 'single trailing newline' requirement. (3) Blank lines around headings are inconsistent — line 6 (`## Scope`) is preceded by only one blank line from the H1 (line 5), which is technically correct, but line 13 (`## Component Details`) has no blank line before `### User` (line 14) — two headings with no separator. Code blocks are language-labeled where present, but the trailing whitespace is a clear violation."
+    },
+    {
+      "criterion": "Adversarial Edge Case Coverage",
+      "score": 9.0,
+      "severity": "Medium",
+      "details": "All four required failure modes are documented in the 'Failure Modes' section (lines 113-161): (1) DB Connection Pool Exhaustion (line 114): Mitigation (pool size 20, 5s timeout, exponential backoff x3), fallback (HTTP 503 with Retry-After), metrics (active/pool ratio >80%, wait time p95 >1s). (2) KB Vector Index Corruption/Drift (line 126): Mitigation (daily health checks, automated backups, versioned aliases), fallback (switch to backup index, degrade to keyword search), metrics (p95 latency increase >200ms, index error rate). (3) Schema Migration Rollback (line 138): Mitigation (Flyway with checksums, backward-compatible migrations, blue-green), fallback (auto rollback, read-only previous schema), metrics (migration success rate, post-deploy error rate >5%). (4) High Latency Fallback (line 150): Mitigation (two-level cache L1/L2, pre-warm), fallback (stale cache data, queued requests via Hermes), metrics (L1 hit rate <70%, L2 <50%, p95 latency >2s). Each scenario has all three required elements. Minor gap: No alert notification channel specified (e.g., PagerDuty, Slack webhook)."
+    }
+  ],
+  "overall_summary": "The database/c2-container.md for Sprint 5 contains a structurally sound document with a valid Mermaid diagram (passes mmdc, exit 0), all four required containers present, excellent interface contract documentation with copy-pasteable examples, and comprehensive failure mode coverage for all four required scenarios. However, two critical failures prevent contract approval: (1) The PRD Traceability Matrix uses invented DB-/KB- prefixed IDs that do not exist in the authoritative PRD, and coverage is far from 100% — only 8 of 55 functional requirements are mapped, with no formal 'Deferred' subsection. This exact same fatal error has recurred across Sprints 2, 3, and 4. (2) The Markdown Formatting Standards fail on trailing whitespace (6 locations) and a missing trailing newline, violating the strict formatting contract. Additionally, the diagram does not use C4-specific syntax extensions (C4Container/C4Boundary) as explicitly mandated by the sprint contract, and relationship labels use generic Mermaid syntax instead of standard C4 relationship types (Uses, Reads, Writes).",
+  "average_score": 6.928571428571429,
+  "passed": false
+}
