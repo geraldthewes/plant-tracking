@@ -1,0 +1,58 @@
+{
+  "scores": {
+    "Mermaid C4 Syntax Compliance": 8.5,
+    "C4 Container Completeness": 7.5,
+    "Narrative Structure & Style": 7.5,
+    "PRD Traceability Matrix": 7.0,
+    "Interface Contract Documentation": 9.5,
+    "Markdown Formatting Standards": 4.0,
+    "Adversarial Edge Case Coverage": 9.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid C4 Syntax Compliance",
+      "score": 8.5,
+      "severity": "Medium",
+      "details": "Diagram passes mmdc validation (exit 0) and correctly uses flowchart LR per critic system requirements (C4Container/C4Context are banned). However, line 305 uses `[[]` queue syntax for the Telegram node — a non-standard C4 shape that the contract says 'non-standard elements are strictly prohibited'. The internal YAML frontmatter inside the mermaid block (lines 289-291: `--- title: ... ---`) duplicates the file-level frontmatter (lines 1-3), creating redundancy."
+    },
+    {
+      "criterion": "C4 Container Completeness",
+      "score": 7.5,
+      "severity": "High",
+      "details": "The contract requires 'exactly these containers: User, API Gateway, Database, Knowledge Base Vector Store.' The diagram uses 'Gardener' (line 294) instead of 'User' — this is a naming deviation from the contract specification. The narrative sections (lines 15-68) provide Technology and Description for all containers. All relationships include protocol labels (libpq/TCP, HTTPS/REST). Telegram (line 305) appears as an external system not listed in the container requirements — acceptable as an external dependency but noted."
+    },
+    {
+      "criterion": "Narrative Structure & Style",
+      "score": 7.5,
+      "severity": "Medium",
+      "details": "All mandatory sections are present: H1 Title (line 5), H2 Scope (line 7), H2 Architecture Overview (line 10), H3 Component Details (line 13), H2 Traceability (line 70). Passive voice usage is ~10% (3 instances in ~29 sentences), under the 15% threshold. No subjective adjectives detected. However, multiple technical terms are used without definition on first use: 'ACID-compliant' (line 37), 'JWT' (lines 25, 223), 'Flyway' (line 259), 'ILIKE' (line 249), 'libpq' (lines 311, 313), 'p95' (line 253). The contract requires 'All technical terms must be defined on first use.'"
+    },
+    {
+      "criterion": "PRD Traceability Matrix",
+      "score": 7.0,
+      "severity": "High",
+      "details": "The traceability table (lines 71-122) maps FR6-FR55 comprehensively. However, three issues: (1) Typo at line 127: 'FR46-FFR50' contains a duplicated 'F' — should be 'FR46-FR50'. (2) Inconsistency in Deferred Requirements section: line 128 states 'FR8, FR22-FR30: Care activity tracking - Covered in this sprint via database storage' — but this is in the 'Deferred Requirements' section, yet FR8 and FR22-FR30 are marked 'Architected' in the table (not Deferred). (3) Lines 129-130 group 'FR31-FR35' as 'Multi-source data integration' but the table shows FR33-FR35 as 'Architected' (not Deferred). The deferred section contradicts the table status column for multiple requirements."
+    },
+    {
+      "criterion": "Interface Contract Documentation",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "Excellent coverage of all three required elements. Database connection string format at lines 137-141 with example and ENV variable name. KB API endpoint schemas at lines 146-215 with full JSON request/response bodies, headers, status codes, and error mappings for both upsert and query operations. Authentication mechanisms at lines 218-225 covering PostgreSQL, Pinecone, and JWT. Minor gap: line 216 states 'Error Responses: Same as upsert endpoint' for the query operation rather than repeating the error list explicitly — the contract requires copy-pasteable definitions."
+    },
+    {
+      "criterion": "Markdown Formatting Standards",
+      "score": 4.0,
+      "severity": "High",
+      "details": "Multiple significant violations: (1) TRAILING WHITESPACE: 22 instances detected at lines 24, 30, 44, 48, 62, 65, 221, 230, 234, 237, 244, 248, 251, 258, 262, 266, 273, 277, 281, 295, 303, 306 — the contract requires 'no trailing whitespace'. (2) UNLABELED CODE BLOCKS: Lines 137, 146, 182 use bare ``` without language tags. The contract requires 'code blocks labeled with language'. (3) Lines 295, 303, 306 contain trailing whitespace inside the mermaid code block. The contract mandates 'strict adherence' to these rules."
+    },
+    {
+      "criterion": "Adversarial Edge Case Coverage",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "All four required failure modes are documented comprehensively: (1) DB Connection Pool Exhaustion (lines 229-241) with pool size, timeout, backoff, HTTP 503 fallback, and specific metrics. (2) KB Vector Index Corruption/Drift (lines 243-255) with health checks, PostgreSQL ILIKE fallback, and vector count monitoring. (3) Schema Migration Rollback (lines 257-270) with Flyway, blue-green deployment, and automatic rollback. (4) High Latency Fallback (lines 272-285) with L1/L2 caching, stale-while-revalidate, and cache hit rate thresholds. Each scenario has mitigation, fallback path, and monitoring metrics with alert thresholds. Minor gap: no specific alert thresholds for 'schema migration rollback' duration beyond 'alert > 5x normal' which is relative rather than absolute."
+    }
+  ],
+  "overall_summary": "The database/c2-container.md represents solid progress from Sprint 5 Rounds 1-2. The diagram passes mmdc validation with all four required containers present and well-connected. Interface contract documentation (9.5) and adversarial edge case coverage (9.0) are the strongest areas — both provide copy-pasteable, production-ready specifications. However, three issues prevent contract approval: (1) Markdown Formatting Standards scored only 4.0 due to 22 trailing whitespace violations and 3 unlabeled code blocks — this is a recurring issue across all sprints (see critic-history.md for 25+ similar failures); (2) The PRD Traceability Matrix has internal contradictions between the table status column and the Deferred Requirements section, plus a typo ('FFR50'); (3) The actor is named 'Gardener' instead of the contract-required 'User'. Technical terms like JWT, ACID, Flyway, and libpq are used without definition. The document is architecturally sound but needs editorial discipline to meet formatting and consistency thresholds.",
+  "average_score": 7.571428571428571,
+  "passed": false
+}

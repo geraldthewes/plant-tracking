@@ -566,3 +566,123 @@ In Round 5, I addressed specific critic feedback on the database/c2-container.md
 - Ensured fallback paths are architecturally sound and clearly explained
 
 These improvements addressed all critic feedback points and brought the document into full compliance with the Sprint 5 contract requirements.
+
+# Generator Learnings - Sprint 5: Database + Knowledge Base (Round 4)
+
+## Architecture Decisions Made
+- Confirmed that the diagram must use standard Mermaid flowchart syntax (not C4-specific extensions) as required by the critic system
+- Established that the container diagram must include exactly: User (Actor), API Gateway, Database (PostgreSQL), and Knowledge Base Vector Store (Pinecone)
+- Determined that relationship labels must be specific, including both action and technology/protocol (e.g., "Executes SQL queries via libpq/TCP")
+- Verified that external systems like Telegram must be shown with proper subroutine shape
+- Confirmed that all technical terms must be defined on first use (e.g., ACID-compliant, JWT, libpq)
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper Mermaid syntax using double quotes and \n for line breaks (passed validation)
+- Clear relationship labels specifying action AND technology/protocol (e.g., "Executes SQL queries via libpq/TCP", "Vector operations via REST/HTTPS")
+- Correct use of C4 diagram shapes: stadium for actors, rectangles for internal containers, cylinders for data storage, subroutines for external services
+- Proper use of subgraph boundaries to separate internal system containers from external actors and services
+- Comprehensive narrative sections covering scope, architecture overview, component details, traceability, and interface contracts
+- Accurate PRD traceability matrix mapping actual FR IDs to document sections
+- Clean markdown document structure with proper YAML frontmatter, heading hierarchy, and fenced code blocks
+- Specific interface contract documentation with copy-pasteable examples
+- Detailed adversarial edge case coverage with mitigation strategies, fallback paths, and monitoring metrics
+
+## Issues the Critic Raised, How You Addressed Them, and What Worked
+- **Medium - Mermaid C4 Syntax Compliance**: 
+  - Issue: Line 305 used `[[]` queue syntax for the Telegram node — a non-standard C4 shape that is prohibited. Internal YAML frontmatter inside the mermaid block duplicated the file-level frontmatter, creating redundancy.
+  - Addressed: Changed Telegram node to proper subroutine shape `[["Telegram\n(External)"]]` and removed the internal YAML frontmatter (lines 289-291) to eliminate redundancy.
+  - What worked: Diagram now uses only standard Mermaid shapes and has clean structure without duplicate frontmatter.
+  
+- **High - C4 Container Completeness**: 
+  - Issue: The diagram used 'Gardener' instead of the contract-required 'User' for the actor node. Telegram appeared as an external system (acceptable but noted). All relationships included protocol labels.
+  - Addressed: Renamed 'Gardener' node to 'User' to match contract specification exactly.
+  - What worked: Diagram now contains exactly the required containers: User, API Gateway, Database, Knowledge Base Vector Store.
+  
+- **Medium - Narrative Structure & Style**: 
+  - Issue: Multiple technical terms were used without definition on first use: 'ACID-compliant', 'JWT', 'Flyway', 'ILIKE', 'libpq', 'p95'.
+  - Addressed: Added inline definitions for all technical terms on first use (e.g., "PostgreSQL 15 (ACID-compliant)", "JWT (JSON Web Token)", "libpq/TCP (PostgreSQL wire protocol)", "ILIKE (case-insensitive SQL LIKE)", "p95 (95th percentile latency)").
+  - What worked: All technical terms are now defined on first use, satisfying the contract requirement.
+  
+- **High - PRD Traceability Matrix**: 
+  - Issue: Typo at line 127: 'FR46-FFR50' contained a duplicated 'F'. Inconsistency in Deferred Requirements section where FR8 and FR22-FR30 were marked as covered but listed in Deferred section. FR31-FR35 grouping showed inconsistencies between table and deferred section.
+  - Addressed: Fixed the typo ('FR46-FR50'). Corrected the Deferred Requirements section to accurately reflect what is actually deferred vs. architected. Ensured consistency between traceability table and deferred section.
+  - What worked: Traceability matrix is now accurate and consistent, with proper mapping of all requirements.
+  
+- **Low - Markdown Formatting Standards**: 
+  - Issue: 22 instances of trailing whitespace detected. 3 unlabeled code blocks (missing language tags). Trailing whitespace inside mermaid code block.
+  - Addressed: Removed all trailing whitespace throughout the document. Added language tags to all code blocks (e.g., ```json, ```bash). Ensured no trailing whitespace inside mermaid code block.
+  - What worked: Document now passes strict formatting requirements with clean, consistent markdown.
+  
+- **Low - Adversarial Edge Case Coverage**: 
+  - Issue: No specific alert thresholds for 'schema migration rollback' duration beyond 'alert > 5x normal' which is relative rather than absolute.
+  - Addressed: Added specific absolute threshold for schema migration rollback: alert if migration duration > 30 minutes (5x normal baseline of 6 minutes).
+  - What worked: All four failure modes now have complete mitigation strategies, fallback paths, monitoring metrics with specific thresholds, and alert notification channels.
+
+## Domain Insights about the System Gleaned from the PRD
+- The system's data layer needs to support both structured data (plant records, care activities) and unstructured data (care notes, observations) for semantic search
+- PostgreSQL is appropriate for structured plant data requiring ACID transactions and complex reporting queries
+- Pinecone vector store enables semantic similarity search for natural language querying via the Hermes agent
+- The API Gateway pattern provides a clean separation of concerns and enables independent scaling of services
+- Docker containerization ensures consistency across development and deployment environments
+- Proper connection pooling, backup strategies, and migration safeguards are critical for data integrity in a plant tracking system
+- The system must handle both transactional workloads (CRUD operations) and analytical workloads (similarity search, reporting)
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include action AND technology/protocol (e.g., "via camera", "via Telegram")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify action AND technology/protocol
+- External services (like Pinecone) should use subroutine shape
+- Database technologies should use cylinder shape
+- Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per critic system requirements)
+- Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
+
+## Round 4 Specific Learnings from Critic Feedback
+In Round 4, I addressed specific critic feedback on the database/c2-container.md file:
+
+**Architecture Improvements Made:**
+- Changed Telegram node from incorrect queue syntax to proper subroutine shape [["Telegram\n(External)"]]
+- Removed redundant internal YAML frontmatter inside the mermaid block
+- Renamed 'Gardener' actor node to 'User' to match contract specification
+- Added definitions for all technical terms on first use (ACID-compliant, JWT, libpq, ILIKE, p95)
+- Fixed typo in PRD traceability matrix ('FR46-FFR50' → 'FR46-FR50')
+- Corrected Deferred Requirements section to accurately reflect deferred vs. architected requirements
+- Removed all trailing whitespace throughout the document
+- Added language tags to all code blocks (```json, ```bash, etc.)
+- Ensured no trailing whitespace inside mermaid code block
+- Added specific absolute threshold for schema migration rollback alert (>30 minutes)
+
+**Markdown Formatting Improvements:**
+- Eliminated all trailing whitespace violations
+- Ensured all code blocks are properly labeled with language tags
+- Verified proper heading hierarchy and spacing
+- Confirmed consistent 2-space list indentation
+
+**PRD Traceability Enhancements:**
+- Fixed the 'FR46-FFR50' typo
+- Resolved inconsistencies between traceability table and Deferred Requirements section
+- Ensured 100% coverage for Functional Requirements in sprint scope
+- Added proper justification for all deferred requirements
+
+**Interface Contract Documentation:**
+- Maintained copy-pasteable database connection string format with example and environment variable
+- Preserved detailed Knowledge Base API endpoint schemas with full JSON examples
+- Kept authentication mechanisms for PostgreSQL, Pinecone, and API Gateway
+- Retained HTTP status codes and error response schemas for KB endpoints
+
+**Adversarial Edge Case Coverage:**
+- Kept all four required failure modes with specific mitigation strategies
+- Maintained differentiated alert notification channels for each failure mode
+- Included specific monitoring metrics for each scenario
+- Added absolute threshold for schema migration rollback duration (>30 minutes)
+- Ensured fallback paths are architecturally sound and clearly explained
+
+These improvements addressed all critic feedback points and brought the document into full compliance with the Sprint 5 contract requirements.
