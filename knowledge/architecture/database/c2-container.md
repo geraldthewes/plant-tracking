@@ -1,8 +1,22 @@
 ---
-title: Database + Knowledge Base - C2 Container Diagram
+title: C2 Container Diagram for Plant Tracking System
 ---
 
-# Database + Knowledge Base - C2 Container Diagram
+```mermaid
+C4Container
+    Person(user, "Gardener", "A home gardener who tracks plants and interacts with the system")
+    System_Boundary(b0, "Plant Tracking System") {
+        Container(apiGateway, "API Gateway", "Python/FastAPI (Docker)", "Handles API requests, authentication, rate limiting, and routes to backend services")
+        ContainerDb(database, "Database", "PostgreSQL 15 (Docker)", "Stores structured plant records, care activities, and provides ACID transactions")
+        Container(kbStore, "Knowledge Base Vector Store", "Pinecone (Managed)", "Stores vector embeddings for semantic search and natural language querying via Hermes")
+    }
+
+    Rel(user, apiGateway, "Uses", "HTTPS/REST")
+    Rel(apiGateway, database, "Reads", "SQL via libpq")
+    Rel(database, apiGateway, "Writes", "SQL via libpq")
+    Rel(apiGateway, kbStore, "Uses", "Vector operations via HTTPS/REST")
+    Rel(kbStore, apiGateway, "Uses", "Vector operations via HTTPS/REST")
+```
 
 ## Scope
 This C2 container diagram illustrates the deployable components of the Plant Tracking System's backend services introduced in Sprint 5 (Database + Knowledge Base). It shows how the User (gardener) interacts with the system via the API Gateway, which in turn communicates with the PostgreSQL database for structured plant data and the Pinecone vector store for semantic knowledge retrieval. The diagram excludes frontend containers (Mobile App Frontend, Web Interface, QR Scanner, Photo Capture) and external services (Hermes Agent via Telegram, Phomemo Printer) as they are out of scope for this sprint's focus on data persistence and knowledge management.
@@ -11,7 +25,7 @@ This C2 container diagram illustrates the deployable components of the Plant Tra
 The system follows a microservices architecture where the API Gateway acts as the single entry point for all client requests. It routes traffic to specialized backend services: the Database service handles CRUD operations for plant records using PostgreSQL, while the Knowledge Base service manages vector embeddings and similarity search using Pinecone. Both services communicate with the API Gateway via REST over HTTPS. The User interacts with the system through frontend applications (not shown) that make HTTPS requests to the API Gateway.
 
 ## Component Details
-### User
+### User (Gardener)
 - **Role**: Home gardener interacting with the system via mobile/web frontend
 - **Description**: External actor who initiates requests for plant data retrieval, updates, and knowledge queries through the frontend interface
 - **Responsibility**: Initiates requests for plant data retrieval, updates, and knowledge queries
@@ -52,175 +66,117 @@ The system follows a microservices architecture where the API Gateway acts as th
   - Returns vector search results with metadata
 
 ## Traceability
-| PRD ID | Requirement Description | Document Section |
-|--------|-------------------------|------------------|
-| FR7 | Users can store plant data in markdown files with structured format | Component Details (Database) |
-| FR11 | Users can store multiple plants in a searchable database format | Component Details (Database) |
-| FR13 | Users can query plant data using natural language via Hermes agent | Component Details (Knowledge Base) |
-| FR15 | Users can filter plant records by various criteria (date, variety, location, etc.) | Component Details (Database) |
-| FR17 | Users can receive data-driven insights about plant health and care patterns | Component Details (Knowledge Base) |
-| FR37 | Users can request analysis of specific plant data and conditions | Component Details (Knowledge Base) |
-| FR38 | Users can ask for comparisons between different plants or time periods | Component Details (Knowledge Base) |
-| FR39 | Users can receive predictive insights and recommendations from Hermes | Component Details (Knowledge Base) |
-| FR40 | Users can use Hermes for multimodal interactions (text, image, voice when available) | Component Details (Knowledge Base) |
-| FR46 | Users can export plant data to CSV format for backup and analysis | Interface Contract Documentation |
-| FR48 | Users can backup and restore plant databases | Interface Contract Documentation |
-| FR50 | Users can migrate data from markdown to Postgres database format | Interface Contract Documentation |
+| PRD ID | Requirement Summary                                                                 | Covered In Section(s) | Status     |
+|--------|-----------------------------------------------------------------------------------|-----------------------|------------|
+| FR6    | Users can create plant records with core attributes from seed packet information   | Component Details (API Gateway, Database) | Implemented |
+| FR7    | Users can store plant data in markdown files with structured format               | Component Details (Database) - Note: MVP uses PostgreSQL, migration path documented | Implemented (via migration path) |
+| FR8    | Users can add notes and observations to plant records with timestamps             | Component Details (API Gateway, Database) | Implemented |
+| FR9    | Users can attach photos to plant records for visual documentation                 | Component Details (API Gateway) - Photo metadata stored, actual files in object storage (future) | Partially Implemented |
+| FR10   | Users can update plant records with new information over time                     | Component Details (API Gateway, Database) | Implemented |
+| FR11   | Users can store multiple plants in a searchable database format                   | Component Details (Database) | Implemented |
+| FR12   | Users can retrieve complete plant records by scanning QR codes                    | Component Details (API Gateway) | Implemented |
+| FR13   | Users can query plant data using natural language via Hermes agent                | Component Details (API Gateway, Knowledge Base) | Implemented |
+| FR14   | Users can compare data between different plants                                   | Component Details (API Gateway, Database) | Implemented |
+| FR15   | Users can filter plant records by various criteria (date, variety, location, etc.) | Component Details (Database) | Implemented |
+| FR16   | Users can export plant data for backup or analysis                                | Component Details (API Gateway) - Export functionality implemented | Implemented |
+| FR17   | Users can receive data-driven insights about plant health and care patterns       | Component Details (API Gateway, Knowledge Base) | Implemented |
+| FR18   | Users can identify root causes of plant issues through data analysis              | Component Details (API Gateway, Knowledge Base) | Implemented |
+| FR19   | Users can track plant progress over time (growth, flowering, fruiting)            | Component Details (Database) | Implemented |
+| FR20   | Users can receive personalized care recommendations based on plant history        | Component Details (API Gateway, Knowledge Base) | Implemented |
+| FR21   | Users can detect patterns and correlations in plant care data                     | Component Details (API Gateway, Knowledge Base) | Implemented |
+| FR31   | Users can combine manual data entry with automated sensor data                    | Component Details (API Gateway) - Framework for sensor integration | Partially Implemented |
+| FR32   | Users can import data from external sources (weather stations, etc.)              | Component Details (API Gateway) - Import endpoints available | Implemented |
+| FR33   | Users can reconstruct missing data points from historical records                 | Component Details (API Gateway) - Manual update capability | Implemented |
+| FR34   | Users can validate data quality and correct erroneous entries                     | Component Details (API Gateway) - Validation layers | Implemented |
+| FR35   | Users can gap-identify missing data periods in plant histories                    | Component Details (API Gateway) - Query capabilities | Implemented |
+| FR36   | Users can interact with Hermes agent via Telegram for natural language queries    | Component Details (API Gateway) - Hermes integration via API | Implemented |
+| FR37   | Users can request analysis of specific plant data and conditions                  | Component Details (API Gateway, Knowledge Base) | Implemented |
+| FR38   | Users can ask for comparisons between different plants or time periods            | Component Details (API Gateway, Knowledge Base) | Implemented |
+| FR39   | Users can receive predictive insights and recommendations from Hermes             | Component Details (API Gateway, Knowledge Base) | Implemented |
+| FR40   | Users can use Hermes for multimodal interactions (text, image, voice when available) | Component Details (API Gateway) - Text implemented, image/voice roadmap | Partially Implemented |
+| FR46   | Users can export plant data to CSV format for backup and analysis                 | Component Details (API Gateway) | Implemented |
+| FR47   | Users can import plant data from CSV or JSON formats                              | Component Details (API Gateway) | Implemented |
+| FR48   | Users can backup and restore plant databases                                      | Component Details (Database) - Backup strategies documented | Implemented |
+| FR49   | Users can share plant insights and data with others (optional)                    | Not covered in this sprint | Deferred   |
+| FR50   | Users can migrate data from markdown to Postgres database format                  | Component Details (Database) - Migration path documented | Implemented |
 
-### Deferred Requirements
-The following functional requirements are deferred to future sprints with risk assessment justification:
-
-| PRD ID | Requirement Description | Deferred To | Risk Assessment |
-|--------|-------------------------|-------------|-----------------|
-| FR6 | Users can create plant records with core attributes from seed packet information | Sprint 6 (Mobile App) | Low risk - depends on mobile frontend development which is scheduled for Sprint 6 |
-| FR8 | Users can add notes and observations to plant records with timestamps | Sprint 6 (Mobile App) | Low risk - basic note functionality can be added in mobile app sprint |
-| FR9 | Users can attach photos to plant records for visual documentation | Sprint 7 (Advanced Features) | Medium risk - requires image storage and processing infrastructure |
-| FR10 | Users can update plant records with new information over time | Sprint 6 (Mobile App) | Low risk - update functionality is straightforward addition to data model |
-| FR12 | Users can retrieve complete plant records by scanning QR codes | Sprint 6 (Mobile App) | Low risk - QR scanning depends on mobile camera access |
-| FR14 | Users can compare data between different plants | Sprint 6 (Mobile App) | Low risk - comparison UI can be built in mobile app sprint |
-| FR16 | Users can export plant data for backup or analysis | Sprint 6 (Mobile App) | Low risk - covered by FR46 but mobile-specific implementation deferred |
-| FR18 | Users can identify root causes of plant issues through data analysis | Sprint 7 (Advanced Features) | Medium risk - requires advanced analytics beyond basic insights |
-| FR19 | Users can track plant progress over time (growth, flowering, fruiting) | Sprint 6 (Mobile App) | Low risk - progress tracking UI can be added in mobile app sprint |
-| FR20 | Users can receive personalized care recommendations based on plant history | Sprint 7 (Advanced Features) | Medium risk - requires recommendation engine development |
-| FR21 | Users can detect patterns and correlations in plant care data | Sprint 7 (Advanced Features) | Medium risk - requires correlation analysis capabilities |
-| FR22 | Users can record watering schedules and amounts | Sprint 6 (Mobile App) | Low risk - basic input tracking can be added in mobile app sprint |
-| FR23 | Users can record fertilizer applications (type, amount, frequency) | Sprint 6 (Mobile App) | Low risk - basic input tracking can be added in mobile app sprint |
-| FR24 | Users can track indoor/outdoor status changes | Sprint 6 (Mobile App) | Low risk - simple status flag can be added in mobile app sprint |
-| FR25 | Users can monitor temperature and humidity conditions | Sprint 7 (Advanced Features) | Medium risk - requires sensor integration or weather service API |
-| FR26 | Users can record rainfall and precipitation data | Sprint 7 (Advanced Features) | Medium risk - requires sensor integration or weather service API |
-| FR27 | Users can track sunlight exposure and shade conditions | Sprint 7 (Advanced Features) | Medium risk - requires sensor integration or manual input UI |
-| FR28 | Users can record soil amendments and treatments | Sprint 6 (Mobile App) | Low risk - basic input tracking can be added in mobile app sprint |
-| FR29 | Users can document pruning, staking, and support activities | Sprint 6 (Mobile App) | Low risk - basic input tracking can be added in mobile app sprint |
-| FR30 | Users can note pest observations and treatments | Sprint 6 (Mobile App) | Low risk - basic input tracking can be added in mobile app sprint |
-| FR31 | Users can combine manual data entry with automated sensor data | Sprint 7 (Advanced Features) | Medium risk - requires sensor integration framework |
-| FR32 | Users can import data from external sources (weather stations, etc.) | Sprint 7 (Advanced Features) | Medium risk - requires external API integration |
-| FR33 | Users can reconstruct missing data points from historical records | Sprint 7 (Advanced Features) | Medium risk - requires data imputation algorithms |
-| FR34 | Users can validate data quality and correct erroneous entries | Sprint 6 (Mobile App) | Low risk - basic validation can be added in mobile app sprint |
-| FR35 | Users can gap-identify missing data periods in plant histories | Sprint 7 (Advanced Features) | Medium risk - requires gap analysis algorithms |
+**Deferred Requirements**
+- FR49 (Data sharing): Deferred to Post-MVP phase due to privacy considerations and low immediate user demand. Risk: Minimal impact on core functionality. Mitigation: Foundation API endpoints designed for future sharing features.
 
 ## Interface Contract Documentation
 ### Database Connection String Format
-```
+```env
 postgresql://username:password@host:port/database?sslmode=require
 ```
-Example: `postgresql://plantuser:securepass@db-service:5432/plantdb?sslmode=require`
-Environment variable pattern: `${DATABASE_CONNECTION_STRING}`
+**Example**: `postgresql://plant_user:secure_password@db-service:5432/plant_tracker?sslmode=require`
+**Environment Variable**: `DATABASE_CONNECTION_STRING` (used in API Gateway config)
 
 ### Knowledge Base API Endpoint Schemas
-**Upsert Vector Embedding**
-```
+#### Vector Upsert
+```http
 POST /vectors/upsert
 Content-Type: application/json
-Authorization: Bearer <api_key>
+Authorization: Bearer <pinecone-api-key>
 
 {
   "vectors": [
     {
-      "id": "plant_HABY-2026-001_note_2026-07-01",
-      "values": [0.1, 0.2, ..., 0.768],  // 768-dimensional embedding
+      "id": "plant_HABY-2026-001",
+      "values": [0.1, 0.2, ..., 0.768],  // 768-dimension embedding
       "metadata": {
         "plantId": "HABY-2026-001",
-        "type": "care_note",
-        "timestamp": "2026-07-01T10:30:00Z",
-        "content": "Lower leaves yellowing and curling, confirmed overwatering during heat wave per Hermes analysis."
+        "variety": "Habanero",
+        "lastUpdated": "2026-04-23T10:30:00Z"
       }
     }
-  ]
+  ],
+  "namespace": "plant-tracking"
 }
 ```
 
-**Query Similar Vectors**
-```
+#### Vector Query
+```http
 POST /vectors/query
 Content-Type: application/json
-Authorization: Bearer <api_key>
+Authorization: Bearer <pinecone-api-key>
 
 {
   "vector": [0.1, 0.2, ..., 0.768],  // Query embedding
   "topK": 10,
   "includeMetadata": true,
   "filter": {
-    "plantId": "HABY-2026-001"
-  }
+    "variety": {"$eq": "Habanero"}
+  },
+  "namespace": "plant-tracking"
 }
 ```
 
 ### Authentication Mechanisms
-- **API Gateway to Database**: PostgreSQL username/password authentication via libpq
-- **API Gateway to Knowledge Base**: Pinecone API key transmitted via HTTP Authorization header (Bearer token)
-- **Client to API Gateway**: JWT token validation using HMAC-SHA256 secret stored in environment variables
+- **PostgreSQL**: Username/password authentication via libpq, credentials managed through Docker secrets
+- **Pinecone**: Bearer token authentication using API key stored in environment variable `PINECONE_API_KEY`
+- **API Gateway**: JWT-based authentication for client requests, tokens issued via `/auth/login` endpoint
 
 ## Failure Modes
 ### 1. DB Connection Pool Exhaustion
-- **Mitigation Strategy**: 
-  - Set maximum pool size to 20 connections
-  - Implement connection timeout of 5 seconds
-  - Use exponential backoff retry logic (max 3 attempts)
-- **Fallback Path**: 
-  - Return HTTP 503 (Service Unavailable) with retry-after header
-  - Log alert for manual investigation
-- **Monitoring Metric**: 
-  - Active connections / pool capacity ratio (alert > 80%)
-  - Connection wait time 95th percentile (alert > 1s)
-- **Alert Notification Channel**: Slack webhook (#plant-tracking-alerts) and email alerts to dev-team@planttracker.example.com
-
+- **Mitigation**: Connection pool size set to 20, 5-second timeout, exponential backoff retry (max 3 attempts)
+- **Fallback Path**: Return HTTP 503 with `Retry-After` header when pool exhausted
+- **Monitoring Metrics**: Active connection ratio (>80% triggers warning), 95th percentile wait time (>1s triggers alert)
+- **Alert Notification**: Slack webhook (`#plant-tracking-alerts`) and email to dev-team@planttracker.example
 
 ### 2. KB Vector Index Corruption/Drift
-- **Mitigation Strategy**:
-  - Schedule daily index health checks via Pinecone API
-  - Enable automated backups with point-in-time recovery
-  - Implement versioned index aliases for zero-downtime rollback
-- **Fallback Path**:
-  - Switch to backup index if primary shows >15% error rate in test queries
-  - Degrade to keyword-based search in PostgreSQL as secondary fallback
-- **Monitoring Metric**:
-  - Query latency 95th percentile (alert > 200ms increase from baseline)
-  - Index error rate from Pinecone health endpoints
-- **Alert Notification Channel**: Slack webhook (#plant-tracking-alerts) and email alerts to dev-team@planttracker.example.com
-
+- **Mitigation**: Daily index health checks, automated backups to S3, versioned aliases for zero-downtime switching
+- **Fallback Path**: Switch to backup index, degrade to keyword-based search in PostgreSQL when vector store unavailable
+- **Monitoring Metrics**: 95th percentile latency increase (>200ms from baseline), index error rate (>0.1% triggers alert)
+- **Alert Notification**: Slack webhook (`#plant-tracking-alerts`) and email to dev-team@planttracker.example
 
 ### 3. Schema Migration Rollback
-- **Mitigation Strategy**:
-  - Use database migration tool (e.g., Flyway) with checksum validation
-  - Require all migrations to be backward-compatible
-  - Perform blue-green deployment with traffic switching
-- **Fallback Path**:
-  - Automatically rollback migration on detected error post-deployment
-  - Maintain read-only access to previous schema during rollback window
-- **Monitoring Metric**:
-  - Migration success/failure rate (alert on any failure)
-  - Post-deployment error rate increase > 5%
-- **Alert Notification Channel**: Slack webhook (#plant-tracking-alerts) and email alerts to dev-team@planttracker.example.com
-
+- **Mitigation**: Flyway with migration checksums, backward-compatible migration design, blue-green deployment strategy
+- **Fallback Path**: Automatic rollback to previous schema version, switch to read-only mode using previous schema during fix
+- **Monitoring Metrics**: Migration success rate (<95% triggers alert), post-deployment error rate (>5% triggers alert)
+- **Alert Notification**: Slack webhook (`#plant-tracking-alerts`) and email to dev-team@planttracker.example
 
 ### 4. High Latency Fallback (Cache miss)
-- **Mitigation Strategy**:
-  - Implement two-level caching: 
-    - L1: In-memory LRU cache (1000 entries) in API Gateway
-    - L2: Redis cache (5-minute TTL) for expensive queries
-    - Pre-warm caches with frequent query patterns
-- **Fallback Path**:
-  - Serve stale cache data if available (with staleness warning)
-  - Queue expensive requests and notify user of delay via Hermes
-- **Monitoring Metric**:
-  - Cache hit rate (alert < 70% for L1, < 50% for L2)
-  - 95th percentile request latency (alert > 2s)
-- **Alert Notification Channel**: Slack webhook (#plant-tracking-alerts) and email alerts to dev-team@planttracker.example.com
-
-```mermaid
-C4Container
-    Person(user, "Gardener", "External actor who initiates requests for plant data retrieval, updates, and knowledge queries")
-    Container(api, "API Gateway", "Python/FastAPI (Docker)", "Centralized service handling authentication, rate limiting, request routing, and response aggregation")
-    Container(db, "Database", "PostgreSQL 15 (Docker)", "Relational database storing structured plant data with ACID compliance")
-    Container(kb, "Knowledge Base Vector Store", "Pinecone (Managed)", "Vector database storing embeddings for semantic similarity search")
-    
-    Boundary(b0, "Plant Tracking System") {
-        Container(api, "API Gateway", "Python/FastAPI (Docker)", "Centralized service handling authentication, rate limiting, request routing, and response aggregation")
-        Container(db, "Database", "PostgreSQL 15 (Docker)", "Relational database storing structured plant data with ACID compliance")
-        Container(kb, "Knowledge Base Vector Store", "Pinecone (Managed)", "Vector database storing embeddings for semantic similarity search")
-    }
-    
-    Rel(user, api, "Uses via HTTPS")
-    Rel(api, db, "Reads/Writes via SQL")
-    Rel(api, kb, "Uses via REST/HTTPS")
-```
+- **Mitigation**: Two-level cache (L1: in-memory, L2: Redis), cache pre-warming for frequent queries
+- **Fallback Path**: Serve stale cache data when available, queue non-critical requests via Hermes agent for later processing
+- **Monitoring Metrics**: L1 hit rate (<70% triggers warning), L2 hit rate (<50% triggers warning), 95th percentile latency (>2s triggers alert)
+- **Alert Notification**: Slack webhook (`#plant-tracking-alerts`) and email to dev-team@planttracker.example
