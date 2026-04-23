@@ -232,3 +232,18 @@ that caused the regression. Check critic-history.md for what the critic flagged.
 Your next round should build on this baseline — do NOT reintroduce the changes
 that caused the regression. Check critic-history.md for what the critic flagged.
 ---
+
+## Sprint 5 · Round 6 — 2026-04-23 17:50:01 UTC
+**Feedback addressed**: 7 concern(s) from prior critic round (avg 7.7/10)
+**Files modified**: sprint-5-round-5-log.json, sprint-5-round-5.json, .#2026-04-22-PROJ-0001-create-plant-and-print-label.md, progress.json, critic-history.md, c2-container.md, generator-history.md, generator-learnings.md
+**Token usage**: 0
+---
+
+## [ROLLBACK] Sprint 5 · Round 6 — 2026-04-23 17:58:34 UTC
+**Action**: Architecture files reverted to best-scoring commit
+**Reason**: Score regressed 7.4/10 vs best 7.7/10
+**Reverted to commit**: `3e1e74e462e5`
+**What this means**: The files you see now reflect the best architecture so far.
+Your next round should build on this baseline — do NOT reintroduce the changes
+that caused the regression. Check critic-history.md for what the critic flagged.
+---

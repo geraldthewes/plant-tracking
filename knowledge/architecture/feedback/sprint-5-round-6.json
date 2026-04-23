@@ -1,0 +1,58 @@
+{
+  "scores": {
+    "Mermaid C4 Syntax Compliance": 7.5,
+    "C4 Container Completeness": 7.0,
+    "Narrative Structure & Style": 7.5,
+    "PRD Traceability Matrix": 5.0,
+    "Interface Contract Documentation": 9.5,
+    "Markdown Formatting Standards": 5.5,
+    "Adversarial Edge Case Coverage": 9.5
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid C4 Syntax Compliance",
+      "score": 7.5,
+      "severity": "High",
+      "details": "The diagram passes mmdc validation from the markdown file (exit 0), which is good. However, it uses non-standard Mermaid node shapes that are not C4-aligned: `([\"...\\n...\"])` actor shape for User (c2-container.md:191), `[\"[\"...\\n...\"]\"]` subroutine shape for Telegram (c2-container.md:193) and Pinecone (c2-container.md:194), and cylinder shape `(\"...\")` for PostgreSQL (c2-container.md:200). The sprint contract mandates 'C4 container syntax extensions (e.g., C4Container, C4Boundary)' but the critic system rules ban those directives — this creates a contradictory requirement. The diagram uses `flowchart LR` which is correct per critic rules, but the node shapes are decorative Mermaid shapes, not C4 constructs. The YAML frontmatter inside the mermaid block (lines 185-187) with `--- title: ... ---` is a known mmdc anti-pattern that worked only because mmdc parsed the full markdown file context. When extracted standalone, the diagram block fails to parse (UnknownDiagramError). This fragility is a reliability concern."
+    },
+    {
+      "criterion": "C4 Container Completeness",
+      "score": 7.0,
+      "severity": "High",
+      "details": "The contract requires 'exactly these containers: User, API Gateway, Database, Knowledge Base Vector Store.' The diagram contains 6 nodes: User (line 191), Telegram (line 193), Pinecone (line 194), API Gateway (line 199), PostgreSQL (line 200), and the system subgraph itself. Telegram is an extra node not in the required container list — it was present in prior rounds (Sprint 4 backend) and leaks scope. The four required containers ARE present: User as actor, API Gateway, PostgreSQL as Database, Pinecone as Knowledge Base Vector Store. Each has technology and description in the narrative (lines 17-27). Relationships include protocol labels (HTTPS, libpq/TCP, REST/HTTPS). However, the container-level narrative does not use formal 'Technology:' and 'Description:' field labels as the contract requires — it embeds these details in prose instead. The Knowledge Base Vector Store (Pinecone) is correctly placed outside the system subgraph (line 194 vs subgraph at 197-201), which fixes the recurring antipattern from Rounds 3-4."
+    },
+    {
+      "criterion": "Narrative Structure & Style",
+      "score": 7.5,
+      "severity": "Medium",
+      "details": "All mandatory sections are present: H1 Title (line 5), H2 Scope (line 7), H2 Architecture Overview (line 11), H3 Component Details (line 15), H2 Traceability (line 29). The H1 heading that was missing in Round 5 is now present — good fix. Passive voice usage: 7 passive constructions detected across the document (e.g., 'is supplied' at line 67, 'is configured' at line 67, 'is external' at line 18, 'is a Dockerized service' at line 21, 'is enforced' at line 142, 'are injected' at line 142, 'is stored' at line 143). Total narrative sentences number approximately 25-30, putting passive usage at ~25-28%, which exceeds the 15% threshold. Subjective adjectives: 'efficiently' appears at line 24 ('manage concurrent requests efficiently') — this is a borderline subjective term. Technical terms (ACID, JWT, libpq, embedding, semantic similarity search) are mostly defined on first use or self-explanatory in context. The 'Adversarial Edge Case Coverage' section uses active voice predominantly, which helps bring the average down."
+    },
+    {
+      "criterion": "PRD Traceability Matrix",
+      "score": 5.0,
+      "severity": "Critical",
+      "details": "The traceability table (lines 31-41) maps only 6 PRD IDs: DB-001 through DB-005 and KB-001 through KB-003. The Deferred table (lines 45-51) covers FR7, FR9, FR41-FR45, FR49, FR51-FR55 (roughly 14 deferred requirements). However, the PRD contains 55+ functional requirements, and the following FRs are completely unaccounted for: FR1-FR6, FR8, FR10-FR40 (31 requirements), FR46-FR48, FR50. These are neither marked as 'Architected' nor 'Deferred'. The contract mandates 'Coverage must be 100% for Functional Requirements. Any non-coverage requires a formal Deferred subsection with risk assessment justification.' With 31+ FRs missing entirely from any table, coverage is far from 100%. This is a recurring issue — Round 1 flagged invented PRD IDs, Round 2-4 flagged use of raw FR IDs instead of DB-001/KB-002 format. The current document uses DB-001/KB-002 format IDs for the main table but these IDs do not appear to exist in the authoritative PRD (_bmad-output/prd.md), which only has FR-numbered requirements. The DB-001/KB-001 IDs appear to be fabricated identifiers."
+    },
+    {
+      "criterion": "Interface Contract Documentation",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "Excellent coverage of all three required elements. (1) Database connection string format at lines 56-67: provides libpq format template, concrete example with values, and ENV variable name (DATABASE_URL). Pool configuration is specified (min=2, max=10, idle timeout=30s, connection timeout=5s). (2) KB API endpoint schemas at lines 69-139: includes Vector Upsert endpoint (POST /kb/vectors/upsert) and Query Similar Vectors endpoint (POST /kb/vectors/query) with full JSON request bodies, success responses, and error responses. (3) Authentication mechanisms at lines 141-144: covers PostgreSQL (username/password via Docker secrets), Pinecone (Bearer token/Docker secrets), and API Gateway (JWT with 15-min expiration and refresh tokens). All examples are copy-pasteable and specific. Minor note: the connection string code blocks at lines 58-60 and 63-65 lack language labels (should be tagged with a language identifier)."
+    },
+    {
+      "criterion": "Markdown Formatting Standards",
+      "score": 5.5,
+      "severity": "High",
+      "details": "Multiple persistent formatting violations: (1) TRAILING WHITESPACE: 4 instances at lines 73 ('- **Headers:** '), 151 ('- **Monitoring Metrics:** '), 195 (indent-only line), and 202 (indent-only line). (2) UNLABELED CODE BLOCKS: 4 code blocks lack language tags — lines 58-60 (connection string format), lines 63-65 (connection string example). These should be labeled (e.g., `text` or `bash`). The JSON blocks are properly labeled with `json`. (3) MISSING BLANK LINES AROUND HEADINGS: ~20+ heading violations detected — no blank line before ## Scope (line 7), ## Architecture Overview (line 11), ## Component Details (line 15), ### User (line 17), ### API Gateway (line 20), ### Database (line 23), ### Knowledge Base Vector Store (line 26), ## Traceability (line 29), ### Deferred Requirements (line 42), ## Interface Contract Documentation (line 53), ### Database Connection String Format (line 55), and all subsequent headings. (4) YAML frontmatter title on line 2 duplicates the H1 on line 5 — potential MD025 violation depending on linter configuration. (5) The mermaid diagram block at lines 184-211 embeds YAML frontmatter (`---`) inside the code fence, which is technically valid Mermaid but non-standard markdown practice."
+    },
+    {
+      "criterion": "Adversarial Edge Case Coverage",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All four required failure modes are comprehensively documented: (1) DB Connection Pool Exhaustion (lines 148-155): pool limits (min=2, max=10), retry with exponential backoff (max 3 attempts), HTTP 429 fallback, specific metrics (db_pool_used, db_pool_idle, db_wait_time_seconds), and alert thresholds (>0.8 utilization for 2 minutes). (2) KB Vector Index Corruption/Drift (lines 157-164): auto-scheduled backups, weekly consistency checks, PostgreSQL ILIKE fallback, metrics (kb_index_uptodate, kb_query_latency_seconds, kb_mismatch_rate), and alert conditions. (3) Schema Migration Rollback (lines 166-173): Flyway migrations, staging testing, blue-green deployment, rollback on failure, metrics (migration_duration_seconds, migration_success, db_schema_version), and alert thresholds. (4) High Latency Fallback (lines 175-182): two-tier caching (L1 in-memory LRU + L2 Redis), stale-while-revalidate, thundering herd detection, metrics (api_latency_seconds, cache_hit_total, thundering_herd_detected), and alert conditions. Each scenario has mitigation, fallback path, metrics, and alert notification. This is the strongest criterion."
+    }
+  ],
+  "overall_summary": "The database/c2-container.md shows measurable improvement from Round 5 — the H1 heading is now present, the diagram passes mmdc validation, and the four required containers are all represented. Interface Contract Documentation (9.5) and Adversarial Edge Case Coverage (9.5) are the strongest areas, providing production-ready specificity. Two critical failures block contract approval: (1) The PRD Traceability Matrix (5.0) only covers 6 DB/KB requirements plus ~14 deferred FRs, leaving 31+ FRs completely unaccounted for — the contract mandates 100% functional requirement coverage. The DB-001/KB-001 IDs used in the table do not exist in the authoritative PRD, which only uses FR-numbered requirements. (2) Markdown Formatting Standards (5.5) have persistent violations: 20+ headings missing blank lines before them, 4 trailing whitespace instances, and 4 unlabeled code blocks. Recurring from prior rounds: the Telegram node leaks scope from Sprint 4's backend diagram into this Sprint 5 database diagram. The embedded YAML frontmatter inside the mermaid code fence creates fragility — the diagram only validates when parsed from the full markdown file context, not as a standalone block.",
+  "average_score": 7.357142857142857,
+  "passed": false
+}
