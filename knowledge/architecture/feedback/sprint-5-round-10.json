@@ -1,0 +1,58 @@
+{
+  "scores": {
+    "Mermaid C4 Syntax Compliance": 7.5,
+    "C4 Container Completeness": 7.5,
+    "Narrative Structure & Style": 4.5,
+    "PRD Traceability Matrix": 7.0,
+    "Interface Contract Documentation": 6.5,
+    "Markdown Formatting Standards": 3.0,
+    "Adversarial Edge Case Coverage": 7.0
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid C4 Syntax Compliance",
+      "score": 7.5,
+      "severity": "Medium",
+      "details": "Diagram passes mmdc validation (exit 0) and correctly uses `flowchart LR` per critic system rules. However, line 509 uses non-standard Mermaid node shape `[[]` (queue/cylinder syntax) for `telegram[[\"Telegram\\n(External System)\"]]` — this is not a C4 container shape and renders as a queue icon, which misrepresents an external messaging system. Lines 513-516 use standard rectangular shapes which is acceptable. No banned C4Container/C4Context blocks present (correct per critic rules)."
+    },
+    {
+      "criterion": "C4 Container Completeness",
+      "score": 7.5,
+      "severity": "High",
+      "details": "All four required containers present in diagram: User (line 513), API Gateway (line 514), Database (line 515), Knowledge Base Vector Store (line 516). Technology annotations exist: (Python/FastAPI), (PostgreSQL 15), (Pinecone). The User node labeled (Gardener) has no technology — acceptable for an actor but contract states 'each container must define Technology'. Telegram (line 509) appears as a 5th node outside the subgraph — architecturally valid as external system but adds noise. Edge labels correctly include protocols (HTTPS, libpq/TCP, REST/HTTPS)."
+    },
+    {
+      "criterion": "Narrative Structure & Style",
+      "score": 4.5,
+      "severity": "Critical",
+      "details": "ALL mandatory sections present (H1 Title line 1, H2 Scope line 3, H2 Architecture Overview line 7, H3 Component Details line 11, H2 Traceability line 37). However, the ENTIRE document content (lines 1-251) is DUPLICATED verbatim at lines 252-502 — confirmed by diff returning zero differences. Every section appears twice, making the document 523 lines when it should be ~275. This duplication renders it professionally unusable. The prohibited adjective 'seamless' appears on lines 73 and 324 (duplicate): 'ensure seamless integration'. Passive voice is approximately 14% (10 instances / 72 sentences), barely under the 15% threshold."
+    },
+    {
+      "criterion": "PRD Traceability Matrix",
+      "score": 7.0,
+      "severity": "Medium",
+      "details": "The traceability table (lines 39-65, duplicated at 290-316) correctly uses the DB-001/KB-002 format specified in the contract. All 26 FR rows mapped to specific document sections. The Deferred Requirements subsection (lines 67-83) provides Impact, Likelihood, and Mitigation for FR6-FR10, FR22-FR30, and FR41-FR45. The 'Mitigation' text on line 73 uses the prohibited adjective 'seamless'. Coverage appears complete — no missing FR IDs in the active table."
+    },
+    {
+      "criterion": "Interface Contract Documentation",
+      "score": 6.5,
+      "severity": "High",
+      "details": "All three required elements present: (1) Database connection string format at lines 88-96 with template, example, ENV variable, and pool config. (2) KB API schemas at lines 100-177 with Vector Upsert and Query endpoints, JSON request/response bodies, and error codes. (3) Authentication mechanisms at lines 179-192 covering PostgreSQL, Pinecone, and API Gateway. CRITICAL: JSON code blocks at lines 112 and 146 contain `//` style comments (e.g., `// 1500-dimensional embedding vector`). These are INVALID JSON — the contract requires 'explicit, copy-pasteable interface definitions' and comments make them non-copy-pasteable as valid JSON."
+    },
+    {
+      "criterion": "Markdown Formatting Standards",
+      "score": 3.0,
+      "severity": "Critical",
+      "details": "Multiple persistent violations: (1) TRAILING WHITESPACE: 16 instances detected. (2) FILE DOES NOT END WITH NEWLINE: last byte is a backtick character (`) from the closing mermaid fence — no trailing newline. (3) CONTENT DUPLICATION: entire document body repeated verbatim (lines 252-502 duplicate of lines 1-251). (4) INVALID JSON IN CODE BLOCKS: `//` comments inside JSON blocks at lines 112, 146 and duplicates. (5) YAML FRONTMATTER POSITIONED AFTER CONTENT: frontmatter delimiters at lines 503-505 appear after all content instead of at document start. (6) List indentation is consistently 2-space."
+    },
+    {
+      "criterion": "Adversarial Edge Case Coverage",
+      "score": 7.0,
+      "severity": "Medium",
+      "details": "All four required failure modes documented comprehensively: (1) DB Connection Pool Exhaustion (lines 196-209): pool sizing, timeout, backoff, HTTP 503 fallback, Redis cache, specific metrics. (2) KB Vector Index Corruption/Drift (lines 210-223): health checks, S3 backups, PostgreSQL ILIKE fallback, drift monitoring. (3) Schema Migration Rollback (lines 224-237): Flyway, blue-green deployment, automatic rollback, read-only mode. (4) High Latency Fallback (lines 238-251): L1/L2 cache, stale-while-revalidate, warming, metrics. Each lists mitigation, fallback, and monitoring as required. However, the entire section is duplicated at lines 447-501."
+    }
+  ],
+  "overall_summary": "The database/c2-container.md file suffers from a catastrophic content duplication defect: the entire document body (lines 1–251) is repeated verbatim at lines 252–502, making the file 523 lines when it should be ~275. This duplication affects every section — narrative, traceability matrix, interface contracts, and failure modes — rendering the document professionally unusable. Beyond duplication: 16 trailing whitespace instances, missing trailing newline, `//` comments inside JSON code blocks making them invalid (non-copy-pasteable), the prohibited adjective 'seamless' on line 73, and YAML frontmatter positioned after content instead of at document start. The Mermaid diagram validates cleanly via mmdc with all four required containers connected, and the adversarial edge case and interface contract content (ignoring duplication) are the strongest areas. Cannot pass contract approval until duplication is eliminated and formatting issues resolved.",
+  "average_score": 6.142857142857143,
+  "passed": false
+}
