@@ -42,3 +42,19 @@
 - **Authentication**: Environment variables and Docker secrets — secure injection of API keys/secrets, encrypted at rest
 - **Error Handling**: Circuit breaker pattern — graceful degradation for Hermes agent unavailability with fallback to cached results
 - **Rate Limiting**: Token bucket algorithm — protects external services (Telegram) from abuse while allowing bursts
+
+## Sprint 5: Database + Knowledge Base
+
+- **API Gateway**: Python/FastAPI (Docker) — provides request routing, authentication, and aggregation for backend services
+- **Database**: PostgreSQL 15 (Docker) — stores structured plant data with ACID transactions and complex querying capabilities
+- **Knowledge Base**: Pinecone managed service — enables semantic search and similarity matching for plant care insights
+- **Communication Protocol**: 
+  - API Gateway to Database: PostgreSQL wire protocol (libpq)
+  - API Gateway to Knowledge Base: REST over HTTPS
+  - Client to API Gateway: HTTPS/REST with JWT authentication
+- **Data Integrity**: Connection pooling, automated backups, and migration safeguards ensure zero data loss
+- **Containerization**: Docker — consistent deployment for API Gateway and Database services
+- **Authentication**: 
+  - API Gateway to Database: Username/password via libpq
+  - API Gateway to Knowledge Base: Pinecone API key via HTTP Bearer token
+  - Client to API Gateway: JWT validation using HMAC-SHA256 secret

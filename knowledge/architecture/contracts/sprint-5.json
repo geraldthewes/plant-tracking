@@ -1,0 +1,44 @@
+{
+  "sprint_number": 5,
+  "sprint_name": "Database + Knowledge Base",
+  "files_to_produce": [
+    "database/c2-container.md"
+  ],
+  "criteria": [
+    {
+      "name": "Mermaid C4 Syntax Compliance",
+      "description": "Mermaid diagram must strictly use C4 container syntax extensions (e.g., C4Container, C4Boundary) where applicable. Syntax must validate against Mermaid v10.0+ without warnings in the live editor. Deprecated C4 syntax and non-standard elements are strictly prohibited.",
+      "threshold": 9.8
+    },
+    {
+      "name": "C4 Container Completeness",
+      "description": "Diagram must explicitly include exactly these containers: User, API Gateway, Database, Knowledge Base Vector Store. Each container must define 'Technology' and 'Description' fields. Relationships must use standard C4 types (e.g., 'Uses', 'Reads', 'Writes') and explicitly label protocols (e.g., HTTPS, JDBC, TCP).",
+      "threshold": 9.8
+    },
+    {
+      "name": "Narrative Structure & Style",
+      "description": "Document must contain mandatory sections: H1 Title, H2 Scope, H2 Architecture Overview, H3 Component Details, H2 Traceability. Passive voice usage must be strictly < 15%. All technical terms must be defined on first use. Prohibit subjective adjectives (e.g., 'robust', 'seamless', 'efficient').",
+      "threshold": 9.5
+    },
+    {
+      "name": "PRD Traceability Matrix",
+      "description": "Must include a standardized markdown table mapping PRD IDs (e.g., DB-001, KB-002) to specific document sections. Coverage must be 100% for Functional Requirements. Any non-coverage requires a formal 'Deferred' subsection with risk assessment justification.",
+      "threshold": 9.8
+    },
+    {
+      "name": "Interface Contract Documentation",
+      "description": "Must include explicit, copy-pasteable interface definitions: Database connection string format, KB API endpoint schemas (JSON examples), and authentication mechanisms. Vague references like 'see API spec' or 'standard DB calls' result in automatic rejection.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Markdown Formatting Standards",
+      "description": "Strict adherence required: No trailing whitespace, mandatory blank lines around headings, code blocks labeled with language, relative paths for assets, consistent 2-space list indentation. Run automated check for broken internal links before submission.",
+      "threshold": 9.0
+    },
+    {
+      "name": "Adversarial Edge Case Coverage",
+      "description": "Must include a 'Failure Modes' section explicitly documenting: 1. DB Connection Pool Exhaustion, 2. KB Vector Index Corruption/Drift, 3. Schema Migration Rollback, 4. High Latency Fallback (Cache miss). Each scenario must list mitigation strategy, fallback path, and specific monitoring metric/alert.",
+      "threshold": 9.5
+    }
+  ]
+}

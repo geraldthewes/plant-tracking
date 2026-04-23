@@ -1,6 +1,6 @@
 {
   "status": "running",
-  "current_sprint": 4,
+  "current_sprint": 5,
   "total_sprints": 7,
   "completed_sprints": 4,
   "total_rounds": 19,
@@ -85,7 +85,7 @@
     {
       "sprint_number": 5,
       "sprint_name": "Database + Knowledge Base",
-      "status": "pending",
+      "status": "building",
       "rounds_completed": 0,
       "consecutive_passes": 0,
       "final_score": null,

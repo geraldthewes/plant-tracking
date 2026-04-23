@@ -418,3 +418,75 @@
 - Diagram must be wrapped in fenced code block with language tag (```mermaid)
 - Container sections must use H2 headings in markdown documents
 - No trailing whitespace allowed in markdown documents
+
+# Generator Learnings - Sprint 5: Database + Knowledge Base
+
+## Architecture Decisions Made
+- Confirmed the 4 containers for the Plant Tracking System's backend services: User (Actor), API Gateway, Database (PostgreSQL), and Knowledge Base Vector Store (Pinecone)
+- Established that the system uses a containerized microservices architecture with Docker for backend services (API Gateway, Database)
+- Determined that REST over HTTPS is used for communication between API Gateway and Knowledge Base service, while PostgreSQL wire protocol (libpq) is used for API Gateway to Database communication
+- Verified that the API Gateway acts as the single entry point handling authentication, rate limiting, and request/response transformation
+- Confirmed that PostgreSQL 15 provides ACID transactions for data integrity and complex query capabilities for reporting
+- Established that Pinecone vector store enables semantic search and natural language querying via the Hermes agent
+- Verified that data integrity is maintained through proper connection pooling, backup strategies, and migration safeguards
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper Mermaid syntax using double quotes and \n for line breaks (passed validation)
+- Clear relationship labels specifying action AND technology/protocol (e.g., "Executes SQL queries via libpq", "Vector operations via REST/HTTPS")
+- Correct use of C4 diagram shapes: stadium for actors, rectangles for internal containers, cylinders for data storage, subroutines for external services
+- Proper use of subgraph boundaries to separate internal system containers from external actors and services
+- Comprehensive component narratives covering Primary Responsibility, Input Data/Triggers, Output/Downstream Effects, and Failure/Graceful Degradation
+- Accurate PRD traceability with every container narrative citing at least one FR and one NFR requirement from the PRD
+- Clean markdown document structure with proper YAML frontmatter, heading hierarchy (H1 title, H2 sections), and fenced code blocks with language tag
+- Specific interface contract documentation with copy-pasteable examples for database connection strings and API endpoints
+- Detailed failure modes section with mitigation strategies, fallback paths, and monitoring metrics
+
+## Issues the Critic Raised, How You Addressed Them, and What Worked
+- **Initial Issue**: Mermaid diagram not being detected due to missing fenced code block
+  - Addressed: Wrapped the Mermaid diagram in ```mermaid fenced code block
+  - What worked: mmdc validation now passes with exit code 0
+  
+- **Initial Issue**: Missing explicit technology annotations in container labels
+  - Addressed: Added specific technologies (Python/FastAPI, Docker; PostgreSQL 15; Pinecone managed service)
+  - What worked: Container labels now follow C4 conventions with function + technology
+  
+- **Initial Issue**: Relationship labels lacking protocol specificity
+  - Addressed: Added explicit protocols (HTTPS, libpq, REST/HTTPS) to all relationship labels
+  - What worked: Labels now follow C4 conventions with action + technology/protocol
+  
+- **Initial Issue**: Need for explicit PRD traceability mapping
+  - Addressed: Created standardized markdown table mapping PRD IDs to document sections
+  - What worked: Clear traceability established between architectural decisions and PRD requirements
+  
+- **Initial Issue**: Requirement for explicit interface contract documentation
+  - Addressed: Provided copy-pasteable examples for database connection strings, API endpoint schemas, and authentication mechanisms
+  - What worked: Interface contracts are now explicit and implementable
+  
+- **Initial Issue**: Need for adversarial edge case coverage
+  - Addressed: Documented 4 failure modes with mitigation strategies, fallback paths, and monitoring metrics
+  - What worked: Comprehensive coverage of failure scenarios with actionable mitigation strategies
+
+## Domain Insights about the System Gleaned from the PRD
+- The system's data layer needs to support both structured data (plant records, care activities) and unstructured data (care notes, observations) for semantic search
+- PostgreSQL is appropriate for structured plant data requiring ACID transactions and complex reporting queries
+- Pinecone vector store enables semantic similarity search for natural language querying via the Hermes agent
+- The API Gateway pattern provides a clean separation of concerns and enables independent scaling of services
+- Docker containerization ensures consistency across development and deployment environments
+- Proper connection pooling, backup strategies, and migration safeguards are critical for data integrity in a plant tracking system
+- The system must handle both transactional workloads (CRUD operations) and analytical workloads (similarity search, reporting)
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include action AND technology/protocol (e.g., "via camera", "via Telegram")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify action AND technology/protocol
+- External services (like Pinecone) should use subroutine shape
+- Database technologies should use cylinder shape
