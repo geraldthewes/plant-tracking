@@ -1,0 +1,58 @@
+{
+  "scores": {
+    "Mermaid C4 Syntax Compliance": 8.5,
+    "C4 Container Completeness": 7.5,
+    "Narrative Structure & Style": 9.0,
+    "PRD Traceability Matrix": 7.5,
+    "Interface Contract Documentation": 9.5,
+    "Markdown Formatting Standards": 7.0,
+    "Adversarial Edge Case Coverage": 9.5
+  },
+  "feedback": [
+    {
+      "criterion": "Mermaid C4 Syntax Compliance",
+      "score": 8.5,
+      "severity": "Medium",
+      "details": "Diagram passes mmdc validation (exit 0) and correctly uses `flowchart LR` per critic system rules. However, non-standard Mermaid node shapes are used that deviate from plain C4 container notation: (1) `user([\"User\\n(Actor)\"])` at c2-container.md:259 uses actor/person shape brackets, (2) `db[(\"PostgreSQL\\n(Primary DB)\")]` at c2-container.md:261 uses cylinder/database shape, (3) `kb[[\"Pinecone\\n(Vector Store)\"]]` at c2-container.md:262 uses queue/double-bracket shape, (4) `telegram[[\"Telegram\\n(External)\"]]` at c2-container.md:263 also uses queue shape. All nodes should use standard rectangular `[\"label\"]` notation for containers in a flowchart-based C2 diagram."
+    },
+    {
+      "criterion": "C4 Container Completeness",
+      "score": 7.5,
+      "severity": "High",
+      "details": "The four required containers are present: User (line 259), API Gateway (line 260), Database/PostgreSQL (line 261), Knowledge Base Vector Store/Pinecone (line 262). However, Telegram (line 263) is a fifth node not listed in the contract's 'exactly these containers' mandate. Each container defines Technology and Description in the narrative (lines 17-47). Relationships specify protocols well. Pinecone is correctly placed outside the system subgraph resolving the recurring antipattern. However, Telegram is referenced in the traceability table at line 82 as 'Component Details (Telegram)' but has no narrative Component Details subsection."
+    },
+    {
+      "criterion": "Narrative Structure & Style",
+      "score": 9.0,
+      "severity": "Medium",
+      "details": "All mandatory sections present: H1 Title (line 5), H2 Scope (line 7), H2 Architecture Overview (line 11), H3 Component Details (line 15), H2 Traceability (line 49). Passive voice usage is minimal (~1%). No prohibited subjective adjectives found. Technical terms are defined on first use. Minor gap: the failure section is named 'Adversarial Edge Case Coverage' (line 210) rather than the contract-required 'Failure Modes'."
+    },
+    {
+      "criterion": "PRD Traceability Matrix",
+      "score": 7.5,
+      "severity": "High",
+      "details": "The traceability table (lines 49-113) is comprehensive with 63 rows. Three persistent issues: (1) Mixed PRD ID formats — contract specifies 'DB-001, KB-002' format but the table uses both DB-001/KB-002 AND raw FR IDs (FR7, FR9, FR16 at lines 53, 55, 62) interchangeably. (2) Line 82 references 'Component Details (Telegram)' which does not exist as a narrative subsection. (3) The Deferred list at line 116 references FR50-FR55 which have no row in the main traceability matrix — orphan IDs."
+    },
+    {
+      "criterion": "Interface Contract Documentation",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All three required elements present with copy-pasteable specificity: (1) Database connection string at lines 121-125 with format, example, ENV variable, pool config. (2) KB API schemas at lines 127-196 with two full REST endpoints including HTTP methods, headers, JSON bodies, success/error responses. (3) Authentication at lines 198-208 covering PostgreSQL, Pinecone, and API Gateway. No vague references. Strongest criterion."
+    },
+    {
+      "criterion": "Markdown Formatting Standards",
+      "score": 7.0,
+      "severity": "Medium",
+      "details": "Trailing whitespace is completely eliminated (0 instances, down from 17+ in Round 7). File ends with proper newline. Code blocks labeled with `json`. However, 15 headings have content starting on the immediately next line without a separating blank line: lines 17 (### User), 25 (### API Gateway), 33 (### Database), 41 (### Knowledge Base Vector Store), 50 (## Traceability Matrix), 116 (### Deferred Requirements), 122, 129, 157, 199, 213, 224, 235, 246. Line 128 (#### Upsert Vector) has no blank line before it. Contract requires 'mandatory blank lines around headings' — 15+ violations is significant."
+    },
+    {
+      "criterion": "Adversarial Edge Case Coverage",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All four required failure modes comprehensively documented: (1) DB Connection Pool Exhaustion (lines 212-221) with pool sizing, timeout, backoff, fallback, metrics. (2) KB Vector Index Corruption/Drift (lines 223-232) with health checks, snapshots, ILIKE fallback. (3) Schema Migration Rollback (lines 234-243) with Flyway, blue-green deployment, rollback monitoring. (4) High Latency Fallback (lines 245-254) with L1+L2 cache, stale-while-revalidate, thundering herd detection. Each includes mitigation, fallback path, metrics, and alert thresholds."
+    }
+  ],
+  "overall_summary": "Round 8 shows meaningful improvement over prior Sprint 5 rounds — trailing whitespace is completely eliminated (was 17+ instances in Round 7), the Mermaid diagram validates cleanly, and the four required containers plus comprehensive failure mode coverage remain strong anchors. The document's biggest strengths are Interface Contract Documentation (9.5) and Adversarial Edge Case Coverage (9.5), both providing production-grade specificity. However, three persistent issues prevent contract approval: (1) Markdown formatting has 15+ blank-line violations around headings (score 7.0) — every component detail and failure mode heading has content starting immediately without a separating blank line; (2) The PRD Traceability Matrix uses mixed ID formats (DB-001/KB-002 alongside raw FR IDs) and references a non-existent 'Component Details (Telegram)' section while orphaning FR50-FR55 IDs; (3) The diagram uses non-standard Mermaid node shapes (actor, cylinder, queue brackets) instead of uniform rectangular container notation, and includes a Telegram node beyond the four required containers. Average score: 8.3.",
+  "average_score": 8.357142857142858,
+  "passed": false
+}
