@@ -1,10 +1,10 @@
 ---
 title: Deployment Configuration for Plant Tracking System
 version: 1.0
-prd_refs: §5.3, FR2-FR15, FR36-FR41, NFR1-NFR5
+prd_refs: §5.3, FR2-FR21, FR36-FR41, NFR1-NFR5
 ---
 
-## Overview
+# Deployment Configuration - Plant Tracking System
 
 This document specifies the deployment architecture for the Plant Tracking System's edge function system, covering authentication, horizontal scaling, observability, and fallback mechanisms. The system is designed for containerized deployment using Docker and orchestrated via Nomad/Kubernetes.
 
@@ -19,6 +19,7 @@ The system implements JWT RS256 validation for securing edge function endpoints,
   - `sub` (subject): Must correspond to registered gardener identifier
   - `exp` (expiration): Unix timestamp, must be ≤24h from issuance
   - `scope` (scope): Space-separated list of granted permissions (e.g., `qr_scan plant_read tg_webhook`)
+  - `aud` (audience): Must match `JWT_AUDIENCE` environment variable
 - **Header**: Includes `kid` (key ID) for key rotation support
 
 ### Environment Variables
@@ -27,7 +28,7 @@ The system implements JWT RS256 validation for securing edge function endpoints,
 | `JWT_ISSUER` | Expected issuer claim value | `plant-tracking-system` |
 | `JWT_AUDIENCE` | Expected audience claim value | `edge-functions` |
 | `JWT_PUBLIC_KEY` | RSA public key for verification (PEM format) | `-----BEGIN PUBLIC KEY-----\n...` |
-| `HERMES_ENDPOINT` | Hermes agent REST API URL | `https://hermes.example.com/api/v1` |
+| `HERMES_ENDPOINT` | Hermes agent REST API URL for webhook | `https://hermes.example.com/telegram/webhook` |
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot API token | `123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11` |
 
 ### Refresh Strategy
@@ -65,6 +66,7 @@ The edge function system uses Kubernetes Horizontal Pod Autoscaler (HPA) with cu
 - **Behavior**:
   - Scale-up: Max 4 replicas per minute (rapid response to traffic spikes)
   - Scale-down: Max 2 replicas per minute (gentle degradation to avoid thrashing)
+- **Rollback Policy**: On failed scale-up (pods fail to reach ready state within 3 minutes), automatically revert to previous replica count and trigger alert for manual investigation
 
 ### Load Test Configuration
 Validates 50 simultaneous QR scan peak load scenario (PRD NFR1):
@@ -144,6 +146,7 @@ Compliant with OpenTelemetry specification for comprehensive system observabilit
   - `hermes_analysis_latency_seconds`: Latency of Hermes analysis calls
   - `edge_function_errors_total`: Total errors by type and service
   - `http_requests_total`: Total HTTP requests by endpoint, method, and status
+  - `http_requests_success_total`: Total successful HTTP requests (status <400)
 - **Required Gauges**:
   - `edge_function_memory_bytes`: Memory consumption by service
   - `edge_function_cpu_utilization`: CPU utilization percentage
@@ -168,7 +171,7 @@ groups:
 - name: edge-function-alerts
   rules:
   - alert: HighErrorRate
-    expr: rate(edge_function_errors_total[5m]) > 0.05  # >5% 5xx errors
+    expr: rate(edge_function_errors_total[5m]) / rate(http_requests_total[5m]) > 0.05  # >5% 5xx errors
     for: 2m
     labels:
       severity: critical
@@ -199,21 +202,35 @@ groups:
 
 | PRD Requirement | Implementation Detail | Location/Reference |
 |-----------------|----------------------|-------------------|
-| FR12: QR scan retrieval | QR Scan Function decodes QR and retrieves plant record | Container diagram: user → api_gw → qr_scan_func → plant_data |
-| FR13: Natural language queries | Telegram Webhook Function processes messages via Hermes | Container diagram: telegram_api → tg_webhook_func → hermes |
-| FR14: Data comparison | Hermes agent provides comparative analysis | Container diagram: hermes ↔ tg_webhook_func |
-| FR15: Progress tracking | Plant data storage maintains temporal history | Plant Data Storage node showing CRUD operations |
-| FR36: Telegram integration | Official Telegram Bot API webhook | telegram_api external node |
-| FR37: Hermes analysis requests | HTTPS/REST requests to Hermes agent | tg_webhook_func → hermes edges |
-| FR38: Comparative analysis | Hermes agent returns comparison results | hermes → tg_webhook_func edge |
-| FR39: Predictive insights | Hermes agent provides recommendations | hermes → tg_webhook_func edge |
-| FR40: Multimodal Hermes | Designed for future voice/image via same API | hermes external node (extensible) |
-| FR41: Data retrieval for analysis | Plant data accessible to Hermes via webhook | tg_webhook_func → plant_data edge |
-| NFR1: QR scan performance ≤3s | Load test validates <3s 95th percentile | Load test configuration section |
-| NFR2: Hermes insights ≤10s | Metrics track hermes_analysis_latency_seconds | Metrics endpoint specification |
-| NFR3: Data entry ≤2s | Optimized function implementations | Technology choices rationale |
-| NFR4: Data integrity | Atomic file operations + PostgreSQL ACID | Plant Data Storage node description |
-| NFR5: Usability in garden conditions | Mobile-optimized API responses | Edge API Gateway design |
+| FR2: QR label generation | QR Generate Function creates QR code images encoding plant IDs | Container diagram: id_user → id_api_gw → id_qr_gen → id_api_gw → id_user |
+| FR3: Label attachment/printing | QR code image sent to gardener's device for Phomemo M120 printing | Container diagram: id_api_gw → id_user (Returns QR code image via HTTP) |
+| FR6: Plant record creation | Plant data storage maintains structured format for core attributes | Plant Data Storage node description |
+| FR7: Structured data storage | Plant data stored in markdown/PostgreSQL with defined schema | Plant Data Storage node description |
+| FR8: Timestamped notes/observations | Plant records support timed observations and care activities | Plant Data Storage node description |
+| FR9: Photo attachment capability | Plant records support binary data storage for photos | Plant Data Storage node description |
+| FR10: Record updates over time | Plant data storage supports CRUD operations for evolving records | Plant Data Storage node description |
+| FR11: Searchable database format | Plant data storage enables querying by various criteria | Plant Data Storage node description |
+| FR12: QR scan retrieval | QR Scan Function decodes QR and retrieves plant record | Container diagram: id_user → id_api_gw → id_qr_scan → id_plant_data → id_api_gw → id_user |
+| FR13: Natural language queries | Telegram Webhook Function processes messages via Hermes | Container diagram: id_telegram → id_tg_webhook → id_hermes |
+| FR14: Data comparison | Hermes agent provides comparative analysis between plants | Container diagram: id_hermes ↔ id_tg_webhook (Provides comparative analysis) |
+| FR15: Progress tracking | Hermes agent analyzes temporal patterns in plant care data | Container diagram: id_hermes ↔ id_tg_webhook (Tracks progress over time) |
+| FR16: Data filtering | Plant data storage supports filtering by date, variety, location, etc. | Plant Data Storage node description |
+| FR17: Data-driven insights | Hermes agent identifies patterns and correlations in plant care data | Container diagram: id_hermes ↔ id_tg_webhook (Detects patterns and correlations) |
+| FR18: Root cause analysis | Hermes agent determines underlying causes of plant issues | Container diagram: id_hermes ↔ id_tg_webhook (Identifies root causes) |
+| FR19: Progress over time tracking | Hermes agent tracks plant development stages and milestones | Container diagram: id_hermes ↔ id_tg_webhook (Tracks progress over time) |
+| FR20: Personalized recommendations | Hermes agent delivers care recommendations based on plant history | Container diagram: id_hermes ↔ id_tg_webhook (Provides care recommendations) |
+| FR21: Pattern detection | Hermes agent identifies care patterns and their effectiveness | Container diagram: id_hermes ↔ id_tg_webhook (Detects patterns and correlations) |
+| FR36: Telegram integration | Official Telegram Bot API webhook endpoint | Hermes agent webhook: `HERMES_ENDPOINT` environment variable |
+| FR37: Hermes analysis requests | HTTPS/REST requests to Hermes agent for plant data analysis | Container diagram: id_tg_webhook → id_hermes (Requests analysis via HTTPS/REST) |
+| FR38: Comparative analysis | Hermes agent returns comparison results between plants/time periods | Container diagram: id_hermes → id_tg_webhook (Returns analysis via HTTPS/REST) |
+| FR39: Predictive insights | Hermes agent provides forecasting and predictive recommendations | Container diagram: id_hermes → id_tg_webhook (Returns analysis via HTTPS/REST) |
+| FR40: Multimodal Hermes | Designed for future voice/image via same API extensibility | Hermes agent external node (extensible for voice/image) |
+| FR41: Data retrieval for analysis | Plant data accessible to Hermes agent via webhook function | Container diagram: id_tg_webhook → id_plant_data (Retrieves plant record) |
+| NFR1: QR scan performance ≤3s | Load test validates <3s 95th percentile under peak load | Load test configuration section |
+| NFR2: Hermes insights ≤10s | Metrics track hermes_analysis_latency_seconds for performance monitoring | Metrics endpoint specification |
+| NFR3: Data entry ≤2s | Optimized function implementations minimize processing overhead | Technology choices rationale |
+| NFR4: Data integrity | Atomic file operations + PostgreSQL ACID transactions | Plant Data Storage node description |
+| NFR5: Usability in garden conditions | Mobile-optimized API responses with minimal payloads | Edge API Gateway design |
 
 ## Edge Case: Hermes Agent Fallback Documentation
 
@@ -294,6 +311,7 @@ sequenceDiagram
 - [ ] Configure JWT public key from Hermes agent in `JWT_PUBLIC_KEY`
 - [ ] Set `JWT_ISSUER` and `JWT_AUDIENCE` environment variables
 - [ ] Configure Telegram bot token in `TELEGRAM_BOT_TOKEN`
+- [ ] Set `HERMES_ENDPOINT` for Telegram webhook integration
 - [ ] Set up HTTPS certificates for edge function endpoints
 - [ ] Deploy Prometheus Grafana stack for observability
 - [ ] Configure HPA with custom metrics adapter
