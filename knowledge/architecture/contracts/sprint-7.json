@@ -1,0 +1,49 @@
+{
+  "sprint_number": 7,
+  "sprint_name": "ADRs + Cross-Cutting Concerns",
+  "files_to_produce": [
+    "decisions/"
+  ],
+  "criteria": [
+    {
+      "name": "ADR File Naming Convention",
+      "description": "Filenames must strictly match regex ^ADR-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\\.md$. Sequential numbers must be zero-padded, increment by exactly 1 from 0001, and contain no gaps or duplicates across the decisions/ directory.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Required ADR Sections Presence & Content",
+      "description": "Each file must contain exactly these H2 headings: ## Status, ## Context, ## Decision, ## Consequences. No additional H2 headings allowed. Each section must contain at least 50 words of non-whitespace content. Validated via markdownlint MD022/MD024.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Mermaid Diagram Syntax Validity",
+      "description": "Every code block fenced with ```mermaid must pass validation via `mmdc -i <file> -o /dev/null -v` returning exit code 0 with zero syntax warnings or errors.",
+      "threshold": 10.0
+    },
+    {
+      "name": "C4 Diagram Completeness",
+      "description": "C4 diagrams must use standard C4-Mermaid syntax. Context diagrams must include ≥1 Person and ≥1 System nodes. Container diagrams must include ≥1 Container and ≥1 Database/External node. Component diagrams must include ≥1 Component per container. All relationship edges must have explicit text labels (e.g., uses, depends on).",
+      "threshold": 9.5
+    },
+    {
+      "name": "Non-Functional Requirements Traceability",
+      "description": "Each ADR must include a ## Related NFRs subsection containing at least one identifier matching regex NFR-[A-Z]+-[0-9]{2}. All identifiers must exist in the project's nfr_catalog.json file. Cross-references will be validated programmatically.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Markdown Heading Hierarchy & Formatting",
+      "description": "Headings must be strictly sequential (no skipping levels). H1 must be Title Case, H2 and H3 must be sentence case. Files must pass markdownlint with rules MD001, MD022, MD023 enabled and zero warnings.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Relationship Documentation Accuracy",
+      "description": "A ### Relationships subsection must exist directly under ## Status. Must use exact phrases: Supersedes ADR-XXXX, Superseded by ADR-XXXX, Relates to ADR-XXXX, or None. All referenced ADR-XXXX files must physically exist in the decisions/ directory.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Decision Record Structure & Trade-off Analysis",
+      "description": "The ## Decision section must begin with We decided to or We chose. Must include a ### Alternatives Considered list with ≥2 bullet points. Must include a ### Trade-offs subsection explicitly detailing ≥1 pro and ≥1 con for the selected option versus each alternative.",
+      "threshold": 9.5
+    }
+  ]
+}
