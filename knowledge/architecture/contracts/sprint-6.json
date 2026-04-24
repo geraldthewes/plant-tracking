@@ -1,0 +1,45 @@
+{
+  "sprint_number": 6,
+  "sprint_name": "Edge Functions / Deployment / Auth / Scaling / Observability",
+  "files_to_produce": [
+    "edge-functions/c2-container.md",
+    "deployment.md"
+  ],
+  "criteria": [
+    {
+      "name": "C4 Container Diagram Validity",
+      "description": "The Mermaid C4 container diagram in edge-functions/c2-container.md must pass `mmdc` CLI validation with exit code 0, include all containers from PRD §5.3 with node IDs formatted as `id_<SECTION>_<NAME>`, display correct technology labels, depict dependencies as labeled arrows, and include a cross-reference table mapping each arrow to a specific data flow requirement.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Deployment Auth Mechanism Specification",
+      "description": "deployment.md must specify exact auth mechanism (JWT RS256 validation via Hermes agent), define required claims (iss, sub, exp, scope), set token expiration ≤24h, detail refresh strategy (rotation on use), list exact environment variable names (e.g., JWT_ISSUER, JWT_AUDIENCE), and include a threat model subsection proving prevention of unauthorized QR scan data injection per PRD FR36-FR40.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Horizontal Scaling Configuration",
+      "description": "deployment.md must define concrete scaling parameters: autoscaler type (KEDA/HPA), min=1/max=10 replicas, CPU>70% or memory>80% sustained for 2 minutes, 5-minute cooldown, explicit rollback policy on failed scale-up, and include a load test configuration snippet validating the 50 simultaneous QR scan peak load scenario.",
+      "threshold": 9.0
+    },
+    {
+      "name": "Observability Implementation Completeness",
+      "description": "deployment.md must detail observability stack compliant with OpenTelemetry: JSON logging with traceID/correlationID, /metrics endpoint exposing specific counters (qr_scans_total, hermes_analysis_latency), W3C tracecontext propagation validation, explicit Prometheus alert rule YAML for >5% 5xx errors and p95>2s latency, and define log retention policy (≥30 days).",
+      "threshold": 9.0
+    },
+    {
+      "name": "PRD Accuracy for Edge Function Responsibilities",
+      "description": "Both files must include an explicit traceability table mapping PRD FR12-FR15 and FR17-FR21 to exact config keys or diagram nodes, show edge function as data access layer in c2-container.md, specify Hermes agent Telegram webhook endpoint in deployment.md, reference plant records markdown storage per FR7-FR11, and use anchor cross-links (e.g., #fr12) for all requirements.",
+      "threshold": 9.5
+    },
+    {
+      "name": "Markdown Readability & Linting Standards",
+      "description": "Both markdown files must pass `markdownlint` with rules MD009, MD047, MD013 (max 100 chars), MD031 (2-space blank lines), MD033 (inline HTML disabled), include YAML frontmatter with title/version/prd_refs, use H1-H3 hierarchy without skips, format lists with 2-space indentation, label code blocks with language identifiers, and contain zero trailing whitespace.",
+      "threshold": 9.0
+    },
+    {
+      "name": "Edge Case: Hermes Agent Fallback Documentation",
+      "description": "deployment.md must document fallback behavior per PRD Risk Mitigation #3: specify offline mode (local markdown storage only), queue mechanism (Redis/file-based) with explicit depth limit (≤1000) and exponential backoff retry formula (2^attempt * 1s, max 60s), user notification method (Telegram message 'Analysis delayed'), provide an idempotency key format for queued requests, and include a sequence diagram validating data integrity (FR6-FR11) preservation.",
+      "threshold": 9.0
+    }
+  ]
+}
