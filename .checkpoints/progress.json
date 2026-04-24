@@ -2,8 +2,8 @@
   "status": "running",
   "current_sprint": 6,
   "total_sprints": 7,
-  "completed_sprints": 5,
-  "total_rounds": 31,
+  "completed_sprints": 6,
+  "total_rounds": 32,
   "started_at": "2026-04-21T09:42:13.815362Z",
   "seed": 1776764533,
   "sprint_statuses": [
@@ -103,10 +103,10 @@
     {
       "sprint_number": 6,
       "sprint_name": "Edge Functions / Deployment / Auth / Scaling / Observability",
-      "status": "building",
-      "rounds_completed": 2,
+      "status": "passed",
+      "rounds_completed": 3,
       "consecutive_passes": 0,
-      "final_score": null,
+      "final_score": 7.642857142857143,
       "best_round": 2,
       "best_scores": {
         "C4 Container Diagram Validity": 7.5,
