@@ -73,3 +73,9 @@
   - API Gateway to Database: Username/password via libpq
   - API Gateway to Knowledge Base: Pinecone API key via Bearer token
   - Client to API Gateway: JWT validation (HS256, 1-hour expiry)
+
+## Sprint 7: ADRs + Cross-Cutting Concerns
+- **System Boundary Definition**: C1 Context Diagram — established core system vs external systems (Hermes, Phomemo, Seed Packet, Weather)
+- **Data Storage Approach**: Local markdown files with Postgres migration path — human-readable MVP storage
+- **Container Architecture**: Microservices with Docker — independent deployment and scaling of services
+- **Frontend Technology Stack**: Next.js with React (web MVP), React Native [Post-MVP] — performance and accessibility

@@ -3,7 +3,7 @@
   "current_sprint": 7,
   "total_sprints": 7,
   "completed_sprints": 6,
-  "total_rounds": 32,
+  "total_rounds": 33,
   "started_at": "2026-04-21T09:42:13.815362Z",
   "seed": 1776764533,
   "sprint_statuses": [
@@ -122,11 +122,20 @@
       "sprint_number": 7,
       "sprint_name": "ADRs + Cross-Cutting Concerns",
       "status": "building",
-      "rounds_completed": 0,
+      "rounds_completed": 1,
       "consecutive_passes": 0,
       "final_score": null,
-      "best_round": null,
-      "best_scores": null
+      "best_round": 1,
+      "best_scores": {
+        "ADR File Naming Convention": 1.0,
+        "Required ADR Sections Presence & Content": 1.0,
+        "Mermaid Diagram Syntax Validity": 2.0,
+        "C4 Diagram Completeness": 1.0,
+        "Non-Functional Requirements Traceability": 1.0,
+        "Markdown Heading Hierarchy & Formatting": 1.0,
+        "Relationship Documentation Accuracy": 1.0,
+        "Decision Record Structure & Trade-off Analysis": 1.0
+      }
     }
   ]
 }

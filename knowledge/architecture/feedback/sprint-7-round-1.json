@@ -1,0 +1,65 @@
+{
+  "scores": {
+    "ADR File Naming Convention": 1.0,
+    "Required ADR Sections Presence & Content": 1.0,
+    "Mermaid Diagram Syntax Validity": 2.0,
+    "C4 Diagram Completeness": 1.0,
+    "Non-Functional Requirements Traceability": 1.0,
+    "Markdown Heading Hierarchy & Formatting": 1.0,
+    "Relationship Documentation Accuracy": 1.0,
+    "Decision Record Structure & Trade-off Analysis": 1.0
+  },
+  "feedback": [
+    {
+      "criterion": "ADR File Naming Convention",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "The `decisions/` directory does not exist. Zero ADR files are present. The regex `^ADR-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\\.md$` cannot be validated against any files. No sequential numbering, no files at all."
+    },
+    {
+      "criterion": "Required ADR Sections Presence & Content",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "No ADR files exist. The required H2 headings (## Status, ## Context, ## Decision, ## Consequences) are absent. Zero words of content. Complete non-delivery."
+    },
+    {
+      "criterion": "Mermaid Diagram Syntax Validity",
+      "score": 2.0,
+      "severity": "Critical",
+      "details": "No Mermaid code blocks exist in any file because no files exist. Cannot validate syntax with `mmdc`. This criterion cannot pass by definition."
+    },
+    {
+      "criterion": "C4 Diagram Completeness",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "No C4 diagrams exist. No Person, System, Container, Database, External, or Component nodes. No relationship edges with labels. Entirely missing."
+    },
+    {
+      "criterion": "Non-Functional Requirements Traceability",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "No `## Related NFRs` subsections exist. No identifiers matching `NFR-[A-Z]+-[0-9]{2}` found. Additionally, the project's `nfr_catalog.json` file does not exist anywhere in the repository, so even if references were present they could not be validated."
+    },
+    {
+      "criterion": "Markdown Heading Hierarchy & Formatting",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "No markdown files exist to validate. MD001, MD022, MD023 rules cannot pass. No H1 Title Case, no H2/H3 sentence case. Nothing to lint."
+    },
+    {
+      "criterion": "Relationship Documentation Accuracy",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "No `### Relationships` subsection exists under any `## Status` section. No Supersedes/Superseded by/Relates to/None phrases. The entire structure is absent."
+    },
+    {
+      "criterion": "Decision Record Structure & Trade-off Analysis",
+      "score": 1.0,
+      "severity": "Critical",
+      "details": "No `## Decision` sections exist. No 'We decided to' or 'We chose' statements. No `### Alternatives Considered` lists. No `### Trade-offs` subsections with pros and cons. Complete non-delivery."
+    }
+  ],
+  "overall_summary": "Sprint 7 \"ADRs + Cross-Cutting Concerns\" has zero deliverables. The `decisions/` directory does not exist within `knowledge/architecture/`. No ADR files, no Mermaid diagrams, no NFR catalog, no documentation of any kind was produced. Additionally, the `nfr_catalog.json` referenced by the traceability criterion is missing from the entire project. The `knowledge/architecture/` directory contains only an empty `database/` subdirectory. Every criterion scores 1 (Failed) as there is literally nothing to evaluate. This is a total sprint miss requiring immediate remediation before any meaningful review can occur.",
+  "average_score": 1.125,
+  "passed": false
+}

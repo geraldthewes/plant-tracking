@@ -1,0 +1,9 @@
+{
+  "NFR-USAB-01": "The interface should be usable in outdoor garden conditions with varying light levels (bright sun to shade). Core functions (scan QR, add note, take photo) should be accessible within 2 taps from the main screen. Text should be readable without zoom in typical outdoor lighting conditions. Touch targets should be appropriately sized for use with gardening gloves or in variable conditions.",
+  "NFR-PERF-01": "QR code scanning and plant data retrieval should complete within 3 seconds for optimal user experience in garden settings.",
+  "NFR-PERF-02": "Hermes agent queries should return insights within 10 seconds for natural conversation flow.",
+  "NFR-RELI-01": "The system should maintain data integrity with zero lost or corrupted plant records under normal usage conditions. QR code scanning should work successfully in 95%+ of attempts under typical garden lighting conditions. Label printing via Phomemo M120 should succeed in 90%+ of attempts when printer is properly connected and charged. Data should be recoverable from backups in case of device failure or data corruption.",
+  "NFR-DATA-02": "Users should be able to export their complete plant database in standard formats (CSV, JSON). Import functionality should support standard data formats for migration or recovery. Data should be migratable from markdown storage to Postgres format without loss of information.",
+  "NFR-MAINT-01": "Data format should be human-readable and editable for manual correction when needed. System should allow for graceful degradation when optional features (like Hermes agent) are unavailable.",
+  "NFR-DATA-03": "Data should be migratable from markdown storage to Postgres format without loss of information. Users should be able to backup and restore plant databases."
+}

@@ -298,3 +298,9 @@ that caused the regression. Check critic-history.md for what the critic flagged.
 **Files modified**: sprint-6-round-2-log.json, sprint-6-round-2.json, .#2026-04-22-PROJ-0001-create-plant-and-print-label.md, progress.json, critic-history.md, generator-history.md, architect-run-20260423-201535.log
 **Token usage**: 0
 ---
+
+## Sprint 7 · Round 1 — 2026-04-24 06:13:40 UTC
+**Feedback addressed**: First round — no prior feedback
+**Files modified**: sprint-7.json, sprint-06-documentation.md, .#2026-04-22-PROJ-0001-create-plant-and-print-label.md, progress.json, architect-run-20260423-201535.log
+**Token usage**: 0
+---
