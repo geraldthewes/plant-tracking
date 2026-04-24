@@ -451,3 +451,17 @@
 - [Critical] Decision Record Structure & Trade-off Analysis (1.0/10): No `## Decision` sections exist. No 'We decided to' or 'We chose' statements. No `### Alternatives Considered` lists. No `### Trade-offs` subsections with pros and cons. Complete non-delivery.
 **Summary**: Sprint 7 "ADRs + Cross-Cutting Concerns" has zero deliverables. The `decisions/` directory does not exist within `knowledge/architecture/`. No ADR files, no Mermaid diagrams, no NFR catalog, no documentation of any kind was produced. Additionally, the `nfr_catalog.json` referenced by the traceabilit
 ---
+
+## Sprint 7 · Round 2 — 2026-04-24 14:15:58 UTC
+**Score**: 5.0/10  **Passed**: No
+**Concerns**:
+- [Low] ADR File Naming Convention (9.5/10): All 5 files pass the regex ^ADR-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\.md$. Sequential numbering 0001-0005 with no gaps or duplicates. This is the strongest criterion in the sprint.
+- [Critical] Required ADR Sections Presence & Content (2.5/10): Two fundamental failures across all 5 files. (1) Extra H2 headings: The contract mandates exactly 4 H2 headings (## Status, ## Context, ## Decision, ## Consequences). Every file contains additional H2
+- [Low] Mermaid Diagram Syntax Validity (10.0/10): All files with mermaid code blocks (ADR-0002, ADR-0003) pass mmdc validation with exit code 0. Files without mermaid blocks (ADR-0001, ADR-0004, ADR-0005) pass vacuously — the contract states 'Every c
+- [High] C4 Diagram Completeness (4.0/10): Multiple issues: (1) ADR-0003 container diagram has an orphan node — `printer` ('Print Service') at line 57 has an outbound edge to `phomemo` (line 72) but no inbound edge from any other container wit
+- [Medium] Non-Functional Requirements Traceability (6.0/10): All ADRs contain NFR identifiers matching NFR-[A-Z]+-[0-9]{2} and all referenced IDs exist in nfr_catalog.json. However, the contract specifies 'a ## Related NFRs subsection' — implying it should be a
+- [Critical] Markdown Heading Hierarchy & Formatting (3.0/10): Multiple markdownlint failures: (1) MD025 — Multiple top-level headings in ADR-0003:5, ADR-0004:5, ADR-0005:5 (YAML frontmatter title conflicts with H1 heading). ADR-0001 and ADR-0002 lack frontmatter
+- [Critical] Relationship Documentation Accuracy (2.0/10): Two failures: (1) The contract requires 'A ### Relationships subsection must exist directly under ## Status.' In all 5 files, 'Relationships' appears as a standalone H2 (## Relationships) at the end o
+- [Critical] Decision Record Structure & Trade-off Analysis (3.0/10): Partial compliance: (1) All files contain 'We chose to' at the start of the Decision section — ADR-0001:27, ADR-0002:13, ADR-0003:14, ADR-0004:22, ADR-0005:22. This passes the opening phrase requireme
+**Summary**: Sprint 7 shows dramatic improvement from Round 1 (1.1/10 — zero files existed) to having 5 ADR files with valid naming, passing Mermaid syntax, and valid NFR cross-references. However, the delivery is fundamentally incomplete against the sprint contract. Every single ADR file fails the 'exactly 4 H2
+---
