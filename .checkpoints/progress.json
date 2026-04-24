@@ -3,7 +3,7 @@
   "current_sprint": 6,
   "total_sprints": 7,
   "completed_sprints": 5,
-  "total_rounds": 30,
+  "total_rounds": 31,
   "started_at": "2026-04-21T09:42:13.815362Z",
   "seed": 1776764533,
   "sprint_statuses": [
@@ -104,17 +104,17 @@
       "sprint_number": 6,
       "sprint_name": "Edge Functions / Deployment / Auth / Scaling / Observability",
       "status": "building",
-      "rounds_completed": 1,
+      "rounds_completed": 2,
       "consecutive_passes": 0,
       "final_score": null,
-      "best_round": 1,
+      "best_round": 2,
       "best_scores": {
-        "C4 Container Diagram Validity": 6.5,
+        "C4 Container Diagram Validity": 7.5,
         "Deployment Auth Mechanism Specification": 9.0,
-        "Horizontal Scaling Configuration": 7.0,
+        "Horizontal Scaling Configuration": 9.0,
         "Observability Implementation Completeness": 9.0,
-        "PRD Accuracy for Edge Function Responsibilities": 5.5,
-        "Markdown Readability & Linting Standards": 3.0,
+        "PRD Accuracy for Edge Function Responsibilities": 6.5,
+        "Markdown Readability & Linting Standards": 4.0,
         "Edge Case: Hermes Agent Fallback Documentation": 9.0
       }
     },
