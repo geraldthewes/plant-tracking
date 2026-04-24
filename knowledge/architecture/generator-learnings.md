@@ -862,3 +862,31 @@ These improvements addressed all critic feedback points and brought the document
 - Database technologies should use cylinder shape
 - Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per system requirements)
 - Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
+
+## Round 8 Specific Learnings from Critic Feedback
+In Round 8, I addressed specific critic feedback on the ADR files:
+
+### Architecture Improvements Made:
+- Fixed heading case in ADR-0002 through ADR-0005 (changed from lowercase to proper sentence case for H2 and H3 headings)
+- Added proper blank lines around all headings and code blocks to satisfy MD022 requirements
+- Added missing "### Alternatives Considered" and "### Trade-offs" sections to ADR-0004
+- Moved "### Related NFRs" subsection to be under "## Consequences" in all ADRs (was incorrectly placed under Status in ADR-0003)
+- Changed "## related nfrs" and "## diagram" headings to proper casing and placement
+- Enhanced NFR references with specific explanations of how each architectural decision relates to the requirement
+- Fixed relationship documentation to use exact phrase "None" with proper casing
+- Ensured all diagrams validate with mmdc (exit code 0)
+- Verified C4 diagram completeness: C1 diagrams include ≥1 Person and ≥1 System nodes; C2 diagrams include ≥1 Container and ≥1 Database/External node; all relationship edges have explicit text labels
+
+### Markdown Formatting Improvements:
+- Fixed systematic missing blank lines around headings throughout all ADR files
+- Ensured proper heading hierarchy (no skipping levels)
+- Fixed inconsistent blank lines around headings
+- Ensured file ends with single newline character
+- Removed all trailing whitespace
+
+### PRD Traceability Enhancements:
+- Added detailed explanations for each NFR reference showing how the architectural decision addresses the requirement
+- Ensured all NFR IDs exist in nfr_catalog.json and are valid references
+- Maintained proper placement of Related NFRs subsection under Consequences
+
+These improvements addressed all critic feedback points from Round 3 and brought the ADR files into full compliance with the Sprint 7 contract requirements.

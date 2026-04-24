@@ -2,6 +2,7 @@
 
 ## Status
 Accepted - This technology stack selection has been reviewed and approved as the foundation for the Plant Tracking System. The decision represents a careful balance between development efficiency, system capabilities, and long-term maintainability. The selected technologies align with the project's greenfield nature and single developer constraints while providing a clear migration path for future enhancements. This ADR establishes the foundational architectural decisions that will guide all subsequent technical implementations.
+
 ### Relationships
 None
 
@@ -52,7 +53,7 @@ We chose to use a hybrid technology stack consisting of:
 - Bluetooth printing reliability varies across devices
 
 ### Related NFRs
-- NFR-PERF-02: Hermes agent queries should return insights within 10 seconds
-- NFR-RELI-01: System should maintain data integrity with zero lost records
-- NFR-DATA-02: Users should export/import data in standard formats
-- NFR-MAINT-01: System should allow graceful degradation when optional features unavailable
+- NFR-PERF-02: Hermes agent queries should return insights within 10 seconds - Ensures timely responses from the AI agent for effective user interaction
+- NFR-RELI-01: System should maintain data integrity with zero lost records - Requires that plant data is never lost or corrupted during storage operations
+- NFR-DATA-02: Users should export/import data in standard formats - Specifies that data must be exportable/importable in formats like CSV or JSON
+- NFR-MAINT-01: System should allow graceful degradation when optional features unavailable - Requires system to function when Hermes agent or other optional services are unavailable

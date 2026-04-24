@@ -1,0 +1,65 @@
+{
+  "scores": {
+    "ADR File Naming Convention": 9.5,
+    "Required ADR Sections Presence & Content": 4.0,
+    "Mermaid Diagram Syntax Validity": 10.0,
+    "C4 Diagram Completeness": 6.0,
+    "Non-Functional Requirements Traceability": 6.5,
+    "Markdown Heading Hierarchy & Formatting": 3.0,
+    "Relationship Documentation Accuracy": 7.0,
+    "Decision Record Structure & Trade-off Analysis": 5.0
+  },
+  "feedback": [
+    {
+      "criterion": "ADR File Naming Convention",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All 5 filenames match the required regex ^ADR-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\\.md$. Sequential numbering 0001-0005 with no gaps or duplicates. No issues found."
+    },
+    {
+      "criterion": "Required ADR Sections Presence & Content",
+      "score": 4.0,
+      "severity": "Critical",
+      "details": "Multiple violations of the required H2 sections. The contract mandates exactly four H2 headings: ## Status, ## Context, ## Decision, ## Consequences with no additional H2s.\n\n- ADR-0002 (line 51): Contains extra H2 `## related nfrs` — not one of the four allowed headings. Also contains extra H2 `## diagram` (line 56).\n- ADR-0003 (line 65): Contains extra H2 `## diagram` — not an allowed heading.\n- ADR-0004 and ADR-0005: All H2 headings are lowercase (`## status`, `## context`, `## decision`, `## consequences`) instead of the required capitalized form (`## Status`, `## Context`, `## Decision`, `## Consequences`). Only ADR-0001 uses the correct casing.\n- ADR-0002's `## related nfrs` section (lines 52-54) has only ~25 words, below the 50-word minimum.\n- ADR-0003's `## diagram` section is an entirely extraneous top-level heading."
+    },
+    {
+      "criterion": "Mermaid Diagram Syntax Validity",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All mermaid diagrams pass `mmdc` validation with exit code 0. Three files (ADR-0002, ADR-0003, ADR-0004) each contain one valid mermaid chart. ADR-0001 and ADR-0005 contain no mermaid code blocks, which is vacuously compliant. No syntax warnings or errors."
+    },
+    {
+      "criterion": "C4 Diagram Completeness",
+      "score": 6.0,
+      "severity": "High",
+      "details": "Several issues with C4 diagram completeness:\n\n- ADR-0002 (system context): Contains Person node (gardener) and System node — meets context diagram minimums. However, the edge `gardener --> hermes` (line 73) connects an actor directly to an external system, bypassing the Plant Tracking System.\n- ADR-0003 (container): Uses `subgraph sys[\"Plant Tracking System\"]` which is good. Containers have technology annotations ✓. Has Database node ✓. All edges have labels ✓.\n- ADR-0004 (frontend): Diagram shows gardener as Person shape — correct. Camera and storage use external system shape — correct.\n- All diagrams use `flowchart LR` format which is the required format."
+    },
+    {
+      "criterion": "Non-Functional Requirements Traceability",
+      "score": 6.5,
+      "severity": "High",
+      "details": "Most NFR references are valid and exist in nfr_catalog.json. Issues:\n\n- ADR-0002 (line 51): The NFR section appears as `## related nfrs` (an H2 heading) instead of the required `### Related NFRs` (H3 subsection under ## Consequences).\n- ADR-0003 (line 13): Has `### related nfrs` but it appears under `## status` section (between relationships and context), not under `## Consequences` where it belongs.\n- ADR-0004 (line 43) and ADR-0005 (line 63): Have `### related nfrs` under `## consequences` — correct placement but lowercase heading.\n- All NFR IDs referenced (NFR-USAB-01, NFR-PERF-02, NFR-RELI-01, NFR-DATA-02, NFR-MAINT-01) exist in nfr_catalog.json — cross-references are valid."
+    },
+    {
+      "criterion": "Markdown Heading Hierarchy & Formatting",
+      "score": 3.0,
+      "severity": "Critical",
+      "details": "Severe and pervasive markdownlint violations across ALL five files:\n\n- MD022 (blanks-around-headings): Every single file has heading adjacency violations. Nearly every H2 and H3 heading is missing a blank line before or after it. For example, ADR-0001 line 3: `## Status` immediately followed by content. ADR-0001 line 5: `### Relationships` has no blank line above or below. This is a universal pattern across all 5 files.\n- H2 heading case: ADR-0002 through ADR-0005 use lowercase H2 headings (`## status`, `## context`, `## decision`, `## consequences`) which violates the requirement. Only ADR-0001 uses correct casing.\n- H3 heading case: All files use either Title Case (ADR-0001: `### Relationships`) or lowercase (ADR-0002+: `### relationships`). Contract requires sentence case.\n- ADR-0003 (line 1): Has YAML frontmatter before the H1, creating an MD025 violation (multiple top-level headings).\n- No MD023 (heading hierarchy skip) violations found."
+    },
+    {
+      "criterion": "Relationship Documentation Accuracy",
+      "score": 7.0,
+      "severity": "Medium",
+      "details": "All five ADRs contain a Relationships subsection directly under the Status section with 'None' as the value.\n\n- ADR-0001 (line 5): `### Relationships` — correct placement, correct casing ✓\n- ADR-0002 through ADR-0005: Use `### relationships` (lowercase) — inconsistent with the required phrase format.\n- No ADR references another ADR (all say 'None'), which is valid. No broken cross-references.\n- The contract specifies exact phrases: 'Supersedes ADR-XXXX', 'Superseded by ADR-XXXX', 'Relates to ADR-XXXX', or 'None'. 'None' is used correctly."
+    },
+    {
+      "criterion": "Decision Record Structure & Trade-off Analysis",
+      "score": 5.0,
+      "severity": "High",
+      "details": "Critical missing sections in ADR-0004:\n\n- All ADRs begin the Decision section with 'We chose to...' — correct ✓\n- ADR-0001: Has `### Alternatives Considered` (3 items) and `### Trade-offs` (with pros/cons) ✓\n- ADR-0002: Has `### alternatives considered` (3 items) and `### trade-offs` ✓\n- ADR-0003: Has `### alternatives considered` (3 items) and `### trade-offs` ✓\n- ADR-0004: MISSING both `### Alternatives Considered` and `### Trade-offs` entirely. No alternatives list and no trade-off analysis. This is a fundamental omission. ✗\n- ADR-0005: Has `### alternatives considered` (4 items) and `### trade-offs` ✓"
+    }
+  ],
+  "overall_summary": "This Round 3 delivery shows mixed quality with two critical failures and one critical pass. The strongest areas are ADR file naming (all 5 files correctly formatted with sequential numbering 0001-0005) and Mermaid syntax (all diagrams validate cleanly via mmdc). The weakest areas are Markdown formatting (pervasive MD022 blank-line violations across all 5 files — every heading is missing surrounding blank lines, producing hundreds of violations) and Required ADR Sections (ADR-0002 and ADR-0003 have forbidden extra H2 headings like `## related nfrs` and `## diagram`, while ADR-0004 through ADR-0005 use lowercase H2 headings instead of the required capitalized form). ADR-0004 is the most structurally deficient — it entirely lacks `### Alternatives Considered` and `### Trade-offs` subsections, making it an incomplete decision record. The NFR traceability section is misplaced in ADR-0003 (appears under Status instead of Consequences) and promoted to an H2 in ADR-0002.",
+  "average_score": 6.375,
+  "passed": false
+}

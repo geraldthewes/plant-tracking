@@ -75,9 +75,11 @@
   - Client to API Gateway: JWT validation (HS256, 1-hour expiry)
 
 ## Sprint 7: ADRs + Cross-Cutting Concerns
-- **System Boundary Definition**: C1 Context Diagram — established core system vs external systems (Hermes, Phomemo, Seed Packet, Weather)
-- **Data Storage Approach**: Local markdown files with Postgres migration path — human-readable MVP storage
-- **Container Architecture**: Microservices with Docker — independent deployment and scaling of services
-- **Frontend Technology Stack**: Next.js with React (web MVP), React Native [Post-MVP] — performance and accessibility
-- **Technology Stack Selection**: Hybrid stack (Next.js/React frontend, Python/FastAPI backend, Docker containers) — leverages developer familiarity and enables rapid prototyping
-- **Backend Technology Stack**: Python/FastAPI microservices with Docker — high-performance APIs with automatic documentation and async capabilities
+- Technology Stack: Hybrid (Next.js/React frontend, Python/FastAPI backend) — Leverages existing expertise and enables rapid web prototyping
+- Frontend MVP: Next.js with React and TypeScript — Provides excellent developer experience and performance for web interface
+- Frontend Post-MVP: React Native with TypeScript — Enables cross-platform mobile access with native device capabilities
+- Backend: Python 3.9+ with FastAPI running in Docker containers — High performance with async capabilities and rich ecosystem for integrations
+- Data Storage (MVP): Local markdown files — Human-readable and easy to backup with clear migration path to PostgreSQL
+- AI Integration: Hermes agent accessed via Telegram Bot API — Provides sophisticated AI capabilities without custom UI
+- Device Integration: Python libraries for Bluetooth communication with Phomemo M120 — Reliable connectivity for label printing in garden environments
+- QR Handling: Client-side QR code generation and scanning libraries — Eliminates need for separate QR service container
