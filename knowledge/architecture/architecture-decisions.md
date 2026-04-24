@@ -79,3 +79,5 @@
 - **Data Storage Approach**: Local markdown files with Postgres migration path — human-readable MVP storage
 - **Container Architecture**: Microservices with Docker — independent deployment and scaling of services
 - **Frontend Technology Stack**: Next.js with React (web MVP), React Native [Post-MVP] — performance and accessibility
+- **Technology Stack Selection**: Hybrid stack (Next.js/React frontend, Python/FastAPI backend, Docker containers) — leverages developer familiarity and enables rapid prototyping
+- **Backend Technology Stack**: Python/FastAPI microservices with Docker — high-performance APIs with automatic documentation and async capabilities

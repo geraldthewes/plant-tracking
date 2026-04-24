@@ -774,3 +774,91 @@ These improvements addressed all critic feedback points and brought the document
 4. **Technical Term Definition**: Define all acronyms and technical terms on first use with parenthetical explanations
 5. **Passive Voice Reduction**: Actively monitor and reduce passive voice usage to stay under 15% threshold
 6. **Paragraph Length**: Keep paragraphs to 3-5 sentences for readability in both raw and rendered markdown
+
+## Generator Learnings - Sprint 7: ADRs + Cross-Cutting Concerns
+
+### Architecture Decisions Made
+- Established proper ADR file naming convention with zero-padded sequential numbers (ADR-0001, ADR-0002, etc.)
+- Created system context diagram (C1) showing core system boundary with external entities (Gardener, Hermes Agent, Phomemo Printer, Seed Packet Data, Weather Service)
+- Created container diagram (C2) showing deployable building blocks (Mobile App Frontend, QR Code Service, Print Service, Data Storage Service, Hermes Agent Interface) with technology annotations
+- Selected hybrid technology stack: Next.js/React frontend, Python/FastAPI backend, Docker containers, markdown storage (MVP) with Postgres migration path
+- Selected frontend technology stack: Next.js with React/TypeScript for web MVP, React Native [Post-MVP] for mobile app
+- Selected backend technology stack: Python 3.9+ with FastAPI, Docker containerization, REST/HTTPS communication, Python libraries for QR/Bluetooth/Telegram integration
+
+### Patterns and Approaches that Scored Well with the Critic
+- Proper ADR file naming following ^ADR-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\.md$ convention
+- Correct Mermaid syntax using double quotes and \n for line breaks (passed validation via mmdc)
+- Clear relationship labels specifying action AND technology/protocol (e.g., "Enters seed packet data via manual input")
+- Proper use of C4 diagram shapes: stadium for actors, rectangles for internal system/containers, subroutines for external systems, cylinders for data storage
+- Proper use of subgraph boundaries to separate internal system from external entities
+- Comprehensive ADR sections: Status, Context, Decision, Consequences, Related NFRs, Relationships, Diagram
+- Accurate PRD traceability with explicit references to functional and non-functional requirements
+- Clean markdown document structure with proper YAML frontmatter, heading hierarchy, and fenced code blocks
+- Inclusion of Related NFRs subsection with valid identifiers from nfr_catalog.json
+
+### Issues the Critic Raised from Previous Sprints, How We Addressed Them, and What Worked
+- **Critical - ADR File Naming Convention**: 
+  - Issue: Zero ADR files existed in previous sprint
+  - Addressed: Created properly named ADR files with sequential zero-padded numbers starting from 0001
+  - What worked: All ADR files now pass the naming convention validation
+  
+- **Critical - Required ADR Sections Presence & Content**:
+  - Issue: No ADR sections existed previously
+  - Addressed: Implemented all required H2 headings (## Status, ## Context, ## Decision, ## Consequences) with at least 50 words each
+  - What worked: ADR sections now meet content and formatting requirements
+  
+- **Critical - Mermaid Diagram Syntax Validity**:
+  - Issue: No Mermaid diagrams existed previously
+  - Addressed: Created valid Mermaid diagrams in all ADRs and validated with mmdc (exit code 0)
+  - What worked: All Mermaid diagrams now pass syntax validation
+  
+- **Critical - C4 Diagram Completeness**:
+  - Issue: No C4 diagram elements existed previously
+  - Addressed: Ensured C1 diagrams include ≥1 Person and ≥1 System nodes; C2 diagrams include ≥1 Container and ≥1 Database/External node; all relationship edges have explicit text labels
+  - What worked: C4 diagrams now meet completeness requirements
+  
+- **Critical - Non-Functional Requirements Traceability**:
+  - Issue: No NFR references existed and nfr_catalog.json was missing
+  - Addressed: Created nfr_catalog.json and added ## Related NFRs subsections with valid identifiers (NFR-USAB-01, NFR-PERF-02, etc.)
+  - What worked: NFR traceability now passes validation
+  
+- **Critical - Markdown Heading Hierarchy & Formatting**:
+  - Issue: No markdown files existed to validate formatting rules
+  - Addressed: Ensured proper heading hierarchy (no skipping levels), Title Case H1, sentence case H2/H3, and compliance with markdownlint rules MD001, MD022, MD023
+  - What worked: ADR files now pass markdownlint validation
+  
+- **Critical - Relationship Documentation Accuracy**:
+  - Issue: No Relationships subsection existed previously
+  - Addressed: Added ### Relationships subsection under ## Status with exact phrases (None for initial ADRs as they don't supersede or relate to others yet)
+  - What worked: Relationship documentation now meets accuracy requirements
+  
+- **Critical - Decision Record Structure & Trade-off Analysis**:
+  - Issue: No Decision section structure existed previously
+  - Addressed: Implemented ## Decision sections beginning with "We chose" or "We decided to", included ### Alternatives Considered lists with ≥2 bullet points, and ### Trade-offs subsections detailing pros and cons
+  - What worked: Decision record structure now meets all requirements
+
+### Domain Insights about the System Gleaned from the PRD and Sprint Work
+- The system's architecture must clearly separate internal concerns (frontend, backend services) from external dependencies (Hermes agent, Phomemo printer, Telegram service)
+- Technology stack decisions should leverage developer familiarity while providing migration paths for future scaling (markdown → PostgreSQL)
+- C4 diagramming at appropriate levels (C1 for stakeholder understanding, C2 for developer onboarding) enables effective communication
+- ADR creation provides lightweight, decision-focused documentation that complements detailed implementation specifications
+- Non-functional requirements must be explicitly traced to architectural decisions to ensure they're addressed
+- Clear system boundaries help manage complexity and define scope for MVP vs Post-MVP features
+
+### Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include action AND technology/protocol (e.g., "via camera", "via Telegram")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify action AND technology/protocol
+- External services (like Telegram, Pinecone) should use subroutine shape
+- Database technologies should use cylinder shape
+- Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per system requirements)
+- Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics

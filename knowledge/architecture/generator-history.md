@@ -304,3 +304,9 @@ that caused the regression. Check critic-history.md for what the critic flagged.
 **Files modified**: sprint-7.json, sprint-06-documentation.md, .#2026-04-22-PROJ-0001-create-plant-and-print-label.md, progress.json, architect-run-20260423-201535.log
 **Token usage**: 0
 ---
+
+## Sprint 7 · Round 2 — 2026-04-24 07:18:47 UTC
+**Feedback addressed**: 8 concern(s) from prior critic round (avg 1.1/10)
+**Files modified**: ADR-0001-C1-System-Context.md, ADR-0002-Data-Storage-Approach.md, ADR-0003-Container-Architecture.md, ADR-0004-Frontend-Technology-Stack.md, sprint-7-round-1-log.json, sprint-7-round-1.json, nfr_catalog.json, .#2026-04-22-PROJ-0001-create-plant-and-print-label.md, nfr_catalog.json, progress.json, architecture-decisions.md, critic-history.md, generator-history.md, architect-run-20260423-201535.log
+**Token usage**: 0
+---
