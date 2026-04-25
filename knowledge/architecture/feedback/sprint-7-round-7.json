@@ -1,0 +1,65 @@
+{
+  "scores": {
+    "ADR File Naming Convention": 10.0,
+    "Required ADR Sections Presence & Content": 10.0,
+    "Mermaid Diagram Syntax Validity": 10.0,
+    "C4 Diagram Completeness": 9.5,
+    "Non-Functional Requirements Traceability": 9.5,
+    "Markdown Heading Hierarchy & Formatting": 5.0,
+    "Relationship Documentation Accuracy": 10.0,
+    "Decision Record Structure & Trade-off Analysis": 10.0
+  },
+  "feedback": [
+    {
+      "criterion": "ADR File Naming Convention",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All 6 filenames strictly match the regex ^ADR-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\\.md$. Sequential numbering 0001–0006 with no gaps or duplicates. Perfect compliance."
+    },
+    {
+      "criterion": "Required ADR Sections Presence & Content",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All 6 files contain exactly the 4 required H2 headings (## Status, ## Context, ## Decision, ## Consequences) with no additional H2 headings. All sections exceed 50 words: minimum observed is 60 words (ADR-0004 ## Status). Word counts range from 60–441 across all sections. MD022/MD024 validation: no duplicate H2 headings detected."
+    },
+    {
+      "criterion": "Mermaid Diagram Syntax Validity",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All Mermaid code blocks pass mmdc validation with exit code 0 and zero warnings. ADR-0002, ADR-0003, ADR-0004 each contain 1 valid mermaid chart. ADR-0001, ADR-0005, ADR-0006 contain no mermaid code blocks (vacuously satisfied). No syntax errors detected."
+    },
+    {
+      "criterion": "C4 Diagram Completeness",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "ADR-0002 (context diagram): contains gardener (Person/Actor) node and Plant Tracking System node plus 4 external system nodes. All 6 edges carry explicit protocol labels (e.g., 'Enters seed packet data via manual input', 'Queries Hermes agent via Telegram'). ADR-0003 (container diagram): contains 5 containers within subgraph boundary (frontend, qr, printer, storage, hermes_interface), 1 database node (db), and 3 external nodes. All 11 edges have explicit labels with protocol. ADR-0004 diagram: contains Person node and system/external nodes with labeled edges. Minor deduction because ADR-0001, ADR-0005, and ADR-0006 contain no C4 diagrams, so the completeness criteria cannot be verified for those decisions."
+    },
+    {
+      "criterion": "Non-Functional Requirements Traceability",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All 6 ADRs include a ### Related NFRs subsection with valid NFR identifiers. All referenced IDs (NFR-USAB-01, NFR-RELI-01, NFR-MAINT-01, NFR-PERF-02, NFR-DATA-02, NFR-DATA-03) exist in nfr_catalog.json. No invalid or hallucinated NFR references found. Minor deduction: the contract specifies '## Related NFRs' (H2) but all files correctly use '### Related NFRs' (H3) since criterion 2 prohibits additional H2 headings."
+    },
+    {
+      "criterion": "Markdown Heading Hierarchy & Formatting",
+      "score": 5.0,
+      "severity": "Critical",
+      "details": "CRITICAL FAILURE: The contract mandates 'zero warnings' for MD001, MD022, MD023 — but ADR-0005 fails MD022 with 2 errors: (1) decisions/ADR-0005-backend-technology-stack.md:57 — '### positive' heading not surrounded by blank lines (below), (2) decisions/ADR-0005-backend-technology-stack.md:65 — '### negative' heading not surrounded by blank lines (below). Additionally, H3 sentence case is violated in ADR-0005: '### positive' (line 57) and '### negative' (line 65) use lowercase first letters instead of sentence case ('Positive', 'Negative'). ADR-0006 has H3 headings with trailing colons ('### MVP Implementation Details:' at line 49, '### Migration Design:' at line 58) which trigger MD026. H1 Title Case is correct across all files. Heading hierarchy (no level skipping) is correct — all files follow H1→H2→H3 sequentially."
+    },
+    {
+      "criterion": "Relationship Documentation Accuracy",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All 6 files contain ### Relationships as the first H3 subsection directly under ## Status. Five files (ADR-0001 through ADR-0005) use the exact phrase 'None'. ADR-0006 uses 'Relates to ADR-0001 (Technology Stack Selection) and ADR-0005 (Backend Technology Stack)' — both referenced ADR files physically exist in the decisions/ directory. All relationship phrases match the required exact phrases."
+    },
+    {
+      "criterion": "Decision Record Structure & Trade-off Analysis",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All 6 files begin the ## Decision section with 'We chose to'. All files contain ### Alternatives Considered with ≥2 bullet points (range: 3–5 alternatives). All files contain ### Trade-offs with explicit Pros and Cons for the selected option AND for each alternative. Trade-off analysis is thorough and specific to each decision context."
+    }
+  ],
+  "overall_summary": "The ADR set is structurally sound with excellent decision records, complete trade-off analysis, valid NFR traceability, and clean relationship documentation. All Mermaid diagrams pass mmdc validation, and C4 diagrams in ADR-0002 and ADR-0003 meet completeness requirements. The single critical failure is in Markdown Heading Hierarchy & Formatting: ADR-0005 fails the mandatory 'zero warnings' requirement for MD022 with 2 blank-line-around-headings violations (lines 57, 65), and its '### positive'/'### negative' headings violate sentence case rules. ADR-0006 has minor heading issues with trailing colons. Five of six files pass all contract-specified lint rules; only ADR-0005 fails, dragging the criterion below the 9.5 threshold. Note the recurring pattern from critic history: markdownlint formatting issues have plagued this project since Sprint 1, persisting through 8 rounds of feedback across multiple sprints — this is a systemic quality issue that deserves architectural attention.",
+  "average_score": 9.25,
+  "passed": false
+}

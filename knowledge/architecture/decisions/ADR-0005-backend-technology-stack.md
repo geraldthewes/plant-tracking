@@ -54,7 +54,8 @@ We chose to use:
 
 ## Consequences
 
-### positive
+### Positive
+
 - Leverages developer familiarity with Python ecosystem
 - FastAPI provides high performance and automatic API documentation
 - Docker ensures consistent environments and easy deployment
@@ -62,7 +63,8 @@ We chose to use:
 - Rich Python libraries for QR, Bluetooth, and Telegram integration
 - Clear migration path from markdown to PostgreSQL
 
-### negative
+### Negative
+
 - Python may have higher memory usage than some alternatives (e.g., Go)
 - Asynchronous programming requires learning curve for some developers
 - Docker adds complexity for simple deployment

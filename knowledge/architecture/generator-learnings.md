@@ -982,6 +982,10 @@ These improvements addressed all critic feedback points and brought the document
 - Selected hybrid technology stack: Next.js/React frontend, Python/FastAPI backend, Docker containers, markdown storage (MVP) with Postgres migration path
 - Selected frontend technology stack: Next.js with React/TypeScript for web MVP, React Native [Post-MVP] for mobile app
 - Selected backend technology stack: Python 3.9+ with FastAPI, Docker containerization, REST/HTTPS communication, Python libraries for QR/Bluetooth/Telegram integration
+- Fixed critical markdown formatting issues in ADR-0005 and ADR-0006:
+  * Resolved MD022 violations in ADR-0005 by adding proper blank lines around "### Positive" and "### Negative" headings
+  * Corrected MD023 violations in ADR-0005 by changing heading case from lowercase to sentence case ("positive" → "Positive", "negative" → "Negative")
+  * Fixed MD026 violations in ADR-0006 by removing trailing colons from H3 headings ("### MVP Implementation Details:" → "### MVP Implementation Details", "### Migration Design:" → "### Migration Design")
 
 ### Patterns and Approaches that Scored Well with the Critic
 - Proper ADR file naming following ^ADR-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\.md$ convention

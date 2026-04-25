@@ -46,7 +46,7 @@ We chose to implement a phased data persistence strategy:
   - *Pros*: Flexible schema, good for unstructured data, horizontal scaling
   - *Cons*: Eventual consistency model, lacks ACID guarantees, unfamiliar querying syntax
 
-### MVP Implementation Details:
+### Mvp implementation details
 
 - Each plant record stored as individual markdown file: `plants/PLANT-ID.md`
 - Structured frontmatter (YAML) for metadata: variety names, dates, IDs, etc.
@@ -55,7 +55,7 @@ We chose to implement a phased data persistence strategy:
 - File-based locking mechanism to prevent concurrent write conflicts
 - Regular automated backups to JSON format for migration readiness
 
-### Migration Design:
+### Migration Design
 
 - Frontmatter fields map directly to PostgreSQL columns
 - Markdown body content stored in TEXT column for observations
