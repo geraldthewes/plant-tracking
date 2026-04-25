@@ -1,15 +1,20 @@
 # Backend Technology Stack for Plant Tracking System
 
+
 ## Status
+
 Accepted - We need to select the backend technology stack for the Plant Tracking System that supports RESTful API for frontend communication, QR code generation, Bluetooth communication with Phomemo M120 printer, data storage and retrieval (initially markdown, later PostgreSQL), integration with Hermes agent via Telegram Bot API, and Docker containerization for consistent deployment. The backend must be maintainable by a single developer and leverage familiar technologies. This decision impacts the system's performance, scalability, and maintainability while establishing the foundation for all backend services.
 
 ### Relationships
+
 None
 
 ## Context
+
 We need to select the backend technology stack for the Plant Tracking System that supports RESTful API for frontend communication, QR code generation, Bluetooth communication with Phomemo M120 printer, data storage and retrieval (initially markdown, later PostgreSQL), integration with Hermes agent via Telegram Bot API, and Docker containerization for consistent deployment. The backend must be maintainable by a single developer and leverage familiar technologies. This selection impacts the system's performance, scalability, and maintainability while establishing the foundation for all backend services.
 
 ## Decision
+
 We chose to use:
 - **Language**: Python 3.9+
 - **Framework**: FastAPI for high-performance, async-capable REST APIs
@@ -23,12 +28,14 @@ We chose to use:
 - **API Documentation**: OpenAPI/Swagger via FastAPI automatic docs
 
 ### Alternatives Considered
+
 - **Node.js/Express**: JavaScript backend with Express framework - Rejected because it would split the developer's expertise and limit access to Python-specific libraries for Bluetooth and QR generation
 - **Go/Gin**: Go language with Gin framework - Rejected due to learning curve and fewer mature libraries for Telegram integration compared to Python
 - **Django**: Python Django framework - Rejected because it's heavier than needed for our microservices approach and includes ORM we don't need initially
 - **Monolithic Python**: Single Python application instead of microservices - Rejected because it doesn't support independent scaling and deployment of services
 
 ### Trade-offs
+
 - **Selected Approach (Python/FastAPI/Microservices)**:
   - *Pros*: Leverages existing Python expertise, high performance with async capabilities, automatic API documentation, rich ecosystem for required integrations
   - *Cons*: Requires managing multiple containers, potential overhead from containerization
@@ -46,6 +53,7 @@ We chose to use:
   - *Cons*: Scaling bottlenecks, technology lock-in, harder to maintain as system grows
 
 ## Consequences
+
 ### positive
 - Leverages developer familiarity with Python ecosystem
 - FastAPI provides high performance and automatic API documentation
@@ -61,6 +69,7 @@ We chose to use:
 - Bluetooth library compatibility may vary across Linux distributions
 
 ### Related NFRs
+
 - NFR-PERF-02: Hermes agent queries return insights within 10 seconds
 - NFR-RELI-01: Data integrity with zero lost records
 - NFR-DATA-02: Export/import functionality in standard formats
