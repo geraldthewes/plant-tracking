@@ -1,9 +1,9 @@
 # Backend Technology Stack for Plant Tracking System
 
-## status
+## Status
 Accepted - We need to select the backend technology stack for the Plant Tracking System that supports RESTful API for frontend communication, QR code generation, Bluetooth communication with Phomemo M120 printer, data storage and retrieval (initially markdown, later PostgreSQL), integration with Hermes agent via Telegram Bot API, and Docker containerization for consistent deployment. The backend must be maintainable by a single developer and leverage familiar technologies. This decision impacts the system's performance, scalability, and maintainability while establishing the foundation for all backend services.
 
-### relationships
+### Relationships
 None
 
 ## context

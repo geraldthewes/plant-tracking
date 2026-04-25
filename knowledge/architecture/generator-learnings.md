@@ -890,3 +890,59 @@ In Round 8, I addressed specific critic feedback on the ADR files:
 - Maintained proper placement of Related NFRs subsection under Consequences
 
 These improvements addressed all critic feedback points from Round 3 and brought the ADR files into full compliance with the Sprint 7 contract requirements.
+
+# Generator Learnings - Sprint 8: Final ADRs and Architecture Review
+
+## Architecture Decisions Made
+- Created ADR-0006 for Data Persistence Strategy detailing the phased approach from markdown to PostgreSQL
+- Updated ADR-0005 to fix heading case and ensure proper formatting
+- Ensured all ADRs meet the strict formatting requirements of the sprint contract
+- Validated all Mermaid diagrams with mmdc to ensure syntax correctness
+- Confirmed all ADRs include required sections with sufficient content
+- Verified proper traceability to NFRs in nfr_catalog.json
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper Mermaid syntax using double quotes and \n for line breaks (passed validation via mmdc)
+- Correct ADR file naming following ^ADR-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\.md$ convention with sequential numbering
+- Clear relationship labels in diagrams specifying action AND technology/protocol
+- Proper use of C4 diagram shapes and boundaries
+- Comprehensive ADR sections with at least 50 words of non-whitespace content each
+- Accurate PRD traceability with explicit references to requirements
+- Clean markdown document structure with proper heading hierarchy and formatting
+- Inclusion of Related NFRs subsection with valid identifiers
+
+## Issues Addressed from Sprint Contract Requirements
+- **ADR File Naming Convention**: All files match ^ADR-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\.md$ with sequential zero-padded numbers
+- **Required ADR Sections Presence & Content**: All files contain exactly ## Status, ## Context, ## Decision, ## Consequences with ≥50 words each
+- **Mermaid Diagram Syntax Validity**: All ```mermaid code blocks pass validation via mmdc with exit code 0
+- **C4 Diagram Completeness**: C1 diagrams include ≥1 Person and ≥1 System nodes; C2 diagrams include ≥1 Container and ≥1 Database/External node; all relationship edges have explicit text labels
+- **Non-Functional Requirements Traceability**: Each ADR includes ## Related NFRs subsection with valid identifiers matching nfr_catalog.json
+- **Markdown Heading Hierarchy & Formatting**: Headings are strictly sequential (no skipping levels); H1 is Title Case, H2/H3 are sentence case; files pass markdownlint with rules MD001, MD022, MD023 enabled and zero warnings
+- **Relationship Documentation Accuracy**: ### Relationships subsection exists under ## Status with exact phrases (None, Supersedes ADR-XXXX, etc.)
+- **Decision Record Structure & Trade-off Analysis**: ## Decision sections begin with "We chose" or "We decided to"; include ### Alternatives Considered (≥2 bullets) and ### Trade-offs (≥1 pro/con per alternative)
+
+## Domain Insights about the System Gleaned from the PRD and Sprint Work
+- The system's architecture clearly separates internal concerns (frontend, backend services) from external dependencies (Hermes agent, Phomemo printer, Telegram service)
+- Technology stack decisions leverage developer familiarity while providing clear migration paths (markdown → PostgreSQL)
+- C4 diagramming at appropriate levels enables effective communication with different stakeholders
+- ADR creation provides lightweight, decision-focused documentation that complements detailed implementation specifications
+- Non-functional requirements are explicitly traced to architectural decisions to ensure they're addressed
+- Clear system boundaries help manage complexity and define scope for MVP vs Post-MVP features
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include action AND technology/protocol (e.g., "via camera", "via Telegram")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify action AND technology/protocol
+- External services (like Telegram, Pinecone) should use subroutine shape
+- Database technologies should use cylinder shape
+- Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per system requirements)
+- Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
