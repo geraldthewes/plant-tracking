@@ -21,7 +21,7 @@ We chose to implement a phased data persistence strategy:
 - **Future Phase**: PostgreSQL database with JSONB fields for flexible schema and vector extension for Hermes agent integration
 - **Backup Strategy**: Regular exports to JSON/CSV with version-controlled markdown repository as primary backup
 
-### Alternatives Considered
+### Alternatives considered
 
 - **Pure Markdown Storage**: Keep all data in markdown files indefinitely - Rejected because it would limit querying capabilities and scalability as the system grows
 - **Immediate PostgreSQL**: Start with PostgreSQL from day one - Rejected because it adds unnecessary complexity for MVP and delays initial deployment
@@ -46,7 +46,7 @@ We chose to implement a phased data persistence strategy:
   - *Pros*: Flexible schema, good for unstructured data, horizontal scaling
   - *Cons*: Eventual consistency model, lacks ACID guarantees, unfamiliar querying syntax
 
-### MVP Implementation Details:
+### Mvp implementation details:
 
 - Each plant record stored as individual markdown file: `plants/PLANT-ID.md`
 - Structured frontmatter (YAML) for metadata: variety names, dates, IDs, etc.
@@ -55,7 +55,7 @@ We chose to implement a phased data persistence strategy:
 - File-based locking mechanism to prevent concurrent write conflicts
 - Regular automated backups to JSON format for migration readiness
 
-### Migration Design:
+### Migration design:
 
 - Frontmatter fields map directly to PostgreSQL columns
 - Markdown body content stored in TEXT column for observations
@@ -82,7 +82,7 @@ We chose to implement a phased data persistence strategy:
 - Migration effort required when moving to PostgreSQL
 - No built-in querying capabilities beyond grep-like text search in MVP
 
-### Related NFRs
+### Related nfrs
 
 - NFR-DATA-02: Users should be able to export their complete plant database in standard formats (CSV, JSON) - The markdown structure is designed for easy conversion to CSV/JSON, and regular automated exports fulfill this requirement
 - NFR-DATA-03: Data should be migratable from markdown storage to Postgres format without loss of information - The structured frontmatter and consistent formatting ensure lossless migration is possible

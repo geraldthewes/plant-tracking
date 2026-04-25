@@ -88,6 +88,8 @@
 - Data Persistence Strategy: Phased approach from markdown to PostgreSQL — Human-readable MVP with clear migration path to robust storage
 - ADR-0006: Data Persistence Strategy document — Defines structured markdown format designed for seamless migration to PostgreSQL
 - Updated ADR-0005: Fixed heading case and ensured proper formatting compliance
+- Fixed heading case in all ADR files (ADR-0001 through ADR-0006) to meet contract requirements (Title Case H1, sentence case H2/H3)
+- Updated C4 diagrams in ADR-0002, ADR-0003, and ADR-0004 to use standard C4-Mermaid element types (Person, System, Container, Database)
+- Validated all Mermaid diagrams with mmdc (exit code 0) ensuring syntax correctness
 - Architecture Review: Validated all ADRs meet sprint contract requirements including naming conventions, section content, diagram validity, and NFR traceability
-- Mermaid Diagram Validation: All C4 diagrams validated with mmdc (exit code 0) ensuring syntax correctness
 - NFR Traceability: All ADRs include proper ## Related NFRs subsections with valid identifiers from nfr_catalog.json

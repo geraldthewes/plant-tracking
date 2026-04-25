@@ -346,3 +346,18 @@ that caused the regression. Check critic-history.md for what the critic flagged.
 **Files modified**: sprint-7-round-6-log.json, sprint-7-round-6.json, .#2026-04-22-PROJ-0001-create-plant-and-print-label.md, notes.md, progress.json, plant_tracking_cli.cpython-313.pyc, critic-history.md, ADR-0001-C1-System-Context.md, ADR-0001-technology-stack-selection.md, ADR-0002-Data-Storage-Approach.md, ADR-0002-system-context.md, ADR-0003-Container-Architecture.md, ADR-0003-container-diagram.md, ADR-0004-Frontend-Technology-Stack.md, ADR-0004-frontend-technology-stack.md, ADR-0005-backend-technology-stack.md, ADR-0006-data-persistence-strategy.md, generator-history.md, architect-run-20260425-075609.log, test_plant_tracking.cpython-313-pytest-9.0.1.pyc
 **Token usage**: 0
 ---
+
+## Sprint 7 · Round 8 — 2026-04-25 17:07:26 UTC
+**Feedback addressed**: 8 concern(s) from prior critic round (avg 9.2/10)
+**Files modified**: sprint-7-round-7-log.json, sprint-7-round-7.json, .#2026-04-22-PROJ-0001-create-plant-and-print-label.md, progress.json, architecture-decisions.md, critic-history.md, ADR-0001-C1-System-Context.md, ADR-0002-Data-Storage-Approach.md, ADR-0003-Container-Architecture.md, ADR-0004-Frontend-Technology-Stack.md, ADR-0005-backend-technology-stack.md, ADR-0006-data-persistence-strategy.md, generator-history.md, generator-learnings.md, architect-run-20260425-075609.log
+**Token usage**: 0
+---
+
+## [ROLLBACK] Sprint 7 · Round 8 — 2026-04-25 17:45:00 UTC
+**Action**: Architecture files reverted to best-scoring commit
+**Reason**: Score regressed 8.4/10 vs best 9.2/10
+**Reverted to commit**: `cd47b92a8f79`
+**What this means**: The files you see now reflect the best architecture so far.
+Your next round should build on this baseline — do NOT reintroduce the changes
+that caused the regression. Check critic-history.md for what the critic flagged.
+---

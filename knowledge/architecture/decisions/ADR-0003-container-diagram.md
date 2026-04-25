@@ -28,7 +28,7 @@ We chose to model the following containers:
 - **Hermes Agent Interface**: Communicates with Hermes agent via Telegram Bot API
 - **External Systems**: Telegram Service, Phomemo M120 Printer, Seed Packet Data Source
 
-### Alternatives Considered
+### Alternatives considered
 
 - **Monolithic Container**: All functionality in a single container - Rejected because it would hinder independent scaling and deployment
 - **Functional Containers per FR**: One container per functional requirement - Rejected because it would create excessive granularity and communication overhead
@@ -66,7 +66,7 @@ We chose to model the following containers:
 - Requires service discovery and load balancing considerations
 - Data consistency challenges across services
 
-### Related NFRs
+### Related nfrs
 
 - NFR-PERF-02: Hermes agent queries return insights within 10 seconds - Ensures timely responses from the AI agent for effective user interaction
 - NFR-RELI-01: Data integrity with zero lost records - Requires that plant data is never lost or corrupted during storage operations
@@ -77,31 +77,29 @@ We chose to model the following containers:
 ---
 title: C2 Container Diagram for Plant Tracking System
 ---
-flowchart LR
-    gardener(["Gardener\n(Actor)"])
+C4Container
+    Person(gardener, "Gardener", "The home gardener who uses the system")
+    System_Boundary(plant_tracking_system, "Plant Tracking System") {
+        Container(frontend, "Mobile App Frontend", "Next.js/React, Docker", "Web interface for data entry and retrieval")
+        Container(qr_service, "QR Code Service", "Python, Docker", "Generates QR codes for plant IDs")
+        Container(print_service, "Print Service", "Python, Docker", "Handles Bluetooth communication with Phomemo M120 printer")
+        Container(data_storage, "Data Storage Service", "Python, Docker", "Manages plant records in markdown files")
+        Container(hermes_interface, "Hermes Agent Interface", "Python, Docker", "Communicates with Hermes agent via Telegram Bot API")
+        ContainerDb(db, "Markdown Storage", "Local Files", "Storage for plant records")
+    }
+    System_Ext(telegram, "Telegram Service", "External messaging platform")
+    System_Ext(phomemo, "Phomemo M120 Printer", "External Bluetooth label printer")
+    System_Ext(seed, "Seed Packet Data Source", "External source of variety information")
 
-    subgraph sys["Plant Tracking System"]
-        frontend["Mobile App Frontend\n(Next.js/React, Docker)"]
-        qr["QR Code Service\n(Python, Docker)"]
-        printer["Print Service\n(Python, Docker)"]
-        storage["Data Storage Service\n(Python, Docker)"]
-        hermes_interface["Hermes Agent Interface\n(Python, Docker)"]
-        db[("Markdown Storage\n(Local Files)")]
-    end
-
-    telegram[["Telegram Service\n(External)"]]
-    phomemo[["Phomemo M120 Printer\n(External)"]]
-    seed[["Seed Packet Data Source\n(External)"]]
-
-    gardener -->|"Uses interface via HTTPS"| frontend
-    frontend -->|"Requests QR code via REST/HTTPS"| qr
-    frontend -->|"Submits plant data via REST/HTTPS"| storage
-    frontend -->|"Queries Hermes agent via REST/HTTPS"| hermes_interface
-    frontend -->|"Sends print request (label data) via REST/HTTPS"| printer
-    qr -->|"Returns QR code via REST/HTTPS"| frontend
-    printer -->|"Prints label via Bluetooth"| phomemo
-    storage -->|"Reads/writes plant data via file I/O"| db
-    hermes_interface -->|"Sends queries via Telegram Bot API"| telegram
-    hermes_interface -->|"Receives insights via Telegram Bot API"| telegram
-    storage -.->|"Retrieves variety information from"| seed
+    Rel(gardener, frontend, "Uses interface via HTTPS")
+    Rel(frontend, qr_service, "Requests QR code via REST/HTTPS")
+    Rel(frontend, data_storage, "Submits plant data via REST/HTTPS")
+    Rel(frontend, hermes_interface, "Queries Hermes agent via REST/HTTPS")
+    Rel(frontend, print_service, "Sends print request (label data) via REST/HTTPS")
+    Rel(qr_service, frontend, "Returns QR code via REST/HTTPS")
+    Rel(print_service, phomemo, "Prints label via Bluetooth")
+    Rel(data_storage, db, "Reads/writes plant data via file I/O")
+    Rel(hermes_interface, telegram, "Sends queries via Telegram Bot API")
+    Rel(hermes_interface, telegram, "Receives insights via Telegram Bot API")
+    Rel_R(data_storage, seed, "Retrieves variety information from")
 ```

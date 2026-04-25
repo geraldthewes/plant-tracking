@@ -31,7 +31,7 @@ We chose to use:
   - Form handling with React Hook Form
   - Date handling with date-fns
 
-### Alternatives Considered
+### Alternatives considered
 
 - **Monolithic Frontend**: Single technology stack for web and mobile - Rejected because it would limit access to native device capabilities on mobile and provide suboptimal web performance
 - **Separate Stacks**: Completely different technologies for web (Vue/Angular) and mobile (Swift/Kotlin) - Rejected because it would increase development effort and prevent code sharing
@@ -69,7 +69,7 @@ We chose to use:
 - Maintaining two codebases (web and mobile) increases development effort
 - React Native requires native toolchain setup (Xcode, Android Studio) which may increase setup time
 
-### Related NFRs
+### Related nfrs
 
 - NFR-USAB-01: Interface usable in outdoor garden conditions - Ensures the frontend works in various lighting conditions (bright sun to shade) for gardener usability
 - NFR-PERF-02: Hermes agent queries return insights within 10 seconds - Requires responsive frontend that doesn't add unnecessary latency to AI interactions
@@ -82,15 +82,17 @@ We chose to use:
 ---
 title: ADR-0004 Frontend Technology Stack Decision
 ---
-flowchart LR
-    gardener(["Gardener\n(Actor)"])
-    frontend["Frontend System\n(Next.js/React, Docker)"]
-    backend[["Backend API\n(External)"]]
-    camera[["Device Camera\n(External)"]]
-    storage[["Device Storage\n(External)"]]
+C4Container
+    Person(gardener, "Gardener", "The home gardener who uses the system")
+    System_Boundary(frontend_system, "Frontend System") {
+        Container(frontend_app, "Frontend System", "Next.js/React, Docker", "Web interface for the plant tracking system")
+    }
+    System_Ext(backend_api, "Backend API", "External backend service")
+    System_Ext(device_camera, "Device Camera", "External device camera for QR scanning and photo capture")
+    System_Ext(device_storage, "Device Storage", "External device storage for saving photos and data")
 
-    gardener -->|"Uses interface via HTTPS"| frontend
-    frontend -->|"Exchanges data with backend via REST/HTTPS"| backend
-    frontend -->|"Accesses camera via native API"| camera
-    frontend -->|"Accesses storage via native API"| storage
+    Rel(gardener, frontend_app, "Uses interface via HTTPS")
+    Rel(frontend_app, backend_api, "Exchanges data with backend via REST/HTTPS")
+    Rel(frontend_app, device_camera, "Accesses camera via native API")
+    Rel(frontend_app, device_storage, "Accesses storage via native API")
 ```

@@ -1,0 +1,65 @@
+{
+  "scores": {
+    "ADR File Naming Convention": 10.0,
+    "Required ADR Sections Presence & Content": 9.0,
+    "Mermaid Diagram Syntax Validity": 10.0,
+    "C4 Diagram Completeness": 6.0,
+    "Non-Functional Requirements Traceability": 10.0,
+    "Markdown Heading Hierarchy & Formatting": 4.0,
+    "Relationship Documentation Accuracy": 9.0,
+    "Decision Record Structure & Trade-off Analysis": 9.0
+  },
+  "feedback": [
+    {
+      "criterion": "ADR File Naming Convention",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All 6 filenames match the required regex ^ADR-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\\.md$. Sequential numbering 0001-0006 with no gaps or duplicates. Perfect compliance."
+    },
+    {
+      "criterion": "Required ADR Sections Presence & Content",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "All 6 ADR files contain exactly the 4 required H2 headings (## Status, ## Context, ## Decision, ## Consequences) with no additional H2 headings. All sections contain well over 50 words each (minimum observed: ~57 words for ADR-0004 Status section). Minor issue: ADR-0004 has an extra ### Diagram H3 subsection under ## Consequences which is cosmetic but does not violate the H2-only constraint."
+    },
+    {
+      "criterion": "Mermaid Diagram Syntax Validity",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All 3 files containing ```mermaid blocks (ADR-0002, ADR-0003, ADR-0004) pass mmdc validation with exit code 0 and zero warnings. ADR-0001, ADR-0005, ADR-0006 have no mermaid code blocks, which is acceptable (no syntax errors to validate against)."
+    },
+    {
+      "criterion": "C4 Diagram Completeness",
+      "score": 6.0,
+      "severity": "High",
+      "details": "The diagrams use `flowchart LR` with custom shape notation (e.g., `[\"Gardener\\n(Actor)\"]`, `[\"Plant Tracking System\\n(Internal System)\"]`) rather than standard C4-Mermaid element types (`Person`, `System`, `Container`, `Database`). The contract explicitly states 'C4 diagrams must use standard C4-Mermaid syntax.' ADR-0002 (context diagram) includes a Person-equivalent and System-equivalent but with non-standard syntax. ADR-0003 (container diagram) includes Container-equivalent and Database-equivalent nodes but again without standard C4 types. All relationship edges do have explicit text labels, which is positive. The diagrams are architecturally meaningful but fail the 'standard C4-Mermaid syntax' requirement."
+    },
+    {
+      "criterion": "Non-Functional Requirements Traceability",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All 6 ADRs contain a ### Related NFRs subsection with NFR identifiers matching NFR-[A-Z]+-[0-9]{2}. All 6 unique identifiers (NFR-USAB-01, NFR-PERF-02, NFR-RELI-01, NFR-DATA-02, NFR-MAINT-01, NFR-DATA-03) exist in the project's nfr_catalog.json. Perfect cross-reference validation."
+    },
+    {
+      "criterion": "Markdown Heading Hierarchy & Formatting",
+      "score": 4.0,
+      "severity": "Critical",
+      "details": "Systemic failure across all 6 files. The contract requires 'H1 must be Title Case, H2 and H3 must be sentence case.' All H2 headings are Title Case instead of sentence case: '## Status' (should be '## status'), '## Context' (should be '## context'), '## Decision' (should be '## decision'), '## Consequences' (should be '## consequences'). All H3 headings are also Title Case: '### Relationships', '### Alternatives Considered', '### Trade-offs', '### Positive', '### Negative', '### Related NFRs'. Additionally, ADR-0003 (decisions/ADR-0003-container-diagram.md:1-3) has a YAML frontmatter block with a `title:` field, which causes MD025 'Multiple top-level headings' when the H1 on line 5 is also parsed. The heading hierarchy itself is sequential (no skipping levels), which passes MD023, but the case requirements are universally violated."
+    },
+    {
+      "criterion": "Relationship Documentation Accuracy",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "All 6 files have ### Relationships subsection directly under ## Status. ADR-0001 through ADR-0005 correctly use 'None'. ADR-0006 uses 'Relates to ADR-0001' and references ADR-0005, matching the required 'Relates to ADR-XXXX' pattern. Both referenced files physically exist in the decisions/ directory."
+    },
+    {
+      "criterion": "Decision Record Structure & Trade-off Analysis",
+      "score": 9.0,
+      "severity": "Low",
+      "details": "All 6 ADRs begin their ## Decision section with 'We chose to...' satisfying the required opening phrase. All include ### Alternatives Considered with >=2 bullet points. All include ### Trade-offs subsection with explicit pros and cons for both the selected option and each alternative. ADR-0006 has a minor issue with '### Mvp implementation details' having inconsistent case ('Mvp' instead of 'MVP'), but this is cosmetic."
+    }
+  ],
+  "overall_summary": "The ADR set demonstrates solid architectural decision-making with well-structured trade-off analysis, proper cross-referencing of NFRs, and valid Mermaid syntax. However, two critical issues undermine compliance: (1) All heading case requirements are systematically violated across every file — H2 and H3 headings are Title Case when the contract mandates sentence case (e.g., '## Decision' vs required '## decision'), and (2) C4 diagrams use generic flowchart syntax rather than standard C4-Mermaid element types (Person, System, Container, Database). The ADR numbering, file naming, Relationships documentation, and Decision Record structure all meet or exceed requirements. The heading case issue is the most pervasive problem, affecting all 6 files uniformly, suggesting a template-level fix is needed.",
+  "average_score": 8.375,
+  "passed": false
+}
