@@ -528,6 +528,72 @@
 - Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension
 - Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
 
+# Generator Learnings - Sprint 9: ADR Fixes and Critical Issues Resolution
+
+## Architecture Decisions Made
+- Fixed heading case issues in ADR-0005 (changed lowercase ## context, ## decision, ## consequences to proper sentence case)
+- Added missing Relationships subsection to ADR-0006 with proper relationship to ADR-0001 and ADR-0005
+- Added missing Alternatives Considered and Trade-offs subsections to ADR-0006
+- Removed unauthorized ## Diagram heading from ADR-0003 that violated the "no additional H2 headings" rule
+- Ensured all ADRs have proper section casing and structure to pass markdownlint validation
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper heading casing (Title Case for H1, sentence case for H2/H3) resolved MD022/MD023 violations
+- Complete ADR structure with all required subsections (Relationships, Alternatives Considered, Trade-offs, Related NFRs) satisfied contract requirements
+- Removal of extra headings prevented MD022 violations for multiple H1-level headings
+- Proper relationship documentation using exact phrases ("Relates to ADR-XXXX") passed validation
+- All Mermaid diagrams maintained validity with mmdc (exit code 0)
+
+## Issues the Critic Raised and How I Addressed Them
+- **Critical - Required ADR Sections Presence & Content (4.0/10 → Addressed)**:
+  - Issue: ADR-0005 used lowercase H2 headings (## context, ## decision, ## consequences) and ADR-0006 was missing Relationships, Alternatives Considered, Trade-offs, and Related NFRs subsections
+  - Addressed: Fixed heading case in ADR-0005 and added all four missing subsections to ADR-0006 with proper content
+  - What worked: ADR-0005 now passes MD022/MD024 validation; ADR-0006 has complete ADR structure
+  
+- **Critical - Markdown Heading Hierarchy & Formatting (4.0/10 → Addressed)**:
+  - Issue: ADR-0005 had pervasive lowercase headings throughout and ADR-0003 had an extra ## Diagram H2 heading
+  - Addressed: Normalized all heading casing in ADR-0005 and removed the ## Diagram heading from ADR-0003
+  - What worked: All ADRs now have proper heading hierarchy with no skipped levels
+  
+- **High - Non-Functional Requirements Traceability (5.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Related NFRs subsection and ADR-0005 had lowercase "### related nfrs"
+  - Addressed: Added Related NFRs subsection to ADR-0006 and fixed casing in ADR-0005
+  - What worked: All ADRs now have proper NFR traceability with valid identifiers
+  
+- **High - Relationship Documentation Accuracy (5.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Relationships subsection entirely
+  - Addressed: Added Relationships subsection under ## Status with "Relates to ADR-0001 (Technology Stack Selection) and ADR-0005 (Backend Technology Stack)"
+  - What worked: Relationship documentation now accurate and complete
+  
+- **Critical - Decision Record Structure & Trade-off Analysis (4.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Alternatives Considered and Trade-offs subsections; ADR-0005 had lowercase versions
+  - Addressed: Added both subsections to ADR-0006 with proper content and fixed casing in ADR-0005
+  - What worked: Decision record structure now complete with proper alternatives analysis and trade-offs
+
+## Domain Insights about the System Gleaned from the PRD and Sprint Work
+- ADR structure and formatting are critical for architectural decision documentation and must follow exact specifications
+- Consistent heading casing and proper subsection structure enable automated validation and maintainability
+- Relationship documentation between ADRs creates traceability that helps architects understand decision dependencies
+- Even seemingly minor formatting issues (like heading case) can cause significant validation failures if not addressed
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include action AND technology/protocol (e.g., "via camera", "via Telegram")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify action AND technology/protocol
+- External services (like Telegram, Pinecone) should use subroutine shape
+- Database technologies should use cylinder shape
+- Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per system requirements)
+- Relationship labels should be standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
+
 ## Round 5 Specific Learnings from Critic Feedback
 In Round 5, I addressed specific critic feedback on the database/c2-container.md file:
 
@@ -644,6 +710,72 @@ These improvements addressed all critic feedback points and brought the document
 - Database technologies should use cylinder shape
 - Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per critic system requirements)
 - Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
+
+# Generator Learnings - Sprint 9: ADR Fixes and Critical Issues Resolution
+
+## Architecture Decisions Made
+- Fixed heading case issues in ADR-0005 (changed lowercase ## context, ## decision, ## consequences to proper sentence case)
+- Added missing Relationships subsection to ADR-0006 with proper relationship to ADR-0001 and ADR-0005
+- Added missing Alternatives Considered and Trade-offs subsections to ADR-0006
+- Removed unauthorized ## Diagram heading from ADR-0003 that violated the "no additional H2 headings" rule
+- Ensured all ADRs have proper section casing and structure to pass markdownlint validation
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper heading casing (Title Case for H1, sentence case for H2/H3) resolved MD022/MD023 violations
+- Complete ADR structure with all required subsections (Relationships, Alternatives Considered, Trade-offs, Related NFRs) satisfied contract requirements
+- Removal of extra headings prevented MD022 violations for multiple H1-level headings
+- Proper relationship documentation using exact phrases ("Relates to ADR-XXXX") passed validation
+- All Mermaid diagrams maintained validity with mmdc (exit code 0)
+
+## Issues the Critic Raised and How I Addressed Them
+- **Critical - Required ADR Sections Presence & Content (4.0/10 → Addressed)**:
+  - Issue: ADR-0005 used lowercase H2 headings (## context, ## decision, ## consequences) and ADR-0006 was missing Relationships, Alternatives Considered, Trade-offs, and Related NFRs subsections
+  - Addressed: Fixed heading case in ADR-0005 and added all four missing subsections to ADR-0006 with proper content
+  - What worked: ADR-0005 now passes MD022/MD024 validation; ADR-0006 has complete ADR structure
+  
+- **Critical - Markdown Heading Hierarchy & Formatting (4.0/10 → Addressed)**:
+  - Issue: ADR-0005 had pervasive lowercase headings throughout and ADR-0003 had an extra ## Diagram H2 heading
+  - Addressed: Normalized all heading casing in ADR-0005 and removed the ## Diagram heading from ADR-0003
+  - What worked: All ADRs now have proper heading hierarchy with no skipped levels
+  
+- **High - Non-Functional Requirements Traceability (5.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Related NFRs subsection and ADR-0005 had lowercase "### related nfrs"
+  - Addressed: Added Related NFRs subsection to ADR-0006 and fixed casing in ADR-0005
+  - What worked: All ADRs now have proper NFR traceability with valid identifiers
+  
+- **High - Relationship Documentation Accuracy (5.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Relationships subsection entirely
+  - Addressed: Added Relationships subsection under ## Status with "Relates to ADR-0001 (Technology Stack Selection) and ADR-0005 (Backend Technology Stack)"
+  - What worked: Relationship documentation now accurate and complete
+  
+- **Critical - Decision Record Structure & Trade-off Analysis (4.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Alternatives Considered and Trade-offs subsections; ADR-0005 had lowercase versions
+  - Addressed: Added both subsections to ADR-0006 with proper content and fixed casing in ADR-0005
+  - What worked: Decision record structure now complete with proper alternatives analysis and trade-offs
+
+## Domain Insights about the System Gleaned from the PRD and Sprint Work
+- ADR structure and formatting are critical for architectural decision documentation and must follow exact specifications
+- Consistent heading casing and proper subsection structure enable automated validation and maintainability
+- Relationship documentation between ADRs creates traceability that helps architects understand decision dependencies
+- Even seemingly minor formatting issues (like heading case) can cause significant validation failures if not addressed
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include action AND technology/protocol (e.g., "via camera", "via Telegram")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify action AND technology/protocol
+- External services (like Telegram, Pinecone) should use subroutine shape
+- Database technologies should use cylinder shape
+- Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per system requirements)
+- Relationship labels should be standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
 
 ## Round 4 Specific Learnings from Critic Feedback
 In Round 4, I addressed specific critic feedback on the database/c2-container.md file:
@@ -767,6 +899,72 @@ These improvements addressed all critic feedback points and brought the document
 - Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per critic system requirements)
 - Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
 
+# Generator Learnings - Sprint 9: ADR Fixes and Critical Issues Resolution
+
+## Architecture Decisions Made
+- Fixed heading case issues in ADR-0005 (changed lowercase ## context, ## decision, ## consequences to proper sentence case)
+- Added missing Relationships subsection to ADR-0006 with proper relationship to ADR-0001 and ADR-0005
+- Added missing Alternatives Considered and Trade-offs subsections to ADR-0006
+- Removed unauthorized ## Diagram heading from ADR-0003 that violated the "no additional H2 headings" rule
+- Ensured all ADRs have proper section casing and structure to pass markdownlint validation
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper heading casing (Title Case for H1, sentence case for H2/H3) resolved MD022/MD023 violations
+- Complete ADR structure with all required subsections (Relationships, Alternatives Considered, Trade-offs, Related NFRs) satisfied contract requirements
+- Removal of extra headings prevented MD022 violations for multiple H1-level headings
+- Proper relationship documentation using exact phrases ("Relates to ADR-XXXX") passed validation
+- All Mermaid diagrams maintained validity with mmdc (exit code 0)
+
+## Issues the Critic Raised and How I Addressed Them
+- **Critical - Required ADR Sections Presence & Content (4.0/10 → Addressed)**:
+  - Issue: ADR-0005 used lowercase H2 headings (## context, ## decision, ## consequences) and ADR-0006 was missing Relationships, Alternatives Considered, Trade-offs, and Related NFRs subsections
+  - Addressed: Fixed heading case in ADR-0005 and added all four missing subsections to ADR-0006 with proper content
+  - What worked: ADR-0005 now passes MD022/MD024 validation; ADR-0006 has complete ADR structure
+  
+- **Critical - Markdown Heading Hierarchy & Formatting (4.0/10 → Addressed)**:
+  - Issue: ADR-0005 had pervasive lowercase headings throughout and ADR-0003 had an extra ## Diagram H2 heading
+  - Addressed: Normalized all heading casing in ADR-0005 and removed the ## Diagram heading from ADR-0003
+  - What worked: All ADRs now have proper heading hierarchy with no skipped levels
+  
+- **High - Non-Functional Requirements Traceability (5.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Related NFRs subsection and ADR-0005 had lowercase "### related nfrs"
+  - Addressed: Added Related NFRs subsection to ADR-0006 and fixed casing in ADR-0005
+  - What worked: All ADRs now have proper NFR traceability with valid identifiers
+  
+- **High - Relationship Documentation Accuracy (5.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Relationships subsection entirely
+  - Addressed: Added Relationships subsection under ## Status with "Relates to ADR-0001 (Technology Stack Selection) and ADR-0005 (Backend Technology Stack)"
+  - What worked: Relationship documentation now accurate and complete
+  
+- **Critical - Decision Record Structure & Trade-off Analysis (4.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Alternatives Considered and Trade-offs subsections; ADR-0005 had lowercase versions
+  - Addressed: Added both subsections to ADR-0006 with proper content and fixed casing in ADR-0005
+  - What worked: Decision record structure now complete with proper alternatives analysis and trade-offs
+
+## Domain Insights about the System Gleaned from the PRD and Sprint Work
+- ADR structure and formatting are critical for architectural decision documentation and must follow exact specifications
+- Consistent heading casing and proper subsection structure enable automated validation and maintainability
+- Relationship documentation between ADRs creates traceability that helps architects understand decision dependencies
+- Even seemingly minor formatting issues (like heading case) can cause significant validation failures if not addressed
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include action AND technology/protocol (e.g., "via camera", "via Telegram")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify action AND technology/protocol
+- External services (like Telegram, Pinecone) should use subroutine shape
+- Database technologies should use cylinder shape
+- Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per system requirements)
+- Relationship labels should be standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
+
 ## Key Takeaways for Future Sprints
 1. **External Systems Placement**: Always position externally managed services (like Pinecone, Telegram) outside the system boundary in C2 diagrams
 2. **Markdown Hygiene**: Proactively check for trailing whitespace, missing newlines, and excessive line lengths during writing
@@ -863,6 +1061,72 @@ These improvements addressed all critic feedback points and brought the document
 - Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per system requirements)
 - Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
 
+# Generator Learnings - Sprint 9: ADR Fixes and Critical Issues Resolution
+
+## Architecture Decisions Made
+- Fixed heading case issues in ADR-0005 (changed lowercase ## context, ## decision, ## consequences to proper sentence case)
+- Added missing Relationships subsection to ADR-0006 with proper relationship to ADR-0001 and ADR-0005
+- Added missing Alternatives Considered and Trade-offs subsections to ADR-0006
+- Removed unauthorized ## Diagram heading from ADR-0003 that violated the "no additional H2 headings" rule
+- Ensured all ADRs have proper section casing and structure to pass markdownlint validation
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper heading casing (Title Case for H1, sentence case for H2/H3) resolved MD022/MD023 violations
+- Complete ADR structure with all required subsections (Relationships, Alternatives Considered, Trade-offs, Related NFRs) satisfied contract requirements
+- Removal of extra headings prevented MD022 violations for multiple H1-level headings
+- Proper relationship documentation using exact phrases ("Relates to ADR-XXXX") passed validation
+- All Mermaid diagrams maintained validity with mmdc (exit code 0)
+
+## Issues the Critic Raised and How I Addressed Them
+- **Critical - Required ADR Sections Presence & Content (4.0/10 → Addressed)**:
+  - Issue: ADR-0005 used lowercase H2 headings (## context, ## decision, ## consequences) and ADR-0006 was missing Relationships, Alternatives Considered, Trade-offs, and Related NFRs subsections
+  - Addressed: Fixed heading case in ADR-0005 and added all four missing subsections to ADR-0006 with proper content
+  - What worked: ADR-0005 now passes MD022/MD024 validation; ADR-0006 has complete ADR structure
+  
+- **Critical - Markdown Heading Hierarchy & Formatting (4.0/10 → Addressed)**:
+  - Issue: ADR-0005 had pervasive lowercase headings throughout and ADR-0003 had an extra ## Diagram H2 heading
+  - Addressed: Normalized all heading casing in ADR-0005 and removed the ## Diagram heading from ADR-0003
+  - What worked: All ADRs now have proper heading hierarchy with no skipped levels
+  
+- **High - Non-Functional Requirements Traceability (5.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Related NFRs subsection and ADR-0005 had lowercase "### related nfrs"
+  - Addressed: Added Related NFRs subsection to ADR-0006 and fixed casing in ADR-0005
+  - What worked: All ADRs now have proper NFR traceability with valid identifiers
+  
+- **High - Relationship Documentation Accuracy (5.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Relationships subsection entirely
+  - Addressed: Added Relationships subsection under ## Status with "Relates to ADR-0001 (Technology Stack Selection) and ADR-0005 (Backend Technology Stack)"
+  - What worked: Relationship documentation now accurate and complete
+  
+- **Critical - Decision Record Structure & Trade-off Analysis (4.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Alternatives Considered and Trade-offs subsections; ADR-0005 had lowercase versions
+  - Addressed: Added both subsections to ADR-0006 with proper content and fixed casing in ADR-0005
+  - What worked: Decision record structure now complete with proper alternatives analysis and trade-offs
+
+## Domain Insights about the System Gleaned from the PRD and Sprint Work
+- ADR structure and formatting are critical for architectural decision documentation and must follow exact specifications
+- Consistent heading casing and proper subsection structure enable automated validation and maintainability
+- Relationship documentation between ADRs creates traceability that helps architects understand decision dependencies
+- Even seemingly minor formatting issues (like heading case) can cause significant validation failures if not addressed
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include action AND technology/protocol (e.g., "via camera", "via Telegram")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify action AND technology/protocol
+- External services (like Telegram, Pinecone) should use subroutine shape
+- Database technologies should use cylinder shape
+- Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per system requirements)
+- Relationship labels should be standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
+
 ## Round 8 Specific Learnings from Critic Feedback
 In Round 8, I addressed specific critic feedback on the ADR files:
 
@@ -946,3 +1210,69 @@ These improvements addressed all critic feedback points from Round 3 and brought
 - Database technologies should use cylinder shape
 - Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per system requirements)
 - Relationship labels should use standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics
+
+# Generator Learnings - Sprint 9: ADR Fixes and Critical Issues Resolution
+
+## Architecture Decisions Made
+- Fixed heading case issues in ADR-0005 (changed lowercase ## context, ## decision, ## consequences to proper sentence case)
+- Added missing Relationships subsection to ADR-0006 with proper relationship to ADR-0001 and ADR-0005
+- Added missing Alternatives Considered and Trade-offs subsections to ADR-0006
+- Removed unauthorized ## Diagram heading from ADR-0003 that violated the "no additional H2 headings" rule
+- Ensured all ADRs have proper section casing and structure to pass markdownlint validation
+
+## Patterns and Approaches that Scored Well with the Critic
+- Proper heading casing (Title Case for H1, sentence case for H2/H3) resolved MD022/MD023 violations
+- Complete ADR structure with all required subsections (Relationships, Alternatives Considered, Trade-offs, Related NFRs) satisfied contract requirements
+- Removal of extra headings prevented MD022 violations for multiple H1-level headings
+- Proper relationship documentation using exact phrases ("Relates to ADR-XXXX") passed validation
+- All Mermaid diagrams maintained validity with mmdc (exit code 0)
+
+## Issues the Critic Raised and How I Addressed Them
+- **Critical - Required ADR Sections Presence & Content (4.0/10 → Addressed)**:
+  - Issue: ADR-0005 used lowercase H2 headings (## context, ## decision, ## consequences) and ADR-0006 was missing Relationships, Alternatives Considered, Trade-offs, and Related NFRs subsections
+  - Addressed: Fixed heading case in ADR-0005 and added all four missing subsections to ADR-0006 with proper content
+  - What worked: ADR-0005 now passes MD022/MD024 validation; ADR-0006 has complete ADR structure
+  
+- **Critical - Markdown Heading Hierarchy & Formatting (4.0/10 → Addressed)**:
+  - Issue: ADR-0005 had pervasive lowercase headings throughout and ADR-0003 had an extra ## Diagram H2 heading
+  - Addressed: Normalized all heading casing in ADR-0005 and removed the ## Diagram heading from ADR-0003
+  - What worked: All ADRs now have proper heading hierarchy with no skipped levels
+  
+- **High - Non-Functional Requirements Traceability (5.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Related NFRs subsection and ADR-0005 had lowercase "### related nfrs"
+  - Addressed: Added Related NFRs subsection to ADR-0006 and fixed casing in ADR-0005
+  - What worked: All ADRs now have proper NFR traceability with valid identifiers
+  
+- **High - Relationship Documentation Accuracy (5.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Relationships subsection entirely
+  - Addressed: Added Relationships subsection under ## Status with "Relates to ADR-0001 (Technology Stack Selection) and ADR-0005 (Backend Technology Stack)"
+  - What worked: Relationship documentation now accurate and complete
+  
+- **Critical - Decision Record Structure & Trade-off Analysis (4.0/10 → Addressed)**:
+  - Issue: ADR-0006 missing Alternatives Considered and Trade-offs subsections; ADR-0005 had lowercase versions
+  - Addressed: Added both subsections to ADR-0006 with proper content and fixed casing in ADR-0005
+  - What worked: Decision record structure now complete with proper alternatives analysis and trade-offs
+
+## Domain Insights about the System Gleaned from the PRD and Sprint Work
+- ADR structure and formatting are critical for architectural decision documentation and must follow exact specifications
+- Consistent heading casing and proper subsection structure enable automated validation and maintainability
+- Relationship documentation between ADRs creates traceability that helps architects understand decision dependencies
+- Even seemingly minor formatting issues (like heading case) can cause significant validation failures if not addressed
+
+## Mermaid/C4 Syntax Rules Confirmed
+- Node labels must use double quotes and \n for line breaks (never HTML tags or <br>)
+- All nodes inside a subgraph must be defined within the subgraph ... end block
+- Relationship labels must include action AND technology/protocol (e.g., "via camera", "via Telegram")
+- External systems use subroutine shape [["Name\n(External)"]]
+- Data storage uses cylinder shape [("Name\n(Tech)")]
+- Persons/actors use stadium shape (["Name\n(Role)"])
+- Every element must have at least one relationship (no orphan nodes)
+- Title must be set via YAML frontmatter (--- / title: ... / ---)
+- Diagram must be wrapped in fenced code block with language tag (```mermaid)
+- Container sections must use H2 headings in markdown documents
+- No trailing whitespace allowed in markdown documents
+- All edge labels must specify action AND technology/protocol
+- External services (like Telegram, Pinecone) should use subroutine shape
+- Database technologies should use cylinder shape
+- Proper C4 syntax requires using Person, Container, Boundary, and Rel constructs from the C4 Mermaid extension (though we use standard flowchart per system requirements)
+- Relationship labels should be standard C4 types (Uses, Reads, Writes) when appropriate, with technology/protocol specifics

@@ -15,7 +15,7 @@ LABEL_FIELDS = ['variety_name', 'latin_name', 'planned_planting_date']
 ALL_FIELDS = [
     'variety_name', 'latin_name', 'brand', 'days_to_maturity',
     'germination_time', 'planting_depth', 'spacing', 'sun_requirements',
-    'indoor_start_time', 'planned_planting_date'
+    'indoor_start_time', 'planned_planting_date', 'seed_packet_id'
 ]
 
 # All label fields are required
@@ -119,6 +119,27 @@ class Plant:
                     continue  # Skip unreadable files
 
         return max_seq + 1
+
+    def get_seed_packet(self) -> Optional['SeedPacket']:
+        """Load and return the referenced SeedPacket, or None."""
+        spkt_id = self.data.get('seed_packet_id')
+        if not spkt_id or spkt_id == 'unknown':
+            return None
+        return load_seed_packet(spkt_id)
+
+
+def load_seed_packet(packet_id: str):
+    """Load a seed packet by ID. Returns None if not found."""
+    from commands.seed_packet_model import load_from_file, get_seed_packets_dir
+
+    packets_dir = get_seed_packets_dir()
+    if not packets_dir.exists():
+        return None
+
+    filepath = packets_dir / f"{packet_id}.md"
+    if filepath.exists():
+        return load_from_file(filepath)
+    return None
 
 
 def load_plant_from_file(file_path: Path) -> Plant:

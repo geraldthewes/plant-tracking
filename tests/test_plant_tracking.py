@@ -222,6 +222,95 @@ class TestPlantModel(unittest.TestCase):
             load_plant_from_file(invalid_file)
 
 
+class TestPlantSeedPacketReference(unittest.TestCase):
+    def setUp(self):
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.test_db = self.test_dir / "test_database"
+        self.test_db.mkdir()
+        self.test_packets_dir = self.test_db / "seed_packets"
+        self.test_packets_dir.mkdir()
+
+        self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
+        os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
+
+        from commands.plant_model import Plant
+        self.Plant = Plant
+
+    def tearDown(self):
+        if self.original_db:
+            os.environ["PLANT_DATABASE_DIR"] = self.original_db
+        else:
+            os.environ.pop("PLANT_DATABASE_DIR", None)
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def test_plant_with_seed_packet_id_saves_loads(self):
+        """Test that a plant with seed_packet_id saves and loads correctly."""
+        plant_data = {
+            'variety_name': 'Test Plant',
+            'latin_name': 'Testus plantus',
+            'planned_planting_date': '2026-05-01',
+            'seed_packet_id': 'SPKT-001',
+        }
+        plant = self.Plant(plant_data)
+        self.assertEqual(plant.data['seed_packet_id'], 'SPKT-001')
+
+        filepath = self.test_db / f"{plant.data['id']}.md"
+        with open(filepath, 'w') as f:
+            f.write(plant.to_markdown())
+
+        from commands.plant_model import load_plant_from_file
+        loaded = load_plant_from_file(filepath)
+        self.assertEqual(loaded.data['seed_packet_id'], 'SPKT-001')
+
+    def test_plant_with_unknown_seed_packet_id(self):
+        """Test that seed_packet_id of 'unknown' is valid."""
+        plant_data = {
+            'variety_name': 'Test Plant',
+            'latin_name': 'Testus plantus',
+            'planned_planting_date': '2026-05-01',
+            'seed_packet_id': 'unknown',
+        }
+        plant = self.Plant(plant_data)
+        self.assertEqual(plant.data['seed_packet_id'], 'unknown')
+        self.assertIsNone(plant.get_seed_packet())
+
+    def test_get_seed_packet_resolves_reference(self):
+        """Test that get_seed_packet resolves to the correct SeedPacket."""
+        from commands.seed_packet_model import SeedPacket, load_from_file
+
+        packet_data = {
+            'variety_name': 'Yellow Habanero',
+            'latin_name': 'Capsicum chinense',
+            'brand': 'Gardners Basics',
+        }
+        packet = SeedPacket(packet_data)
+        packet_path = self.test_packets_dir / f"{packet.data['id']}.md"
+        with open(packet_path, 'w') as f:
+            f.write(packet.to_markdown())
+
+        plant_data = {
+            'variety_name': 'Yellow Habanero',
+            'latin_name': 'Capsicum chinense',
+            'planned_planting_date': '2026-05-01',
+            'seed_packet_id': packet.data['id'],
+        }
+        plant = self.Plant(plant_data)
+        resolved = plant.get_seed_packet()
+        self.assertIsNotNone(resolved)
+        self.assertEqual(resolved.data['brand'], 'Gardners Basics')
+
+    def test_get_seed_packet_missing_reference(self):
+        """Test that get_seed_packet returns None for missing packet."""
+        plant_data = {
+            'variety_name': 'Test Plant',
+            'latin_name': 'Testus plantus',
+            'planned_planting_date': '2026-05-01',
+            'seed_packet_id': 'SPKT-999',
+        }
+        plant = self.Plant(plant_data)
+        self.assertIsNone(plant.get_seed_packet())
+
+
 class TestLabelGeneration(unittest.TestCase):
     def setUp(self):
         self.test_dir = Path(tempfile.mkdtemp())

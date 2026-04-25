@@ -3,6 +3,9 @@
 ## Status
 Accepted - This data persistence strategy has been reviewed and approved as the foundation for managing plant tracking data in the Plant Tracking System. The decision establishes a clear path for data storage that balances simplicity for MVP with scalability for future growth. This ADR defines how plant records, care activities, observations, and other data will be stored, accessed, and migrated over time.
 
+### Relationships
+Relates to ADR-0001 (Technology Stack Selection) and ADR-0005 (Backend Technology Stack) - This data persistence strategy implements the storage layer decisions made in those ADRs, specifically the migration from markdown to PostgreSQL.
+
 ## Context
 We need to define a data persistence strategy for the Plant Tracking System that supports storing plant records, care activities (watering, fertilizing, etc.), observations, photos, and seed packet information. The system must maintain data integrity, support efficient querying, and provide a migration path from simple storage to a more robust solution as the system grows. The strategy should leverage the PRD's mention of starting with markdown files and migrating to Postgres, while ensuring data is human-readable, backupable, and recoverable.
 
@@ -12,6 +15,29 @@ We chose to implement a phased data persistence strategy:
 - **Migration Path**: Structured markdown format designed for seamless migration to PostgreSQL
 - **Future Phase**: PostgreSQL database with JSONB fields for flexible schema and vector extension for Hermes agent integration
 - **Backup Strategy**: Regular exports to JSON/CSV with version-controlled markdown repository as primary backup
+
+### Alternatives Considered
+- **Pure Markdown Storage**: Keep all data in markdown files indefinitely - Rejected because it would limit querying capabilities and scalability as the system grows
+- **Immediate PostgreSQL**: Start with PostgreSQL from day one - Rejected because it adds unnecessary complexity for MVP and delays initial deployment
+- **SQLite Database**: Use SQLite for lightweight relational storage - Rejected because it doesn't support the vector extensions needed for Hermes agent integration and has weaker concurrent write handling
+- **MongoDB**: Document-based NoSQL storage - Rejected because it doesn't align with the PRD's preference for structured querying and lacks the ACID guarantees needed for data integrity
+
+### Trade-offs
+- **Selected Approach (Phased Markdown to PostgreSQL)**:
+  - *Pros*: Simple MVP with zero configuration, clear migration path, supports both human-readable editing and future querying capabilities
+  - *Cons*: Requires migration effort later, need to maintain two storage systems during transition
+- **Pure Markdown Alternative**:
+  - *Pros*: Maximum simplicity, human-readable, no migration needed
+  - *Cons*: Poor querying capabilities, scaling limitations, no structured data benefits
+- **Immediate PostgreSQL Alternative**:
+  - *Pros*: Robust querying from start, ACID transactions, familiar to developers
+  - *Cons*: Complex setup for MVP, overkill for initial simplicity, delays deployment
+- **SQLite Alternative**:
+  - *Pros*: Lightweight, zero-configuration, good for single-user applications
+  - *Cons*: Limited concurrent write handling, no native vector support for AI embeddings
+- **MongoDB Alternative**:
+  - *Pros*: Flexible schema, good for unstructured data, horizontal scaling
+  - *Cons*: Eventual consistency model, lacks ACID guarantees, unfamiliar querying syntax
 
 ### MVP Implementation Details:
 - Each plant record stored as individual markdown file: `plants/PLANT-ID.md`

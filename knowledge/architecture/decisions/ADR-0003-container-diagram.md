@@ -62,7 +62,6 @@ We chose to model the following containers:
 - NFR-DATA-02: Export/import functionality in standard formats - Specifies that data must be exportable/importable in formats like CSV or JSON
 - NFR-MAINT-01: Graceful degradation when optional features unavailable - Requires system to function when Hermes agent or other optional services are unavailable
 
-## Diagram
 ```mermaid
 ---
 title: C2 Container Diagram for Plant Tracking System

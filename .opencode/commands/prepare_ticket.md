@@ -39,7 +39,7 @@ When creating a new ticket file, use this exact format:
 id: [TICKET-ID]
 title: [Title]
 status: spec
-ticket_type: task
+ticket_type: feat
 priority: medium
 created_at: [ISO 8601 timestamp]
 updated_at: [ISO 8601 timestamp]
@@ -51,6 +51,24 @@ updated_at: [ISO 8601 timestamp]
 
 [Content sections as gathered during the preparation process]
 ```
+
+## Ticket Type (Conventional Commits)
+
+The `ticket_type` field classifies the type of work using the Conventional Commits taxonomy:
+
+| Type | Description | Auto-infer keywords |
+|------|-------------|---------------------|
+| `feat` | New feature | "add", "create", "implement", "introduce", "new" |
+| `fix` | Bug fix | "fix", "bug", "patch", "resolve", "correct" |
+| `ci` | CI/CD changes | "ci", "pipeline", "deploy", "workflow", "github action" |
+| `docs` | Documentation | "doc", "readme", "guide", "wiki", "comment" |
+| `refactor` | Code refactoring | "refactor", "restructure", "reorganize", "clean up", "simplify" |
+| `test` | Tests | "test", "spec", "coverage", "assert" |
+| `chore` | Maintenance | "chore", "update dep", "bump", "upgrade", "maintenance", "config" |
+
+**Default**: `feat` (when no keyword match from title)
+
+Auto-infer by case-insensitive match of the title against the keywords above. If multiple types match, prefer the first match in table order. Always confirm the inferred type with the user.
 
 ## Initial Response
 
@@ -64,10 +82,12 @@ When this command is invoked:
    - If a summary/description is provided (e.g., `/prepare_ticket Add new feature X`):
      - Extract the summary text after the command
      - Use this as the ticket title
+     - Auto-infer `ticket_type` from the title using the keyword table in the Ticket Type section
      - Automatically determine next ticket number (Step 1a below)
    - If no parameters provided:
      - Automatically determine next ticket number (Step 1a below)
      - Ask the user for the title: "What's the ticket title? (Brief, descriptive summary)"
+     - After receiving the title, auto-infer `ticket_type` from it
 
 1a. **Auto-determine next ticket number**:
    ```bash
@@ -83,20 +103,32 @@ When this command is invoked:
    - If it doesn't exist, create it first
    - Use Bash: `mkdir -p knowledge/tickets`
 
-3. **Confirm ticket creation**:
+3. **Confirm ticket creation and ticket type**:
    ```
    Creating new ticket: [TICKET-ID]
    Title: [summary from prompt or user-provided]
+   Ticket type: [auto-inferred type] ([description from table])
 
-   [If title was auto-extracted from prompt, proceed directly to Step 4]
-   [If no title was provided, wait for user to provide it]
+   Conventional Commits types:
+     feat     - New feature
+     fix      - Bug fix
+     ci       - CI/CD changes
+     docs     - Documentation
+     refactor - Code refactoring
+     test     - Tests
+     chore    - Maintenance
+
+   Is this ticket type correct? (Press Enter to confirm, or type a different type)
    ```
+
+   Wait for user response. If the user provides a different type, use that instead.
 
 4. **Create the ticket file with proper format**:
    - Use Write tool to create the file with YAML frontmatter
    - Set current timestamp for created_at and updated_at
    - Initialize with title and workflow status
    - Set status to `spec` (ready for specification)
+   - Set `ticket_type` to the user-confirmed value from Step 3
 
 5. **Present the preparation checklist**:
 ```
@@ -104,6 +136,7 @@ I'll help you prepare this ticket with requirements and context. This is the FIR
 
 Current ticket: [ticket-id]
 Title: [ticket-title]
+Ticket type: [ticket-type] ([description])
 
 This is a requirements gathering session. I'll collect:
 - Business context and user needs
@@ -182,7 +215,7 @@ When creating a new ticket from scratch:
    id: [TICKET-ID]
    title: [User-provided title]
    status: spec
-   ticket_type: task
+   ticket_type: [confirmed ticket type]
    priority: medium
    created_at: [timestamp]
    updated_at: [timestamp]
@@ -428,7 +461,7 @@ Does this capture everything? Any additions or changes?
 id: [TICKET-ID]
 title: [Title]
 status: spec
-ticket_type: task
+ticket_type: [confirmed ticket type]
 priority: medium
 created_at: [ISO 8601 timestamp]
 updated_at: [ISO 8601 timestamp]
@@ -538,6 +571,7 @@ Ready to proceed with planning phase?
    - Automatically determine next ticket number by checking existing tickets
    - Use summary from command prompt as title if provided (e.g., `/prepare_ticket Add feature X`)
    - If no summary provided, ask for title
+   - Auto-infer `ticket_type` from the title and confirm with the user before creating the file
    - Use ISO 8601 timestamp format (e.g., `2026-02-10T15:30:00Z`)
    - Use Write tool for new files, Edit tool for updates
    - Validate YAML frontmatter is properly formatted
@@ -597,6 +631,7 @@ After preparation:
 8. **Don't miss acceptance criteria** - Make success measurable
 9. **Don't ignore research questions** - Document what needs investigation
 10. **Don't assume knowledge** - Ask questions when unclear
+11. **Don't skip ticket type confirmation** - Always confirm the auto-inferred ticket type with the user
 
 ## Success Criteria for This Command
 
@@ -612,6 +647,7 @@ A well-prepared ticket should have:
 - [ ] Optional nice-to-have features
 - [ ] Explicitly defined out-of-scope items
 - [ ] Measurable acceptance criteria
+- [ ] Ticket type identified and confirmed (conventional commits taxonomy)
 
 **Reference & Research**:
 - [ ] Reference implementation location noted (not analyzed)

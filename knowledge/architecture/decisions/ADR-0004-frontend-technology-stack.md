@@ -72,7 +72,7 @@ title: ADR-0004 Frontend Technology Stack Decision
 ---
 flowchart LR
     gardener(["Gardener\n(Actor)"])
-    frontend["Frontend\n(Internal System)"]
+    frontend["Frontend System\n(Next.js/React, Docker)"]
     backend[["Backend API\n(External)"]]
     camera[["Device Camera\n(External)"]]
     storage[["Device Storage\n(External)"]]

@@ -3,7 +3,7 @@
   "current_sprint": 7,
   "total_sprints": 7,
   "completed_sprints": 6,
-  "total_rounds": 36,
+  "total_rounds": 37,
   "started_at": "2026-04-21T09:42:13.815362Z",
   "seed": 1776764533,
   "sprint_statuses": [
@@ -122,7 +122,7 @@
       "sprint_number": 7,
       "sprint_name": "ADRs + Cross-Cutting Concerns",
       "status": "building",
-      "rounds_completed": 4,
+      "rounds_completed": 5,
       "consecutive_passes": 0,
       "final_score": null,
       "best_round": 3,
