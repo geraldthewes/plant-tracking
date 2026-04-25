@@ -1,7 +1,6 @@
 ---
 variety_name: Serrano Pepper
 latin_name: Capsicum annuum
-planned_planting_date: '2024-09-01'
 brand: Gardners Basics
 days_to_maturity: '80'
 germination_time: 7-14
@@ -9,14 +8,13 @@ planting_depth: '0.25'
 spacing: 12-18
 sun_requirements: Full Sun
 indoor_start_time: 8-10 weeks before last frost
-id: SEPE-2026-001
-created_at: '2026-04-24T11:50:48Z'
+id: SPKT-002
+created_at: '2026-04-25T14:30:02Z'
 updated_at: '2026-04-25T14:30:02Z'
-seed_packet_id: SPKT-002
 ---
 
-# Plant Record for Serrano Pepper
+# Seed Packet: Serrano Pepper
 
-*ID: SEPE-2026-001*
+*ID: SPKT-002*
 
 *Created: 2026-04-25*

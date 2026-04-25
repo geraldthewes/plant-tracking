@@ -1,21 +1,19 @@
 ---
 variety_name: Jimmy Nardello
 latin_name: Capsicum annuum
-planned_planting_date: '2024-09-01'
 brand: Botanical Interest
 days_to_maturity: '90'
 germination_time: 10-25
 planting_depth: 0,25
 spacing: 24-36
 indoor_start_time: 8-10 weeks before transplanting
-id: JINA-2026-001
-created_at: '2026-04-22T22:40:57Z'
+id: SPKT-001
+created_at: '2026-04-25T14:30:02Z'
 updated_at: '2026-04-25T14:30:02Z'
-seed_packet_id: SPKT-001
 ---
 
-# Plant Record for Jimmy Nardello
+# Seed Packet: Jimmy Nardello
 
-*ID: JINA-2026-001*
+*ID: SPKT-001*
 
 *Created: 2026-04-25*

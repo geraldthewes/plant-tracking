@@ -8,15 +8,13 @@ planting_depth: '0.25'
 spacing: 12-18
 sun_requirements: Full sun
 indoor_start_time: 8-10 weeks before last frost
-planned_planting_date: '2024-10-15'
-id: YEHA-2026-001
-created_at: '2026-04-22T13:38:24Z'
+id: SPKT-004
+created_at: '2026-04-25T14:30:02Z'
 updated_at: '2026-04-25T14:30:02Z'
-seed_packet_id: SPKT-004
 ---
 
-# Plant Record for Yellow Habanero Pepper
+# Seed Packet: Yellow Habanero Pepper
 
-*ID: YEHA-2026-001*
+*ID: SPKT-004*
 
 *Created: 2026-04-25*

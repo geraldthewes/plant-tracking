@@ -17,39 +17,91 @@ Required Python packages (installed automatically):
 
 The first time you run any command, a `database/` directory is created automatically in the project root. This is where all plant records are stored as individual markdown files.
 
+## Seed Packets
+
+A **seed packet** is a reusable record of information from a seed packet — variety name, Latin name, brand, days to maturity, germination time, and more. By storing this information once in a seed packet, you avoid re-entering the same data every time you plant a new seed of the same variety.
+
+**Relationship**: One seed packet → many plants.
+
+When creating a plant record, the system looks for a matching seed packet by variety name and Latin name. If found, it reuses that data instead of asking you to re-enter it.
+
+**"Unknown" case**: If you don't have packet information available (e.g., saved seeds), choose the "unknown" option and the fields are stored directly on the plant record.
+
 ## Commands
 
-### `create-plant`
+### `create-seed-packet`
 
-Create a new plant record by entering information from your seed packet. The system generates a unique ID automatically.
+Create a standalone seed packet record that can be referenced by multiple plants.
 
 ```bash
-python -m commands.plant_tracking_cli create-plant
+python -m commands.plant_tracking_cli create-seed-packet
 ```
 
-The interactive prompt is divided into two sections:
+The interactive prompt asks for:
 
-**Required fields (needed for label):**
+**Required fields:**
 | Field | Example | Description |
 |-------|---------|-------------|
-| Variety name | Yellow Habanero | Common name of the plant |
+| Variety name | Yellow Habanero | Common name of the plant variety |
 | Latin name | Capsicum chinense | Scientific name |
-| Planned planting date | 2026-05-01 | Date in YYYY-MM-DD format |
 
-**Optional record fields (not on label):**
+**Optional fields:**
 | Field | Example | Description |
 |-------|---------|-------------|
 | Brand | Burpee | Seed company name |
-| Days to maturity | 60-75 | Range or single value, days from planting to harvest |
+| Days to maturity | 60-75 | Days from planting to harvest |
 | Germination time | 7-14 days | Expected germination period |
 | Planting depth | 0.25 inches | Recommended depth |
 | Spacing | 18 inches | Recommended plant spacing |
 | Sun requirements | Full sun | Sunlight needs |
 | Indoor start time | 8 weeks before last frost | When to start indoors |
 
-The `days_to_maturity` field must be a positive integer. All record fields can be skipped by pressing Enter.
+If a matching seed packet already exists (same variety + Latin name), the system warns you and asks if you want to create a duplicate anyway.
 
-After saving, the output shows the generated plant ID and file path, plus commands to generate and print a label.
+### `list-seed-packets`
+
+Display all seed packets in a table for reference during plant creation.
+
+```bash
+python -m commands.plant_tracking_cli list-seed-packets
+```
+
+Output:
+```
+ID           Variety                     Latin Name                  Brand
+------------ -------------------------  -------------------------  --------------------
+SPKT-001     Yellow Habanero            Capsicum chinense          Gardners Basics
+SPKT-002     Avocado                    Persea americana
+```
+
+### `show-seed-packet <id>`
+
+Show full details of a specific seed packet.
+
+```bash
+python -m commands.plant_tracking_cli show-seed-packet SPKT-001
+```
+
+### `create-plant`
+
+Create a new plant record. The system first looks up a matching seed packet, then asks for remaining plant-specific fields.
+
+```bash
+python -m commands.plant_tracking_cli create-plant
+```
+
+The interactive prompt flow:
+
+1. **Variety identification**: Enter variety name and Latin name (required for label)
+2. **Seed packet lookup**:
+   - **Existing match found**: Confirm to use it (skips packet fields), or choose another option
+   - **No match found**: Choose one of:
+     - **(A) Create new seed packet now**: Enter packet fields, creates the packet, links it to the plant
+     - **(B) Select existing from list**: Pick from `list-seed-packets` output
+     - **(C) Skip ("unknown")**: No packet info available; enter fields directly on the plant
+3. **Plant-specific fields**: Enter planned planting date (required for label)
+
+After saving, the output shows the generated plant ID, seed packet ID (if any), file path, and commands to generate and print a label.
 
 ### `create-label`
 
@@ -104,9 +156,28 @@ Plant records are stored as markdown files with YAML frontmatter:
 - `id`, `variety_name`, `latin_name`, `brand`
 - `days_to_maturity`, `germination_time`, `planting_depth`
 - `spacing`, `sun_requirements`, `indoor_start_time`
-- `planned_planting_date`, `created_at`, `updated_at`
+- `planned_planting_date`, `created_at`, `updated_at`, `seed_packet_id`
 
-The `created_at` and `updated_at` fields use ISO 8601 format.
+The `created_at` and `updated_at` fields use ISO 8601 format. The `seed_packet_id` field references a seed packet record (or `"unknown"` if no packet is linked).
+
+### Seed Packet Storage
+
+Seed packet records are stored in a separate subdirectory:
+
+**Location**: `database/seed_packets/SPKT-NNN.md`
+
+**Example plant file with seed packet reference**:
+```yaml
+---
+variety_name: Yellow Habanero
+latin_name: Capsicum chinense
+planned_planting_date: '2025-05-01'
+seed_packet_id: SPKT-003
+id: YEHA-2026-002
+created_at: '2026-04-24T12:05:30Z'
+updated_at: '2026-04-25T14:30:02Z'
+---
+```
 
 ## Database Directory Customization
 

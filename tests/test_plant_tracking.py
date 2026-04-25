@@ -432,5 +432,361 @@ class TestPrinter(unittest.TestCase):
         self.assertFalse(result)
 
 
+class TestCreatePlantFlow(unittest.TestCase):
+    def setUp(self):
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.test_db = self.test_dir / "test_database"
+        self.test_db.mkdir()
+        self.test_packets_dir = self.test_db / "seed_packets"
+        self.test_packets_dir.mkdir()
+
+        self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
+        os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
+
+    def tearDown(self):
+        if self.original_db:
+            os.environ["PLANT_DATABASE_DIR"] = self.original_db
+        else:
+            os.environ.pop("PLANT_DATABASE_DIR", None)
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    @unittest.mock.patch("builtins.input", side_effect=["Yellow Habanero", "Capsicum chinense", "Y", "2026-05-01"])
+    def test_create_plant_with_existing_packet(self, mock_input):
+        """Test create-plant uses existing seed packet when match found."""
+        from commands.seed_packet_model import SeedPacket
+        from commands import plant_tracking_cli
+        
+        plant_tracking_cli.DATABASE_DIR = self.test_db
+        plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
+        
+        # Create an existing seed packet
+        packet = SeedPacket({'variety_name': 'Yellow Habanero', 'latin_name': 'Capsicum chinense'})
+        fp = self.test_packets_dir / f"{packet.data['id']}.md"
+        with open(fp, 'w') as f:
+            f.write(packet.to_markdown())
+        
+        plant_tracking_cli.create_plant(type('Args', (), {})())
+        
+        plant_files = list(self.test_db.glob("*.md"))
+        self.assertEqual(len(plant_files), 1)
+        
+        from commands.plant_model import load_plant_from_file
+        loaded = load_plant_from_file(plant_files[0])
+        self.assertEqual(loaded.data['seed_packet_id'], packet.data['id'])
+
+    @unittest.mock.patch("builtins.input", side_effect=["Yellow Habanero", "Capsicum chinense", "C", "", "", "", "", "", "", "", "2026-05-01"])
+    def test_create_plant_skip_packet_unknown(self, mock_input):
+        """Test create-plant with skip path sets seed_packet_id to unknown."""
+        from commands import plant_tracking_cli
+        
+        plant_tracking_cli.DATABASE_DIR = self.test_db
+        plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
+        
+        plant_tracking_cli.create_plant(type('Args', (), {})())
+        
+        plant_files = list(self.test_db.glob("*.md"))
+        self.assertEqual(len(plant_files), 1)
+        
+        from commands.plant_model import load_plant_from_file
+        loaded = load_plant_from_file(plant_files[0])
+        self.assertEqual(loaded.data['seed_packet_id'], 'unknown')
+
+    @unittest.mock.patch("builtins.input", side_effect=["Yellow Habanero", "Capsicum chinense", "A", "Gardners Basics", "80-100", "7-21", "", "", "", "", "", "2026-05-01"])
+    def test_create_plant_create_new_packet(self, mock_input):
+        """Test create-plant creates new seed packet inline."""
+        from commands import plant_tracking_cli
+        
+        plant_tracking_cli.DATABASE_DIR = self.test_db
+        plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
+        
+        plant_tracking_cli.create_plant(type('Args', (), {})())
+        
+        plant_files = list(self.test_db.glob("*.md"))
+        packet_files = list(self.test_packets_dir.glob("*.md"))
+        
+        self.assertEqual(len(plant_files), 1)
+        self.assertEqual(len(packet_files), 1)
+        
+        from commands.plant_model import load_plant_from_file
+        loaded = load_plant_from_file(plant_files[0])
+        self.assertEqual(loaded.data['seed_packet_id'], packet_files[0].stem)
+
+    @unittest.mock.patch("builtins.input", side_effect=["Yellow Habanero", "Capsicum chinense", "N", "B", "SPKT-001", "2026-05-01"])
+    def test_create_plant_select_existing_packet(self, mock_input):
+        """Test create-plant selects existing packet from list."""
+        from commands.seed_packet_model import SeedPacket
+        from commands import plant_tracking_cli
+        
+        plant_tracking_cli.DATABASE_DIR = self.test_db
+        plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
+        
+        packet = SeedPacket({'variety_name': 'Yellow Habanero', 'latin_name': 'Capsicum chinense', 'id': 'SPKT-001'})
+        fp = self.test_packets_dir / "SPKT-001.md"
+        with open(fp, 'w') as f:
+            f.write(packet.to_markdown())
+        
+        plant_tracking_cli.create_plant(type('Args', (), {})())
+        
+        plant_files = list(self.test_db.glob("*.md"))
+        self.assertEqual(len(plant_files), 1)
+        
+        from commands.plant_model import load_plant_from_file
+        loaded = load_plant_from_file(plant_files[0])
+        self.assertEqual(loaded.data['seed_packet_id'], 'SPKT-001')
+
+
+class TestSeedPacketCLI(unittest.TestCase):
+    def setUp(self):
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.test_db = self.test_dir / "test_database"
+        self.test_db.mkdir()
+        self.test_packets_dir = self.test_db / "seed_packets"
+        self.test_packets_dir.mkdir()
+
+        self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
+        os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
+
+    def tearDown(self):
+        if self.original_db:
+            os.environ["PLANT_DATABASE_DIR"] = self.original_db
+        else:
+            os.environ.pop("PLANT_DATABASE_DIR", None)
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    @unittest.mock.patch("builtins.input", side_effect=["Yellow Habanero", "Capsicum chinense", "Gardners Basics", "80-100", "7-21", "0.25", "12-18", "Full Sun", "8-10 weeks"])
+    def test_create_seed_packet_command(self, mock_input):
+        """Test create-seed-packet subcommand creates a record."""
+        from commands import plant_tracking_cli
+        plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
+        plant_tracking_cli.create_seed_packet(type('Args', (), {})())
+        
+        files = list(self.test_packets_dir.glob("*.md"))
+        self.assertEqual(len(files), 1)
+        self.assertTrue(files[0].name.startswith("SPKT-"))
+
+    @unittest.mock.patch("builtins.input", side_effect=["Yellow Habanero", "Capsicum chinense", "y", "Gardners Basics", "80-100", "7-21", "0.25", "12-18", "Full Sun", "8-10 weeks"])
+    def test_create_seed_packet_duplicate_warning(self, mock_input):
+        """Test create-seed-packet warns on duplicate and creates on confirm."""
+        from commands.seed_packet_model import SeedPacket
+        from commands import plant_tracking_cli
+        
+        plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
+        
+        first = SeedPacket({'variety_name': 'Yellow Habanero', 'latin_name': 'Capsicum chinense'})
+        fp = self.test_packets_dir / f"{first.data['id']}.md"
+        with open(fp, 'w') as f:
+            f.write(first.to_markdown())
+        
+        plant_tracking_cli.create_seed_packet(type('Args', (), {})())
+        
+        files = list(self.test_packets_dir.glob("*.md"))
+        self.assertEqual(len(files), 2)
+
+    def test_list_seed_packets_command(self):
+        """Test list-seed-packets shows all packets."""
+        from commands.seed_packet_model import SeedPacket
+        from commands import plant_tracking_cli
+        from io import StringIO
+        import sys
+        
+        plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
+        
+        for name, latin in [('Avocado', 'Persea americana'), ('Tomato', 'Solanum lycopersicum')]:
+            p = SeedPacket({'variety_name': name, 'latin_name': latin})
+            fp = self.test_packets_dir / f"{p.data['id']}.md"
+            with open(fp, 'w') as f:
+                f.write(p.to_markdown())
+        
+        captured = StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = captured
+        try:
+            plant_tracking_cli.list_seed_packets(type('Args', (), {})())
+        finally:
+            sys.stdout = old_stdout
+        
+        output = captured.getvalue()
+        self.assertIn('Avocado', output)
+        self.assertIn('Tomato', output)
+        self.assertIn('SPKT-', output)
+
+    def test_list_seed_packets_empty(self):
+        """Test list-seed-packets handles empty directory."""
+        from commands import plant_tracking_cli
+        from io import StringIO
+        import sys
+        
+        plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
+        
+        captured = StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = captured
+        try:
+            plant_tracking_cli.list_seed_packets(type('Args', (), {})())
+        finally:
+            sys.stdout = old_stdout
+        
+        self.assertIn('No seed packets', captured.getvalue())
+
+    @unittest.mock.patch("sys.exit")
+    def test_show_seed_packet_not_found(self, mock_exit):
+        """Test show-seed-packet exits for missing packet."""
+        from commands import plant_tracking_cli
+        
+        plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
+        plant_tracking_cli.show_seed_packet(type('Args', (), {'packet_id': 'SPKT-999'})())
+        mock_exit.assert_called_once_with(1)
+
+    def test_show_seed_packet_found(self):
+        """Test show-seed-packet displays packet details."""
+        from commands.seed_packet_model import SeedPacket
+        from commands import plant_tracking_cli
+        from io import StringIO
+        import sys
+        
+        plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
+        
+        data = {
+            'variety_name': 'Yellow Habanero',
+            'latin_name': 'Capsicum chinense',
+            'brand': 'Gardners Basics',
+        }
+        p = SeedPacket(data)
+        fp = self.test_packets_dir / f"{p.data['id']}.md"
+        with open(fp, 'w') as f:
+            f.write(p.to_markdown())
+        
+        captured = StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = captured
+        try:
+            plant_tracking_cli.show_seed_packet(type('Args', (), {'packet_id': p.data['id']})())
+        finally:
+            sys.stdout = old_stdout
+        
+        output = captured.getvalue()
+        self.assertIn('Yellow Habanero', output)
+        self.assertIn('Gardners Basics', output)
+
+
+class TestEndToEnd(unittest.TestCase):
+    """Integration tests covering the full seed packet → plant flow."""
+
+    def setUp(self):
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.test_db = self.test_dir / "test_database"
+        self.test_db.mkdir()
+        self.test_packets_dir = self.test_db / "seed_packets"
+        self.test_packets_dir.mkdir()
+
+        self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
+        os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
+
+    def tearDown(self):
+        if self.original_db:
+            os.environ["PLANT_DATABASE_DIR"] = self.original_db
+        else:
+            os.environ.pop("PLANT_DATABASE_DIR", None)
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def test_create_packet_then_plant_reference(self):
+        """Create a seed packet, then create a plant that references it."""
+        from commands.seed_packet_model import SeedPacket, load_from_file
+        from commands.plant_model import Plant, load_plant_from_file
+
+        # Create seed packet
+        packet_data = {
+            'variety_name': 'Yellow Habanero',
+            'latin_name': 'Capsicum chinense',
+            'brand': 'Gardners Basics',
+            'days_to_maturity': '80-100',
+        }
+        packet = SeedPacket(packet_data)
+        packet_path = self.test_packets_dir / f"{packet.data['id']}.md"
+        with open(packet_path, 'w') as f:
+            f.write(packet.to_markdown())
+
+        # Create plant referencing the packet
+        plant_data = {
+            'variety_name': 'Yellow Habanero',
+            'latin_name': 'Capsicum chinense',
+            'planned_planting_date': '2026-05-01',
+            'seed_packet_id': packet.data['id'],
+        }
+        plant = Plant(plant_data)
+        plant_path = self.test_db / f"{plant.data['id']}.md"
+        with open(plant_path, 'w') as f:
+            f.write(plant.to_markdown())
+
+        # Load and verify
+        loaded_plant = load_plant_from_file(plant_path)
+        self.assertEqual(loaded_plant.data['seed_packet_id'], packet.data['id'])
+
+        resolved = loaded_plant.get_seed_packet()
+        self.assertIsNotNone(resolved)
+        self.assertEqual(resolved.data['brand'], 'Gardners Basics')
+
+    def test_unknown_path_plant_no_packet(self):
+        """Test plant with unknown seed packet works correctly."""
+        from commands.plant_model import Plant, load_plant_from_file
+
+        plant_data = {
+            'variety_name': 'Mystery Plant',
+            'latin_name': 'Unknown unknown',
+            'planned_planting_date': '2026-06-01',
+            'seed_packet_id': 'unknown',
+        }
+        plant = Plant(plant_data)
+        plant_path = self.test_db / f"{plant.data['id']}.md"
+        with open(plant_path, 'w') as f:
+            f.write(plant.to_markdown())
+
+        loaded = load_plant_from_file(plant_path)
+        self.assertEqual(loaded.data['seed_packet_id'], 'unknown')
+        self.assertIsNone(loaded.get_seed_packet())
+
+    def test_packet_fields_not_required_with_seed_packet_id(self):
+        """Test that seed packet fields are optional when seed_packet_id is present."""
+        from commands.plant_model import Plant
+
+        plant_data = {
+            'variety_name': 'Yellow Habanero',
+            'latin_name': 'Capsicum chinense',
+            'planned_planting_date': '2026-05-01',
+            'seed_packet_id': 'SPKT-001',
+        }
+        # Should not raise - no packet fields needed
+        plant = Plant(plant_data)
+        self.assertEqual(plant.data['variety_name'], 'Yellow Habanero')
+        self.assertNotIn('brand', plant.data)
+
+    @unittest.mock.patch("builtins.input", side_effect=[
+            # create_seed_packet: required + 7 optional (empty)
+            "Basil", "Ocimum basilicum", "", "", "", "", "", "", "", "",
+            # create_plant: variety, latin, confirm existing packet, date
+            "Basil", "Ocimum basilicum", "Y", "2026-07-01",
+        ])
+    def test_cli_full_flow_packet_then_plant(self, mock_input):
+        """Test full CLI flow: create packet, then create plant with that packet."""
+        from commands import plant_tracking_cli
+        from commands.plant_model import load_plant_from_file
+
+        plant_tracking_cli.DATABASE_DIR = self.test_db
+        plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
+
+        # Create packet first
+        plant_tracking_cli.create_seed_packet(type('Args', (), {})())
+
+        # Now create plant that matches the packet
+        plant_tracking_cli.create_plant(type('Args', (), {})())
+
+        plant_files = list(self.test_db.glob("*.md"))
+        self.assertEqual(len(plant_files), 1)
+
+        loaded = load_plant_from_file(plant_files[0])
+        self.assertEqual(loaded.data['variety_name'], 'Basil')
+        self.assertTrue(loaded.data['seed_packet_id'].startswith('SPKT-'))
+
+
 if __name__ == '__main__':
     unittest.main()
