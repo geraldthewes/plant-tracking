@@ -82,17 +82,17 @@ We chose to use:
 ---
 title: ADR-0004 Frontend Technology Stack Decision
 ---
-C4Container
-    Person(gardener, "Gardener", "The home gardener who uses the system")
-    System_Boundary(frontend_system, "Frontend System") {
-        Container(frontend_app, "Frontend System", "Next.js/React, Docker", "Web interface for the plant tracking system")
-    }
-    System_Ext(backend_api, "Backend API", "External backend service")
-    System_Ext(device_camera, "Device Camera", "External device camera for QR scanning and photo capture")
-    System_Ext(device_storage, "Device Storage", "External device storage for saving photos and data")
+flowchart LR
+    gardener(["Gardener\n(Actor)"])
+    subgraph frontend_sys["Frontend System"]
+        frontend_app["Frontend System\n(Next.js/React, Docker)"]
+    end
+    backend_api[["Backend API\n(External)"]]
+    device_camera[["Device Camera\n(External)"]]
+    device_storage[["Device Storage\n(External)"]]
 
-    Rel(gardener, frontend_app, "Uses interface via HTTPS")
-    Rel(frontend_app, backend_api, "Exchanges data with backend via REST/HTTPS")
-    Rel(frontend_app, device_camera, "Accesses camera via native API")
-    Rel(frontend_app, device_storage, "Accesses storage via native API")
+    gardener -->|"Uses interface via HTTPS"| frontend_app
+    frontend_app -->|"Exchanges data with backend via REST/HTTPS"| backend_api
+    frontend_app -->|"Accesses camera via native API"| device_camera
+    frontend_app -->|"Accesses storage via native API"| device_storage
 ```

@@ -84,6 +84,16 @@
 - Device Integration: Python libraries for Bluetooth communication with Phomemo M120 — Reliable connectivity for label printing in garden environments
 - QR Handling: Client-side QR code generation and scanning libraries — Eliminates need for separate QR service container
 
+## Sprint 7: ADRs + Cross-Cutting Concerns
+- Technology Stack: Hybrid (Next.js/React frontend, Python/FastAPI backend) — Leverages existing expertise and enables rapid web prototyping
+- Frontend MVP: Next.js with React and TypeScript — Provides excellent developer experience and performance for web interface
+- Frontend Post-MVP: React Native with TypeScript — Enables cross-platform mobile access with native device capabilities
+- Backend: Python 3.9+ with FastAPI running in Docker containers — High performance with async capabilities and rich ecosystem for integrations
+- Data Storage (MVP): Local markdown files — Human-readable and easy to backup with clear migration path to PostgreSQL
+- AI Integration: Hermes agent accessed via Telegram Bot API — Provides sophisticated AI capabilities without custom UI
+- Device Integration: Python libraries for Bluetooth communication with Phomemo M120 — Reliable connectivity for label printing in garden environments
+- QR Handling: Client-side QR code generation and scanning libraries — Eliminates need for separate QR service container
+
 ## Sprint 8: Final ADRs and Architecture Review
 - Data Persistence Strategy: Phased approach from markdown to PostgreSQL — Human-readable MVP with clear migration path to robust storage
 - ADR-0006: Data Persistence Strategy document — Defines structured markdown format designed for seamless migration to PostgreSQL
@@ -93,3 +103,10 @@
 - Validated all Mermaid diagrams with mmdc (exit code 0) ensuring syntax correctness
 - Architecture Review: Validated all ADRs meet sprint contract requirements including naming conventions, section content, diagram validity, and NFR traceability
 - NFR Traceability: All ADRs include proper ## Related NFRs subsections with valid identifiers from nfr_catalog.json
+
+## Sprint 9: Hermes Agent Integration
+- Hermes Agent Integration Strategy: Telegram Bot API with HTTPS/REST communication — Provides natural language querying and analysis capabilities via familiar messaging interface
+- ADR-0007: Hermes Agent Integration Strategy document — Defines how the system interacts with the Hermes agent via Telegram Bot AI for data analysis and insights
+- Integration Approach: HTTPS/REST with JSON payloads, Bot token authentication, and graceful degradation mechanisms
+- Communication Protocol: Structured data exchange via JSON extracts from markdown records
+- Fallback Mechanism: Manual analysis capability when Hermes agent is unavailable

@@ -89,20 +89,18 @@ We chose to model the Plant Tracking System as a single system with the followin
 ---
 title: C1 System Context for Plant Tracking System
 ---
-C4Context
-    Person(gardener, "Gardener", "The home gardener who uses the system")
-    System_Boundary(plant_tracking_system, "Plant Tracking System") {
-        System(trackingsystem, "Plant Tracking System", "Internal system for tracking plants and garden data")
-    }
-    System_Ext(hermes, "Hermes Agent", "AI agent accessed via Telegram for natural language querying and analysis")
-    System_Ext(phomemo, "Phomemo M120 Printer", "Bluetooth label printer for generating QR-coded labels")
-    System_Ext(seed, "Seed Packet Data Source", "Physical seed packets providing variety information")
-    System_Ext(weather, "Weather Service", "Optional service for environmental data (out of MVP scope)")
+flowchart LR
+    gardener(["Gardener\n(Actor)"])
+    trackingsystem["Plant Tracking System"]
+    hermes[["Hermes Agent\n(External)"]]
+    phomemo[["Phomemo M120 Printer\n(External)"]]
+    seed[["Seed Packet Data Source\n(External)"]]
+    weather[["Weather Service\n(External)"]]
 
-    Rel(gardener, trackingsystem, "Enters seed packet data via manual input")
-    Rel(gardener, trackingsystem, "Scans QR code via camera")
-    Rel(trackingsystem, hermes, "Queries Hermes agent via Telegram")
-    Rel(trackingsystem, phomemo, "Prints QR-coded label via Bluetooth")
-    Rel(trackingsystem, seed, "Retrieves variety information from")
-    Rel_R(trackingsystem, weather, "Optional: Retrieves weather data via HTTPS")
+    gardener -->|"Enters seed packet data via manual input"| trackingsystem
+    gardener -->|"Scans QR code via camera"| trackingsystem
+    trackingsystem -->|"Queries Hermes agent via Telegram"| hermes
+    trackingsystem -->|"Prints QR-coded label via Bluetooth"| phomemo
+    trackingsystem -->|"Retrieves variety information from"| seed
+    trackingsystem -->|"Optional: Retrieves weather data via HTTPS"| weather
 ```
