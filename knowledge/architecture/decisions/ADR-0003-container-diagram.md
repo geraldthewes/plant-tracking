@@ -28,7 +28,7 @@ We chose to model the following containers:
 - **Hermes Agent Interface**: Communicates with Hermes agent via Telegram Bot API
 - **External Systems**: Telegram Service, Phomemo M120 Printer, Seed Packet Data Source
 
-### Alternatives considered
+### Alternatives Considered
 
 - **Monolithic Container**: All functionality in a single container - Rejected because it would hinder independent scaling and deployment
 - **Functional Containers per FR**: One container per functional requirement - Rejected because it would create excessive granularity and communication overhead
@@ -66,7 +66,7 @@ We chose to model the following containers:
 - Requires service discovery and load balancing considerations
 - Data consistency challenges across services
 
-### Related nfrs
+### Related NFRs
 
 - NFR-PERF-02: Hermes agent queries return insights within 10 seconds - Ensures timely responses from the AI agent for effective user interaction
 - NFR-RELI-01: Data integrity with zero lost records - Requires that plant data is never lost or corrupted during storage operations
@@ -79,27 +79,29 @@ title: C2 Container Diagram for Plant Tracking System
 ---
 flowchart LR
     gardener(["Gardener\n(Actor)"])
+
     subgraph sys["Plant Tracking System"]
         frontend["Mobile App Frontend\n(Next.js/React, Docker)"]
-        qr_service["QR Code Service\n(Python, Docker)"]
-        print_service["Print Service\n(Python, Docker)"]
-        data_storage["Data Storage Service\n(Python, Docker)"]
+        qr["QR Code Service\n(Python, Docker)"]
+        printer["Print Service\n(Python, Docker)"]
+        storage["Data Storage Service\n(Python, Docker)"]
         hermes_interface["Hermes Agent Interface\n(Python, Docker)"]
         db[("Markdown Storage\n(Local Files)")]
     end
+
     telegram[["Telegram Service\n(External)"]]
     phomemo[["Phomemo M120 Printer\n(External)"]]
     seed[["Seed Packet Data Source\n(External)"]]
 
     gardener -->|"Uses interface via HTTPS"| frontend
-    frontend -->|"Requests QR code via REST/HTTPS"| qr_service
-    frontend -->|"Submits plant data via REST/HTTPS"| data_storage
+    frontend -->|"Requests QR code via REST/HTTPS"| qr
+    frontend -->|"Submits plant data via REST/HTTPS"| storage
     frontend -->|"Queries Hermes agent via REST/HTTPS"| hermes_interface
-    frontend -->|"Sends print request (label data) via REST/HTTPS"| print_service
-    qr_service -->|"Returns QR code via REST/HTTPS"| frontend
-    print_service -->|"Prints label via Bluetooth"| phomemo
-    data_storage -->|"Reads/writes plant data via file I/O"| db
+    frontend -->|"Sends print request (label data) via REST/HTTPS"| printer
+    qr -->|"Returns QR code via REST/HTTPS"| frontend
+    printer -->|"Prints label via Bluetooth"| phomemo
+    storage -->|"Reads/writes plant data via file I/O"| db
     hermes_interface -->|"Sends queries via Telegram Bot API"| telegram
     hermes_interface -->|"Receives insights via Telegram Bot API"| telegram
-    data_storage -->|"Retrieves variety information from"| seed
+    storage -.->|"Retrieves variety information from"| seed
 ```

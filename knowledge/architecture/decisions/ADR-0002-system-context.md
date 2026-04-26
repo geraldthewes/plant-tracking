@@ -31,7 +31,7 @@ We chose to model the Plant Tracking System as a single system with the followin
 - **Seed Packet Data Source (External)**: Physical seed packets providing variety information
 - **Weather Service (External)**: Optional service for environmental data (out of MVP scope)
 
-### Alternatives considered
+### Alternatives Considered
 
 
 
@@ -77,7 +77,7 @@ We chose to model the Plant Tracking System as a single system with the followin
 - Doesn't show internal architectural decisions
 - External systems are treated as black boxes
 
-### Related nfrs
+### Related NFRs
 
 
 
@@ -91,16 +91,18 @@ title: C1 System Context for Plant Tracking System
 ---
 flowchart LR
     gardener(["Gardener\n(Actor)"])
-    trackingsystem["Plant Tracking System"]
+
+    sys["Plant Tracking System\n(Internal System)"]
+
     hermes[["Hermes Agent\n(External)"]]
     phomemo[["Phomemo M120 Printer\n(External)"]]
     seed[["Seed Packet Data Source\n(External)"]]
     weather[["Weather Service\n(External)"]]
 
-    gardener -->|"Enters seed packet data via manual input"| trackingsystem
-    gardener -->|"Scans QR code via camera"| trackingsystem
-    trackingsystem -->|"Queries Hermes agent via Telegram"| hermes
-    trackingsystem -->|"Prints QR-coded label via Bluetooth"| phomemo
-    trackingsystem -->|"Retrieves variety information from"| seed
-    trackingsystem -->|"Optional: Retrieves weather data via HTTPS"| weather
+    gardener -->|"Enters seed packet data via manual input"| sys
+    gardener -->|"Scans QR code via camera"| sys
+    sys -->|"Queries Hermes agent via Telegram"| hermes
+    sys -->|"Prints QR-coded label via Bluetooth"| phomemo
+    sys -->|"Retrieves variety information from"| seed
+    sys -.->|"Optional: Retrieves weather data via HTTPS"| weather
 ```

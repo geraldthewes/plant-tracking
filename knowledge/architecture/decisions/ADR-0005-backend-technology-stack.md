@@ -27,7 +27,7 @@ We chose to use:
 - **Data Storage (Future)**: Migration path to PostgreSQL with SQLAlchemy ORM
 - **API Documentation**: OpenAPI/Swagger via FastAPI automatic docs
 
-### Alternatives considered
+### Alternatives Considered
 
 - **Node.js/Express**: JavaScript backend with Express framework - Rejected because it would split the developer's expertise and limit access to Python-specific libraries for Bluetooth and QR generation
 - **Go/Gin**: Go language with Gin framework - Rejected due to learning curve and fewer mature libraries for Telegram integration compared to Python
@@ -55,6 +55,7 @@ We chose to use:
 ## Consequences
 
 ### Positive
+
 - Leverages developer familiarity with Python ecosystem
 - FastAPI provides high performance and automatic API documentation
 - Docker ensures consistent environments and easy deployment
@@ -63,12 +64,13 @@ We chose to use:
 - Clear migration path from markdown to PostgreSQL
 
 ### Negative
+
 - Python may have higher memory usage than some alternatives (e.g., Go)
 - Asynchronous programming requires learning curve for some developers
 - Docker adds complexity for simple deployment
 - Bluetooth library compatibility may vary across Linux distributions
 
-### Related nfrs
+### Related NFRs
 
 - NFR-PERF-02: Hermes agent queries return insights within 10 seconds
 - NFR-RELI-01: Data integrity with zero lost records

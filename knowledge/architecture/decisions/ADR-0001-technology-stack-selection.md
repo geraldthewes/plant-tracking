@@ -32,7 +32,7 @@ We chose to use a hybrid technology stack consisting of:
 - **Device Integration**: Python libraries for Bluetooth communication with Phomemo M120
 - **QR Handling**: Client-side QR code generation and scanning libraries
 
-### Alternatives considered
+### Alternatives Considered
 
 
 
@@ -81,7 +81,7 @@ We chose to use a hybrid technology stack consisting of:
 - Dependence on external Hermes agent via Telegram creates external dependency
 - Bluetooth printing reliability varies across devices
 
-### Related nfrs
+### Related NFRs
 
 
 

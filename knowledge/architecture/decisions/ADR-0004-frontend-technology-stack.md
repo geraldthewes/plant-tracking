@@ -31,7 +31,7 @@ We chose to use:
   - Form handling with React Hook Form
   - Date handling with date-fns
 
-### Alternatives considered
+### Alternatives Considered
 
 - **Monolithic Frontend**: Single technology stack for web and mobile - Rejected because it would limit access to native device capabilities on mobile and provide suboptimal web performance
 - **Separate Stacks**: Completely different technologies for web (Vue/Angular) and mobile (Swift/Kotlin) - Rejected because it would increase development effort and prevent code sharing
@@ -69,7 +69,7 @@ We chose to use:
 - Maintaining two codebases (web and mobile) increases development effort
 - React Native requires native toolchain setup (Xcode, Android Studio) which may increase setup time
 
-### Related nfrs
+### Related NFRs
 
 - NFR-USAB-01: Interface usable in outdoor garden conditions - Ensures the frontend works in various lighting conditions (bright sun to shade) for gardener usability
 - NFR-PERF-02: Hermes agent queries return insights within 10 seconds - Requires responsive frontend that doesn't add unnecessary latency to AI interactions
@@ -84,15 +84,13 @@ title: ADR-0004 Frontend Technology Stack Decision
 ---
 flowchart LR
     gardener(["Gardener\n(Actor)"])
-    subgraph frontend_sys["Frontend System"]
-        frontend_app["Frontend System\n(Next.js/React, Docker)"]
-    end
-    backend_api[["Backend API\n(External)"]]
-    device_camera[["Device Camera\n(External)"]]
-    device_storage[["Device Storage\n(External)"]]
+    frontend["Frontend System\n(Next.js/React, Docker)"]
+    backend[["Backend API\n(External)"]]
+    camera[["Device Camera\n(External)"]]
+    storage[["Device Storage\n(External)"]]
 
-    gardener -->|"Uses interface via HTTPS"| frontend_app
-    frontend_app -->|"Exchanges data with backend via REST/HTTPS"| backend_api
-    frontend_app -->|"Accesses camera via native API"| device_camera
-    frontend_app -->|"Accesses storage via native API"| device_storage
+    gardener -->|"Uses interface via HTTPS"| frontend
+    frontend -->|"Exchanges data with backend via REST/HTTPS"| backend
+    frontend -->|"Accesses camera via native API"| camera
+    frontend -->|"Accesses storage via native API"| storage
 ```
