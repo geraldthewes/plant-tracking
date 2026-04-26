@@ -1,0 +1,65 @@
+{
+  "scores": {
+    "ADR File Naming Convention": 9.5,
+    "Required ADR Sections Presence & Content": 9.0,
+    "Mermaid Diagram Syntax Validity": 10.0,
+    "C4 Diagram Completeness": 8.5,
+    "Non-Functional Requirements Traceability": 8.0,
+    "Markdown Heading Hierarchy & Formatting": 7.0,
+    "Relationship Documentation Accuracy": 5.0,
+    "Decision Record Structure & Trade-off Analysis": 8.5
+  },
+  "feedback": [
+    {
+      "criterion": "ADR File Naming Convention",
+      "score": 9.5,
+      "severity": "Low",
+      "details": "All 7 files match the required regex ^ADR-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\\.md$. Sequential numbering from 0001 to 0007 with no gaps or duplicates. No issues found."
+    },
+    {
+      "criterion": "Required ADR Sections Presence & Content",
+      "score": 9.0,
+      "severity": "Medium",
+      "details": "All 7 files contain exactly 4 H2 headings (Status, Context, Decision, Consequences) with no extra H2 headings. Each section exceeds 50 words. However, ADR-0006 contains extra H3 headings under ## Decision (`### Mvp implementation details:` at line 49, `### Migration design:` at line 58) that add implementation detail rather than decision rationale — borderline acceptable as they are H3, not H2."
+    },
+    {
+      "criterion": "Mermaid Diagram Syntax Validity",
+      "score": 10.0,
+      "severity": "Low",
+      "details": "All 7 files pass mmdc validation with exit code 0. ADR-0002, ADR-0003, and ADR-0004 contain mermaid diagrams that rendered successfully. ADR-0001, ADR-0005, ADR-0006, ADR-0007 contain no mermaid code blocks, which is valid — the criterion only requires that diagrams that exist must pass validation."
+    },
+    {
+      "criterion": "C4 Diagram Completeness",
+      "score": 8.5,
+      "severity": "Medium",
+      "details": "ADR-0002 (Context) has gardener (Person) and trackingsystem (System) with labeled edges ✓. ADR-0003 (Container) has containers, db[('Markdown Storage')] and external nodes ✓. ADR-0004 has container and external nodes ✓. However: (1) The diagrams use Mermaid flowchart shapes rather than true C4-Mermaid plugin syntax — while C4Context/C4Container are banned per critic rules, the flowchart shapes only approximate C4 concepts (e.g., gardener([\"Gardener\\n(Actor)\"]) at ADR-0002:93). (2) ADR-0002:94 uses `trackingsystem[\"Plant Tracking System\"]` without a technology annotation in the label, which is a missing technology concern for a context-level system node."
+    },
+    {
+      "criterion": "Non-Functional Requirements Traceability",
+      "score": 8.0,
+      "severity": "Medium",
+      "details": "All 7 files contain `### Related nfrs` subsections with valid NFR identifiers matching NFR-[A-Z]+-[0-9]{2}. All referenced NFRs exist in nfr_catalog.json (NFR-USAB-01, NFR-PERF-02, NFR-RELI-01, NFR-DATA-02, NFR-MAINT-01, NFR-DATA-03). Issues: (1) The subsection heading uses lowercase `### Related nfrs` instead of `## Related NFRs` as specified in the contract — the contract explicitly states `## Related NFRs` with uppercase. (2) ADR-0005 lines 73-76 list bare NFR identifiers without descriptive context (e.g., `NFR-PERF-02: Hermes agent queries return insights within 10 seconds` without explanation of how the decision addresses it), whereas the contract implies traceability requires explanation."
+    },
+    {
+      "criterion": "Markdown Heading Hierarchy & Formatting",
+      "score": 7.0,
+      "severity": "High",
+      "details": "Heading hierarchy is valid (H1→H2→H3, no skipping). H1 headings are Title Case. H2 headings are sentence case. However, MD022 violations exist: ADR-0005 has no blank line between ## Status and content (line 4→5), between ## Context and content (line 12→14), between ## Decision and content (line 16→18). ADR-0007 has the same pattern — no blank line after ## Status (line 3→4), ## Context (line 6→7), ## Decision (line 9→10). These files would fail markdownlint MD022 checks. Additionally, ADR-0006 line 49 uses `### Mvp implementation details:` with incorrect capitalization of the acronym 'MVP' (should be uppercase, not 'Mvp')."
+    },
+    {
+      "criterion": "Relationship Documentation Accuracy",
+      "score": 5.0,
+      "severity": "Critical",
+      "details": "ADR-0007 completely lacks a `### Relationships` subsection. The file jumps directly from `## Status` (line 3) to `## Context` (line 6) with no Relationships subsection between them. The contract requires `### Relationships` to exist directly under `## Status` in every ADR. The other 6 files all have `### Relationships` subsections with valid content (ADR-0006 correctly uses `Relates to ADR-0001` and `ADR-0005`, both of which physically exist). ADR-0007's omission is a critical gap in decision traceability."
+    },
+    {
+      "criterion": "Decision Record Structure & Trade-off Analysis",
+      "score": 8.5,
+      "severity": "Medium",
+      "details": "All 7 files begin their Decision section with 'We chose' ✓. All include `### Alternatives considered` with ≥2 bullet points ✓. All include `### Trade-offs` subsections with pros and cons ✓. However, two issues: (1) The heading `### Alternatives considered` uses lowercase 'c' instead of the contract-specified `### Alternatives Considered` — present in all 7 files. (2) The trade-offs section in each file provides pros/cons for each alternative independently, but the contract specifically requires '≥1 pro and ≥1 con for the selected option versus each alternative' — the trade-offs are presented as standalone pros/cons per option rather than explicit comparative analysis between the selected option and each alternative."
+    }
+  ],
+  "overall_summary": "The 7 ADR files in decisions/ are structurally solid with correct naming convention, proper 4-section structure, and valid mermaid syntax. The most critical issue is ADR-0007 missing the mandatory `### Relationships` subsection entirely. Markdown formatting is inconsistent — ADR-0005 and ADR-0007 fail MD022 (missing blank lines after headings), and the `### Related nfrs` heading uses lowercase instead of the contract-required `## Related NFRs`. NFR traceability is comprehensive with all identifiers existing in nfr_catalog.json, though ADR-0005 lists bare identifiers without explanatory context. The Decision sections all properly start with \"We chose\" and include alternatives and trade-offs, but the trade-off format is descriptive rather than comparative as the contract intends. C4 diagrams in ADR-0002, ADR-0003, and ADR-0004 are architecturally sound but use flowchart shapes rather than true C4 plugin syntax.",
+  "average_score": 8.1875,
+  "passed": false
+}
