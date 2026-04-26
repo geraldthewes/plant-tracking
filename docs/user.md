@@ -99,7 +99,7 @@ The interactive prompt flow:
      - **(A) Create new seed packet now**: Enter packet fields, creates the packet, links it to the plant
      - **(B) Select existing from list**: Pick from `list-seed-packets` output
      - **(C) Skip ("unknown")**: No packet info available; enter fields directly on the plant
-3. **Plant-specific fields**: Enter planned planting date (required for label)
+3. **Plant-specific fields**: Enter planting date (required for label)
 
 After saving, the output shows the generated plant ID, seed packet ID (if any), file path, and commands to generate and print a label.
 
@@ -117,7 +117,7 @@ python -m commands.plant_tracking_cli create-label YEHA-2026-001
 ```
 
 The label is saved to `database/<plant_id>_label.png` and contains:
-- **Left side**: variety name, Latin name, and planned planting date
+- **Left side**: variety name, Latin name, and planting date
 - **Right side**: QR code encoding the plant ID
 - **Bottom**: variety name and planting date
 
@@ -139,7 +139,7 @@ The command accepts either a plant ID (generates the label first) or a direct pa
 
 IDs follow the pattern `VARIETY-YYYY-SEQ`:
 - **VARIETY**: First 2 letters of each word in the variety name, up to 4 characters (e.g., "Yellow Habanero" → "YEHA")
-- **YYYY**: Current year
+- **YYYY**: Year from planting_date
 - **SEQ**: Zero-padded 3-digit sequence number (001, 002, ...)
 
 Example: `YEHA-2026-001`
@@ -156,7 +156,7 @@ Plant records are stored as markdown files with YAML frontmatter:
 - `id`, `variety_name`, `latin_name`, `brand`
 - `days_to_maturity`, `germination_time`, `planting_depth`
 - `spacing`, `sun_requirements`, `indoor_start_time`
-- `planned_planting_date`, `created_at`, `updated_at`, `seed_packet_id`
+- `planting_date`, `created_at`, `updated_at`, `seed_packet_id`
 
 The `created_at` and `updated_at` fields use ISO 8601 format. The `seed_packet_id` field references a seed packet record (or `"unknown"` if no packet is linked).
 
@@ -171,7 +171,7 @@ Seed packet records are stored in a separate subdirectory:
 ---
 variety_name: Yellow Habanero
 latin_name: Capsicum chinense
-planned_planting_date: '2025-05-01'
+planting_date: '2025-05-01'
 seed_packet_id: SPKT-003
 id: YEHA-2026-002
 created_at: '2026-04-24T12:05:30Z'

@@ -9,17 +9,17 @@ from typing import Dict, Any, Optional
 import yaml
 
 # Fields needed for label generation (all required)
-LABEL_FIELDS = ['variety_name', 'latin_name', 'planned_planting_date']
+LABEL_FIELDS = ['variety_name', 'latin_name', 'planting_date']
 
 # All available fields (record-keeping)
 ALL_FIELDS = [
     'variety_name', 'latin_name', 'brand', 'days_to_maturity',
     'germination_time', 'planting_depth', 'spacing', 'sun_requirements',
-    'indoor_start_time', 'planned_planting_date', 'seed_packet_id'
+    'indoor_start_time', 'planting_date', 'seed_packet_id'
 ]
 
 # All label fields are required
-REQUIRED_FIELDS = ['variety_name', 'latin_name', 'planned_planting_date']
+REQUIRED_FIELDS = ['variety_name', 'latin_name', 'planting_date']
 
 # Fields for record-keeping only (not used in labels)
 RECORD_ONLY = [
@@ -53,11 +53,11 @@ class Plant:
                 raise ValueError(f"Missing required field: {field}")
 
         # Validate date format
-        if 'planned_planting_date' in self.data:
+        if 'planting_date' in self.data:
             try:
-                datetime.strptime(self.data['planned_planting_date'], '%Y-%m-%d')
+                datetime.strptime(self.data['planting_date'], '%Y-%m-%d')
             except ValueError:
-                raise ValueError("planned_planting_date must be in YYYY-MM-DD format")
+                raise ValueError("planting_date must be in YYYY-MM-DD format")
 
     def to_markdown(self) -> str:
         """Convert plant data to markdown with YAML frontmatter"""
@@ -85,7 +85,11 @@ class Plant:
         if not abbrev:
             abbrev = variety[:4].upper()
 
-        year = datetime.now(timezone.utc).year
+        planting_date_val = self.data.get('planting_date', '')
+        if planting_date_val:
+            year = datetime.strptime(planting_date_val, '%Y-%m-%d').year
+        else:
+            year = datetime.now(timezone.utc).year
 
         # Find sequence number by checking existing records
         seq = self.find_next_sequence(abbrev, year)

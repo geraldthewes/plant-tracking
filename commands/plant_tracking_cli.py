@@ -124,7 +124,7 @@ def create_plant(args):
     # Phase 2: Plant-specific required field (always asked)
     print()
     print("--- Plant-specific field ---")
-    _prompt_field('planned_planting_date', 'Planned planting date (YYYY-MM-DD)', plant_data)
+    _prompt_field('planting_date', 'Planting date (YYYY-MM-DD)', plant_data)
 
     try:
         plant = Plant(plant_data)

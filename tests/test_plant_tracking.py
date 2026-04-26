@@ -5,6 +5,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -37,7 +38,7 @@ class TestPlantModel(unittest.TestCase):
         data = {
             'variety_name': 'Test Plant',
             'latin_name': 'Testus plantus',
-            'planned_planting_date': '2026-05-01',
+            'planting_date': '2026-05-01',
         }
         data.update(overrides)
         return data
@@ -54,7 +55,7 @@ class TestPlantModel(unittest.TestCase):
             'spacing': '12 inches',
             'sun_requirements': 'Partial sun',
             'indoor_start_time': '6 weeks',
-            'planned_planting_date': '2026-05-01',
+            'planting_date': '2026-05-01',
         }
         data.update(overrides)
         return data
@@ -64,7 +65,7 @@ class TestPlantModel(unittest.TestCase):
         plant_data = self._required_plant_data(
             variety_name='Habanero',
             latin_name='Capsicum chinense',
-            planned_planting_date='2026-05-01',
+            planting_date='2026-05-01',
         )
         plant = self.Plant(plant_data)
         self.assertEqual(plant.data['variety_name'], 'Habanero')
@@ -84,7 +85,7 @@ class TestPlantModel(unittest.TestCase):
         plant_data = self._required_plant_data(
             variety_name='Habanero',
             latin_name='Capsicum chinense',
-            planned_planting_date='2026-05-01',
+            planting_date='2026-05-01',
         )
         plant = self.Plant(plant_data)
         pattern = r'^[A-Z]{2,4}-\d{4}-\d{3}$'
@@ -95,7 +96,7 @@ class TestPlantModel(unittest.TestCase):
         plant_data = self._required_plant_data(
             variety_name='Yellow Habanero',
             latin_name='Capsicum chinense',
-            planned_planting_date='2026-05-01',
+            planting_date='2026-05-01',
         )
         plant = self.Plant(plant_data)
         self.assertTrue(plant.data['id'].startswith('YEHA'))
@@ -105,7 +106,7 @@ class TestPlantModel(unittest.TestCase):
         plant_data = self._required_plant_data(
             variety_name='Habanero',
             latin_name='Capsicum chinense',
-            planned_planting_date='2026-05-01',
+            planting_date='2026-05-01',
         )
         plant = self.Plant(plant_data)
         self.assertTrue(plant.data['id'].startswith('HA'))
@@ -153,7 +154,7 @@ class TestPlantModel(unittest.TestCase):
 
     def test_plant_invalid_date_format(self):
         """Test that invalid date format raises ValueError"""
-        plant_data = self._required_plant_data(planned_planting_date='05-01-2026')
+        plant_data = self._required_plant_data(planting_date='05-01-2026')
         with self.assertRaises(ValueError):
             self.Plant(plant_data)
 
@@ -221,6 +222,27 @@ class TestPlantModel(unittest.TestCase):
         with self.assertRaises(ValueError):
             load_plant_from_file(invalid_file)
 
+    def test_id_year_from_planting_date_past_year(self):
+        """Test that ID year comes from planting_date, not current year."""
+        plant_data = self._required_plant_data(
+            variety_name='Yellow Habanero',
+            latin_name='Capsicum chinense',
+            planting_date='2024-05-01',
+        )
+        plant = self.Plant(plant_data)
+        self.assertIn('-2024-', plant.data['id'])
+
+    def test_id_year_from_planting_date_future_year(self):
+        """Test that ID year comes from planting_date for future dates."""
+        next_year = datetime.now(timezone.utc).year + 1
+        plant_data = self._required_plant_data(
+            variety_name='Tomato',
+            latin_name='Solanum lycopersicum',
+            planting_date=f'{next_year}-06-01',
+        )
+        plant = self.Plant(plant_data)
+        self.assertIn(f'-{next_year}-', plant.data['id'])
+
 
 class TestPlantSeedPacketReference(unittest.TestCase):
     def setUp(self):
@@ -248,7 +270,7 @@ class TestPlantSeedPacketReference(unittest.TestCase):
         plant_data = {
             'variety_name': 'Test Plant',
             'latin_name': 'Testus plantus',
-            'planned_planting_date': '2026-05-01',
+            'planting_date': '2026-05-01',
             'seed_packet_id': 'SPKT-001',
         }
         plant = self.Plant(plant_data)
@@ -267,7 +289,7 @@ class TestPlantSeedPacketReference(unittest.TestCase):
         plant_data = {
             'variety_name': 'Test Plant',
             'latin_name': 'Testus plantus',
-            'planned_planting_date': '2026-05-01',
+            'planting_date': '2026-05-01',
             'seed_packet_id': 'unknown',
         }
         plant = self.Plant(plant_data)
@@ -291,7 +313,7 @@ class TestPlantSeedPacketReference(unittest.TestCase):
         plant_data = {
             'variety_name': 'Yellow Habanero',
             'latin_name': 'Capsicum chinense',
-            'planned_planting_date': '2026-05-01',
+            'planting_date': '2026-05-01',
             'seed_packet_id': packet.data['id'],
         }
         plant = self.Plant(plant_data)
@@ -304,7 +326,7 @@ class TestPlantSeedPacketReference(unittest.TestCase):
         plant_data = {
             'variety_name': 'Test Plant',
             'latin_name': 'Testus plantus',
-            'planned_planting_date': '2026-05-01',
+            'planting_date': '2026-05-01',
             'seed_packet_id': 'SPKT-999',
         }
         plant = self.Plant(plant_data)
@@ -334,7 +356,7 @@ class TestLabelGeneration(unittest.TestCase):
             'spacing': '10 inches',
             'sun_requirements': 'Full sun',
             'indoor_start_time': '4 weeks',
-            'planned_planting_date': '2026-06-01',
+            'planting_date': '2026-06-01',
         }
         plant = self.Plant(plant_data)
         plant_file = self.test_db / f"{plant.data['id']}.md"
@@ -710,7 +732,7 @@ class TestEndToEnd(unittest.TestCase):
         plant_data = {
             'variety_name': 'Yellow Habanero',
             'latin_name': 'Capsicum chinense',
-            'planned_planting_date': '2026-05-01',
+            'planting_date': '2026-05-01',
             'seed_packet_id': packet.data['id'],
         }
         plant = Plant(plant_data)
@@ -733,7 +755,7 @@ class TestEndToEnd(unittest.TestCase):
         plant_data = {
             'variety_name': 'Mystery Plant',
             'latin_name': 'Unknown unknown',
-            'planned_planting_date': '2026-06-01',
+            'planting_date': '2026-06-01',
             'seed_packet_id': 'unknown',
         }
         plant = Plant(plant_data)
@@ -752,7 +774,7 @@ class TestEndToEnd(unittest.TestCase):
         plant_data = {
             'variety_name': 'Yellow Habanero',
             'latin_name': 'Capsicum chinense',
-            'planned_planting_date': '2026-05-01',
+            'planting_date': '2026-05-01',
             'seed_packet_id': 'SPKT-001',
         }
         # Should not raise - no packet fields needed

@@ -70,7 +70,7 @@ def create_label(plant_id: str, output_path: Path = None) -> Path:
 
     # Get plant data
     variety_text = plant.data.get('variety_name', 'Unknown Variety')
-    planting_date = plant.data.get('planned_planting_date', '')
+    planting_date = plant.data.get('planting_date', '')
     latin_text = plant.data.get('latin_name', '')
 
     # Get fonts

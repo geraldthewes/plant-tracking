@@ -37,7 +37,7 @@ planting_depth: "0.25 inches"
 spacing: "18 inches"
 sun_requirements: "Full sun"
 indoor_start_time: "8 weeks before last frost"
-planned_planting_date: "2026-04-15"
+planting_date: "2026-04-15"
 seed_packet_id: "SPKT-001"
 created_at: "2026-04-22T10:30:00Z"
 updated_at: "2026-04-22T10:30:00Z"
@@ -58,12 +58,12 @@ updated_at: "2026-04-22T10:30:00Z"
 | `spacing` | string | No | Recommended plant spacing *(deprecated on plants — use seed packet)* |
 | `sun_requirements` | string | No | Sunlight needs *(deprecated on plants — use seed packet)* |
 | `indoor_start_time` | string | No | When to start indoors *(deprecated on plants — use seed packet)* |
-| `planned_planting_date` | string (YYYY-MM-DD) | Yes | Date when planting is planned |
+| `planting_date` | string (YYYY-MM-DD) | Yes | Date when the plant was planted |
 | `seed_packet_id` | string | No | References a seed packet (`SPKT-NNN`) or `"unknown"` |
 | `created_at` | string (ISO 8601) | Yes | Timestamp when record was created |
 | `updated_at` | string (ISO 8601) | Yes | Timestamp when record was last updated |
 
-The three label fields (`variety_name`, `latin_name`, `planned_planting_date`) are required. Seed packet fields (`brand`, `days_to_maturity`, etc.) are deprecated on plants but retained for backward compatibility during migration.
+The three label fields (`variety_name`, `latin_name`, `planting_date`) are required. Seed packet fields (`brand`, `days_to_maturity`, etc.) are deprecated on plants but retained for backward compatibility during migration.
 
 ### Content Section
 
@@ -161,7 +161,7 @@ The markdown storage design includes a clear migration path to Postgres:
 ## Validation Rules
 
 1. **Required Fields**: All fields marked as required in the schema must be present
-2. **Date Format**: `planned_planting_date` must be valid YYYY-MM-DD
+2. **Date Format**: `planting_date` must be valid YYYY-MM-DD
 3. **ID Format (Plants)**: Must match regex `^[A-Z]{2,4}-\d{4}-\d{3}$`
 4. **ID Format (Seed Packets)**: Must match regex `^SPKT-\d{3}$`
 5. **Numeric Values**: `days_to_maturity` must be positive integer
@@ -176,10 +176,9 @@ The markdown storage design includes a clear migration path to Postgres:
 id: HABY-2026-001
 variety_name: Yellow Habanero
 latin_name: Capsicum chinense
-planned_planting_date: "2026-04-15"
+planting_date: "2026-04-15"
 seed_packet_id: "SPKT-001"
 created_at: "2026-04-22T10:30:00Z"
-updated_at: "2026-04-22T10:30:00Z"
 ---
 
 # Plant Record for Yellow Habanero
