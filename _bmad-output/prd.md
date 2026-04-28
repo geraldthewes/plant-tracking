@@ -292,25 +292,25 @@ Both clients communicate with the same backend API and share the same data store
 - FR41: **Hermes agent communicates directly with the Plant Tracking System via API** to fetch plant data, query records, and make changes (e.g., adding care notes, updating observations) on the user's behalf when a Telegram request is received
 
 ### Mobile Interface
-- FR41: Users can access the plant tracking system via mobile device interface
-- FR42: Users can capture photos directly through the mobile app
-- FR43: Users can scan QR codes using mobile device camera
-- FR44: Users can enter and edit plant data through mobile interface
-- FR45: Users can view plant histories and analytics on mobile device
+- FR42: Users can access the plant tracking system via mobile device interface
+- FR43: Users can capture photos directly through the mobile app
+- FR44: Users can scan QR codes using mobile device camera
+- FR45: Users can enter and edit plant data through mobile interface
+- FR46: Users can view plant histories and analytics on mobile device
 
 ### Export/Import & Backup
-- FR46: Users can export plant data to CSV format for backup and analysis
-- FR47: Users can import plant data from CSV or JSON formats
-- FR48: Users can backup and restore plant databases
-- FR49: Users can share plant insights and data with others (optional)
-- FR50: Users can migrate data from markdown to Postgres database format
+- FR47: Users can export plant data to CSV format for backup and analysis
+- FR48: Users can import plant data from CSV or JSON formats
+- FR49: Users can backup and restore plant databases
+- FR50: Users can share plant insights and data with others (optional)
+- FR51: Users can migrate data from markdown to Postgres database format
 
 ### Label Design & Printing
-- FR51: Users can customize label layouts (variety name, QR code, planting info)
-- FR52: Users can adjust label sizes to fit different stakes and pots
-- FR53: Users can generate labels with durable, weather-resistant materials
-- FR54: Users can reprint labels when originals wear out or get damaged
-- FR55: Users can design label templates for reuse across multiple plants
+- FR52: Users can customize label layouts (variety name, QR code, planting info)
+- FR53: Users can adjust label sizes to fit different stakes and pots
+- FR54: Users can generate labels with durable, weather-resistant materials
+- FR55: Users can reprint labels when originals wear out or get damaged
+- FR56: Users can design label templates for reuse across multiple plants
 
 ## Non-Functional Requirements
 

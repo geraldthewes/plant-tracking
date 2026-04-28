@@ -17,12 +17,12 @@ The System Context diagram shows the Plant Tracking System in relation to its us
 - The system assumes connectivity for QR code scanning, Hermes agent, and weather service (though offline handling is deferred to later sprints).
 
 ## 3. Component Definitions
-- User: The home gardener who interacts with the system through mobile and desktop clients (PRD FR41-FR45, FR1-FR5 for labeling and data capture).
-- Mobile App: Client application used in the garden for care activities — QR scanning, photo capture, adding care notes, recording observations (PRD FR41-FR45).
-- Desktop/Laptop Web App: Client application used for initial setup, monitoring, reporting, data management, and label generation. All core operations are available here and on mobile (PRD FR41-FR45).
-- Plant Tracking System: The core system that stores plant records, processes QR scans, serves data to clients, and integrates with external agents via API (PRD FR6-FR40, FR46-FR50).
-- Hermes Agent (Telegram): External AI agent providing natural language querying, data analysis, and insights. Communicates directly with the Plant Tracking System to fetch data or make changes on the user's behalf (PRD FR36-FR40).
-- Phomemo M120 Printer: External Bluetooth label printer for generating QR-coded plant labels (PRD FR3, FR51-FR55).
+- User: The home gardener who interacts with the system through mobile and desktop clients (PRD FR42-FR46, FR1-FR5 for labeling and data capture).
+- Mobile App: Client application used in the garden for care activities — QR scanning, photo capture, adding care notes, recording observations (PRD FR42-FR46).
+- Desktop/Laptop Web App: Client application used for initial setup, monitoring, reporting, data management, and label generation. All core operations are available here and on mobile (PRD FR42-FR46).
+- Plant Tracking System: The core system that stores plant records, processes QR scans, serves data to clients, and integrates with external agents via API (PRD FR6-FR41, FR47-FR51).
+- Hermes Agent (Telegram): External AI agent providing natural language querying, data analysis, and insights. Communicates directly with the Plant Tracking System to fetch data or make changes on the user's behalf (PRD FR36-FR41).
+- Phomemo M120 Printer: External Bluetooth label printer for generating QR-coded plant labels (PRD FR3, FR52-FR56).
 - Seed Packet Data Source: External source of seed packet information (variety, planting details, etc.) that the user reads manually (PRD FR6).
 - Weather Service: Optional external service providing weather data for environmental tracking (PRD FR25-FR26, FR31-FR33).
 
