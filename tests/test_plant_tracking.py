@@ -384,8 +384,8 @@ class TestLabelGeneration(unittest.TestCase):
         img = Image.open(generated_path)
         width, height = img.size
 
-        expected_width = int(40 * 300 / 25.4)  # ~472px
-        expected_height = int(30 * 300 / 25.4)  # ~354px
+        expected_width = int(40 * 203 / 25.4)  # ~319px
+        expected_height = int(30 * 203 / 25.4)  # ~236px
 
         tolerance = 0.1
         self.assertGreaterEqual(width, int(expected_width * (1 - tolerance)))
