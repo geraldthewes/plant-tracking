@@ -11,7 +11,7 @@ The System Context diagram shows the Plant Tracking System in relation to its us
 - The system is designed for home gardeners tracking individual plants.
 - MVP relies on manual data entry for seed packet information and care activities.
 - Hermes agent integration is via Telegram for natural language querying and analysis.
-- Label printing uses the Phomemo M120 Bluetooth printer.
+- Label printing uses the Phomemo M120 Bluetooth/USB printer.
 - Weather service integration is optional and uses HTTPS/REST.
 - The system assumes connectivity for QR code scanning, Hermes agent, and weather service (though offline handling is deferred to later sprints).
 
