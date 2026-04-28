@@ -84,15 +84,15 @@ The dream version of the system:
 ### Primary User - Success Path: Core Experience Journey
 We meet Alex, a home gardener who's just opened a new packet of Yellow Habanero seeds. They're excited to start growing but frustrated from past seasons where they lost track of planting dates, forgot specific care requirements, and couldn't remember which varieties performed best.
 
-Alex takes a clear photo of the seed packet front and back. Using their ID system (VARIETY-YYYY-SEQ), they assign HABY-2026-001 to this plant. Alex uploads the seed packet information, the systems validates the data and adds it to plants.md markdown file and enter all the data from the packet: variety name, Latin name, brand, days to maturity, germination time, planting depth, spacing, sun requirements, and indoor start time. They also add their planned planting date (2026-04-15) and note that they'll start indoors 8-10 weeks before last frost.
+Alex takes a clear photo of the seed packet front and back. On their laptop, they open the Plant Tracking web app and create a new plant record. Using their ID system (VARIETY-YYYY-SEQ), they assign HABY-2026-001 to this plant. Alex uploads the seed packet information, the system validates the data and adds it to the plants.md markdown file, and they enter all the data from the packet: variety name, Latin name, brand, days to maturity, germination time, planting depth, spacing, sun requirements, and indoor start time. They also add their planned planting date (2026-04-15) and note that they'll start indoors 8-10 weeks before last frost.
 
-Using the Phomemo M120 app, they generate a label with the variety name at the top, QR code encoding HABY-2026-001 in the middle, and "Planted 2026" + Latin name at the bottom. They print the label  and attach it to the pot where they've planted the seeds indoors.
+From the laptop web app, they generate a label with the variety name at the top, QR code encoding HABY-2026-001 in the middle, and "Planted 2026" + Latin name at the bottom. They send the print job to their Phomemo M120 printer and attach the label to the pot where they've planted the seeds indoors.
 
 Two weeks later, Alex notices germination and begins tracking: they record the germination date (2026-04-01), note they used a seed starting mix, and record indoor growing conditions (70°F temp, 60% humidity). As the seedlings grow, they track fertilizer applications: "2026-04-15: Applied 1/4 strength liquid fertilizer (NPK 5-5-5)" and "2026-04-29: Applied 1/2 strength liquid fertilizer."
 
 When it's time to transplant outdoors (2026-05-15), Alex updates the plant's location from "indoor seed tray" to "garden bed 3, row 2". They begin tracking outdoor conditions: daily temperature high/low, rainfall amounts, and note any extreme weather events. On 2026-06-10 during a heat wave (95°F high), they notice slight wilting and increase watering frequency, recording: "2026-06-10: Heat wave response - increased watering to twice daily, added shade cloth."
 
-Six weeks after transplanting, Alex notices some leaves on their Habanero plant are yellowing and curling. Concerned, they open their phone's camera app and scan the QR code on the label. Instantly, their plants.md file opens to the HABY-2026-001 entry showing the complete history: indoor start date, germination, fertilizer applications, transplant date, outdoor conditions, and watering schedule. They message their Hermes agent via Telegram: "@hermes_agent analyze HABY-2026-001 for leaf yellowing causes" and receive insights: "Based on your data: 1) Fertilizer applied regularly but watering increased during heat wave, 2) Jimmy Nardello peppers (same planting date) show healthy growth with less frequent watering, 3) Likely overwatering during heat wave rather than fertilizer deficiency." They add an observation note: "2026-07-01: Lower leaves yellowing and curling, confirmed overwatering during heat wave per Hermes analysis."
+Six weeks after transplanting, Alex notices some leaves on their Habanero plant are yellowing and curling. Concerned, they open the Plant Tracking mobile app in the garden and scan the QR code on the label. The mobile app instantly displays the complete history for HABY-2026-001: indoor start date, germination, fertilizer applications, transplant date, outdoor conditions, and watering schedule. They message their Hermes agent via Telegram: "@hermes_agent analyze HABY-2026-001 for leaf yellowing causes." Hermes queries the Plant Tracking System for the plant's full data, analyzes it, and responds with insights: "Based on your data: 1) Fertilizer applied regularly but watering increased during heat wave, 2) Jimmy Nardello peppers (same planting date) show healthy growth with less frequent watering, 3) Likely overwatering during heat wave rather than fertilizer deficiency." Back in the mobile app, Alex adds an observation note: "2026-07-01: Lower leaves yellowing and curling, confirmed overwatering during heat wave per Hermes analysis."
 
 Alex adjusts their watering schedule to every other day (checking soil moisture first) and continues fertilizing every two weeks. Over the next two weeks, the yellowing stops and new growth appears green and healthy. At season's end, they harvest 45 peppers from this plant. They add final notes: "2026-08-15: First harvest, 2026-09-02: Final harvest, Total yield: 45 peppers. Key insights from Hermes analysis: 1) Habaneros in my garden prefer less frequent watering than I initially provided, especially during heat waves. 2) Regular light fertilizing every two weeks worked well when combined with proper watering. 3) Starting indoors 8 weeks before transplant gave me a 6-week head start on the growing season." These insights get stored with the plant record for reference next season.
 
@@ -166,7 +166,12 @@ Your approach innovates by combining the accessibility of physical labeling with
 ## Mobile App Specific Requirements
 
 ### Platform Requirements
-Cross-platform approach preferred for accessibility, starting with Android since the user mentioned Hermes agent and Telegram integration. The core functionality (QR scanning, photo capture, note-taking) can be implemented efficiently on Android first, with potential expansion to iOS or web platforms later based on user needs.
+**Dual-platform interaction model:** The system provides two client interfaces serving different use contexts, with all core operations available on both:
+
+- **Mobile App** — Used in the garden during care activities: QR code scanning, photo capture, recording watering/fertilizing, adding observations, quick data lookup. Optimized for one-handed use in outdoor conditions.
+- **Desktop/Laptop Web App** — Used at home for initial setup, system configuration, monitoring dashboards, reporting, label generation/printing, data management, and bulk operations.
+
+Both clients communicate with the same backend API and share the same data store. Starting with a responsive web app accessible on both mobile browsers and desktop browsers, with potential for a dedicated mobile app later.
 
 ### Device Permissions & Features
 - **Camera**: Essential for QR code scanning and plant photography
@@ -181,10 +186,10 @@ Cross-platform approach preferred for accessibility, starting with Android since
 - **Integration Approach**: Direct integration with Hermes agent via Telegram for AI-powered analysis and natural language interface
 
 ### Implementation Considerations
-- **Development Approach**: Start with a telegram integration and simple web app focused on core QR scanning and data entry functionality
-- **Technology Stack**: Make heavy use of hermes and Next.js (React) + Tailwind CSS + TypeScript for front end, python for backend.
+- **Development Approach**: Start with a responsive web app (accessible on both mobile and desktop) focused on core QR scanning, data entry, and Hermes integration
+- **Technology Stack**: Next.js (React) + Tailwind CSS + TypeScript for frontend (responsive for mobile + desktop), Python for backend API. Hermes agent integrates via Telegram bot and communicates with the Plant Tracking System backend API.
 - **Data Storage**: Begin with local markdown/JSON storage as planned, with migration path to Postgres
-- **AI Integration**: Plan for Hermes agent integration via Telegram bot interface for natural language querying and analysis
+- **AI Integration**: Hermes agent integrates via Telegram bot interface for natural language querying and analysis. Hermes communicates directly with the Plant Tracking System backend API to fetch plant data and make changes on the user's behalf.
 
 ## Project Scoping & Phased Development
 
@@ -284,6 +289,7 @@ Cross-platform approach preferred for accessibility, starting with Android since
 - FR38: Users can ask for comparisons between different plants or time periods
 - FR39: Users can receive predictive insights and recommendations from Hermes
 - FR40: Users can use Hermes for multimodal interactions (text, image, voice when available)
+- FR41: **Hermes agent communicates directly with the Plant Tracking System via API** to fetch plant data, query records, and make changes (e.g., adding care notes, updating observations) on the user's behalf when a Telegram request is received
 
 ### Mobile Interface
 - FR41: Users can access the plant tracking system via mobile device interface
