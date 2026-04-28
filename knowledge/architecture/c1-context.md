@@ -23,7 +23,7 @@ The System Context diagram shows the Plant Tracking System in relation to its us
 - Plant Tracking System: The core system that stores plant records, processes QR scans, serves data to clients, and integrates with external agents via API (PRD FR6-FR41, FR47-FR51).
 - Hermes Agent (Telegram): External AI agent providing natural language querying, data analysis, and insights. Communicates directly with the Plant Tracking System to fetch data or make changes on the user's behalf (PRD FR36-FR41).
 - Phomemo M120 Printer: External Bluetooth label printer for generating QR-coded plant labels (PRD FR3, FR52-FR56).
-- Seed Packet Data Source: External source of seed packet information (variety, planting details, etc.) that the user reads manually (PRD FR6).
+- Seed Packet Data Source: External source of seed packet information (variety, planting details, etc.) entered manually by the user (PRD FR6). Not shown in diagram as it represents an out-of-system action.
 - Weather Service: Optional external service providing weather data for environmental tracking (PRD FR25-FR26, FR31-FR33).
 
 ## 4. Adversarial Edge Case Logging
@@ -43,7 +43,6 @@ flowchart LR
     sys["Plant Tracking System\n(Internal System)"]
     hermes[["Hermes Agent\n(Telegram, External)"]]
     printer[["Phomemo M120 Printer\n(External)"]]
-    seed[["Seed Packet Data Source\n(External)"]]
     weather[["Weather Service\n(External, Optional)"]]
 
     %% User to clients
@@ -56,13 +55,9 @@ flowchart LR
     sys -->|Displays plant records| mobile
     sys -->|Displays plant records| laptop
 
-    %% External sources
-    user -->|Manually reads seed packet data| seed
-    mobile -->|Enters seed packet data| sys
-    laptop -->|Enters seed packet data| sys
-
-    %% Hermes interactions
+    %% Hermes interactions (accessible from both mobile and laptop via Telegram)
     user -->|Sends natural language query via Telegram| hermes
+    laptop -->|Sends natural language query via Telegram| hermes
     hermes -->|Returns analysis via Telegram| user
     hermes -->|Queries / updates plant data via API| sys
     sys -->|Returns plant data via API| hermes
