@@ -39,7 +39,7 @@ This comprehensive technical research provides authoritative guidance for select
 **Key Technical Findings:**
 - **Backend**: Python 3.12+ with FastAPI is recommended for superior AI integration capabilities, automatic OpenAPI generation, and excellent development velocity
 - **Frontend**: Next.js 14+ with React 18+ and TypeScript 5.4+ provides exceptional performance, SEO benefits, and seamless mobile/desktop responsiveness
-- **Database**: PostgreSQL 16 offers ACID compliance, JSONB flexibility, and a clear migration path from initial markdown storage
+- **Database**: PostgreSQL 18 offers ACID compliance, JSONB flexibility, and a clear migration path from initial markdown storage
 - **Architecture**: Modular monolith approach balances simplicity with scalability, enabling evolutionary architecture as the system grows
 - **Integration**: RESTful APIs with OpenAPI documentation, WebSocket for real-time updates, and event-driven patterns for sensor data processing
 
@@ -218,7 +218,7 @@ _Source: Framework documentation and adoption statistics from official sources a
 - **Frontend**: Next.js 14+ with React 18+ provides server-side rendering and excellent performance
   - Tailwind CSS 3+ for utility-first styling approach
   - React Query/TanStack Stack for server state management
-- **Database**: PostgreSQL 16 with strong JSONB support and extension ecosystem
+- **Database**: PostgreSQL 18 with strong JSONB support and extension ecosystem
   - TimescaleDB extension for time-series optimized environmental data
   - Redis for caching and real-time data processing needs
 
@@ -526,12 +526,12 @@ _Source: GDPR and CCPA regulations, WCAG accessibility guidelines, and industry 
 - **Frontend**: Next.js 14+ with React 18+ and TypeScript 5.4+
   - Standard choice for performance, SEO, and developer experience
   - Consider React Native with TypeScript for post-MVP mobile application
-- **Database**: PostgreSQL 16 with clear migration path from markdown storage
+- **Database**: PostgreSQL 18 with clear migration path from markdown storage
   - Primary choice for data integrity and ecosystem maturity
   - Consider TimescaleDB extension for time-series environmental data
 - **Infrastructure**: Docker for containerization, Terraform for IaC
   - Development: Docker Compose for local orchestration
-  - Production: Consider Kubernetes or managed services based on scale needs
+  - Production: Nomad cluster deployment
 - **Observability**: Prometheus + Grafana for metrics, Loki for logs
   - Standard stack for comprehensive system observability
   - Consider cloud provider managed services for reduced operational overhead
@@ -1034,7 +1034,7 @@ _Source: Academic research trends from university agricultural and environmental
 ### Database and Storage Technologies
 
 **Relational Databases:**
-- **PostgreSQL 16**: Continues as the leading choice for relational data requiring ACID transactions, JSONB support, and extensibility
+- **PostgreSQL 18**: Continues as the leading choice for relational data requiring ACID transactions, JSONB support, and extensibility
 - **MySQL 8.0**: Remains popular for simpler applications with good performance and wide hosting support
 - **TimescaleDB**: Gaining adoption for time-series data optimization (relevant for sensor/environmental data)
 
@@ -1846,7 +1846,7 @@ _Source: Academic research trends from university agricultural and environmental
   - Consider Expo for simplified development workflow
 
 **Database:**
-- **Primary Choice**: PostgreSQL 16
+- **Primary Choice**: PostgreSQL 18
   - ACID transactions for data integrity
   - JSONB support for flexible schema evolution
   - Strong ecosystem and tooling (pgAdmin, TimescaleDB extension)
