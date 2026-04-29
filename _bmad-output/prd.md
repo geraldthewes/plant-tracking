@@ -81,6 +81,8 @@ The dream version of the system:
 
 ## User Journeys
 
+The core use case involves gardeners using a mobile web application during plant care activities. When questions arise about plant health or care requirements, gardeners can initiate chat sessions with expert agents (Hermes) for analysis and recommendations.
+
 ### Primary User - Success Path: Core Experience Journey
 We meet Alex, a home gardener who's just opened a new packet of Yellow Habanero seeds. They're excited to start growing but frustrated from past seasons where they lost track of planting dates, forgot specific care requirements, and couldn't remember which varieties performed best.
 
