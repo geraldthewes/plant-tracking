@@ -1105,9 +1105,9 @@ _Source: Academic research trends from university agricultural and environmental
 **Deployment Approach for Plant Tracking:**
 - **Development**: Local Docker Compose for service orchestration
 - **Testing**: Staging environment mirroring production
-- **Production**: Managed Kubernetes service (EKS/GKE/AKS) or simplified Docker deployment for personal use
-- **Edge Consideration**: Potential for edge deployment for local garden processing
-- Source: Cloud adoption reports from Synergy Research Group, Gartner, and cloud provider usage statistics
+- **Production**: Nomad cluster deployment using declarative job specifications
+- **Edge Consideration**: Potential for edge deployment for local garden processing using Nomad's flexibility
+- Source: Cloud adoption reports from Synergy Research Group, Gartner, HashiCorp documentation, and Nomad adoption statistics
 
 ### Technology Adoption Trends
 
@@ -1505,13 +1505,22 @@ _Source: Academic research trends from university agricultural and environmental
 - Source: Docker adoption statistics and container ecosystem maturity
 
 **Orchestration:**
+- **Nomad**: Recommended orchestration platform for this deployment target
+  - Simple to operate with low overhead
+  - Built-in service discovery and load balancing
+  - Supports multiple workload types (containers, VMs, standalone applications)
+  - Declarative job specifications using HCL
+  - Excellent integration with HashiCorp ecosystem (Consul for service discovery, Vault for secrets)
+  - Lower resource overhead compared to Kubernetes
+  - Well-suited for the plant tracking system's expected scale
 - **Kubernetes**: Dominant orchestration platform for production containers
   - Service discovery, load balancing, self-healing
   - Declarative configuration and rolling updates
   - Extensive ecosystem and community support
-- **Nomad**: Simpler alternative gaining adoption for workload orchestration
+  - Higher operational complexity and resource overhead
+  - Consider if scaling needs significantly increase beyond initial expectations
 - **Docker Swarm**: Built-in Docker orchestration for simpler use cases
-- Source: Cloud Native Computing Foundation (CNCF) surveys and orchestrator adoption reports
+- Source: Cloud Native Computing Foundation (CNCF) surveys, HashiCorp adoption reports, and orchestrator comparisons
 
 **Infrastructure as Code (IaC):**
 - **Terraform**: Leading cloud-agnostic IaC tool
@@ -1808,6 +1817,8 @@ _Source: Academic research trends from university agricultural and environmental
 - Enhance security measures and penetration testing
 - Document architecture and operational procedures
 - Plan for potential mobile app (React Native) evolution
+- Optimize Nomad job specifications for resource efficiency
+- Implement Nomad-based scaling policies and health checks
 
 ### Technology Stack Recommendations
 
@@ -1847,11 +1858,12 @@ _Source: Academic research trends from university agricultural and environmental
 
 **Infrastructure and DevOps:**
 - **Containerization**: Docker for consistent environments
-- **Orchestration**: Docker Compose for development, consider Kubernetes for production if scaling needed
+- **Orchestration**: Docker Compose for development, Nomad for production deployment
 - **CI/CD**: GitHub Actions for automated testing and deployment
 - **Infrastructure as Code**: Terraform for provisioning
 - **Monitoring**: Prometheus + Grafana for metrics, Loki for logs
 - **Logging**: Structured JSON logging with correlation IDs
+- **Nomad Integration**: Leverage Nomad's built-in service discovery, health checks, and scaling capabilities
 
 **AI/ML Integration:**
 - **Hermes Agent**: Continued integration via Telegram Bot API
