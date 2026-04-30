@@ -38,14 +38,14 @@ This comprehensive technical research provides authoritative guidance for select
 
 **Key Technical Findings:**
 - **Backend**: Python 3.12+ with FastAPI is recommended for superior AI integration capabilities, automatic OpenAPI generation, and excellent development velocity
-- **Frontend**: Next.js 14+ with React 18+ and TypeScript 5.4+ provides exceptional performance, SEO benefits, and seamless mobile/desktop responsiveness
+- **Frontend**: Vite with React 18/19, TanStack Router v1.x, TanStack Query v5.x, Zustand v5.x, Mantine v8.3.x, CSS Modules, Oxlint v1.x, Oxfmt latest, Vitest + React Testing Library v4.x (chosen over Next.js based on team expertise and equivalent technical merits for internal tool context)
 - **Database**: PostgreSQL 18 offers ACID compliance, JSONB flexibility, and a clear migration path from initial markdown storage
 - **Architecture**: Modular monolith approach balances simplicity with scalability, enabling evolutionary architecture as the system grows
 - **Integration**: RESTful APIs with OpenAPI documentation, WebSocket for real-time updates, and event-driven patterns for sensor data processing
 
 **Technical Recommendations:**
 1. Adopt Python/FastAPI backend for rapid development and AI integration excellence
-2. Implement Next.js/React/TypeScript frontend for superior user experience and maintainability
+2. Implement Vite with React 18/19, TanStack Router v1.x, TanStack Query v5.x, Zustand v5.x, Mantine v8.3.x, CSS Modules, Oxlint v1.x, Oxfmt latest, Vitest + React Testing Library v4.x frontend (chosen over Next.js based on team expertise and equivalent technical merits for internal tool context)
 3. Use PostgreSQL with planned migration from markdown storage for data integrity and scalability
 4. Implement modular architecture enabling incremental evolution toward microservices if needed
 5. Establish comprehensive DevOps practices including CI/CD, infrastructure as code, and observability
@@ -1835,11 +1835,11 @@ _Source: Academic research trends from university agricultural and environmental
   - Consider for performance-critical services if needed
 
 **Frontend:**
-- **Primary Choice**: Next.js 14+ with React 18+ and TypeScript 5.4+
-  - Server-side rendering for performance and SEO
-  - Excellent developer experience and tooling
-  - Seamless mobile/desktop responsiveness
-  - Strong ecosystem and community support
+- **Primary Choice**: Vite with React 18/19, TanStack Router v1.x, TanStack Query v5.x, Zustand v5.x, Mantine v8.3.x, CSS Modules, Oxlint v1.x, Oxfmt latest, Vitest + React Testing Library v4.x (chosen over Next.js based on team expertise and equivalent technical merits for internal tool context)
+  - Excellent developer experience and fast build times
+  - Modern, lightweight tooling with strong ecosystem
+  - Flexible architecture suitable for internal tools
+  - Proven in other projects with excellent maintainability
 - **Mobile Post-MVP**: React Native with TypeScript
   - Code sharing with web application
   - Native device capabilities (camera, sensors)
@@ -1897,6 +1897,36 @@ _Source: Academic research trends from university agricultural and environmental
 - **System Availability**: Uptime percentage (target: 99.9%)
 - **Response Time**: API latency (target: <200ms p95, <500ms p99)
 - **Error Rate**: Percentage of failed requests (target: <0.1%)
+
+### Architectural Decision Record: Frontend Stack Selection
+
+**Decision**: Chose Vite-based stack over Next.js recommendation from initial research.
+
+**Context**: Initial technical research recommended Next.js 14+ with React 18+ and TypeScript 5.4+ for frontend based on performance, SEO, and developer experience benefits.
+
+**Discussion Summary**: 
+After review of the initial research and consideration of an alternative stack based on team experience from other projects (including calm-parrot-snap), a discussion with the system architect (Winston) evaluated the trade-offs. The alternative stack consisted of: Vite (build), React 18.x/19.x, TanStack Router v1.x (routing), TanStack Query v5.x (server state), Zustand v5.x (client state), Mantine v8.3.x (UI library), CSS Modules (styling), Oxlint v1.x (linting), Oxfmt latest (formatting), Vitest + React Testing Library v4.x (testing).
+
+**Reconsideration Factors**:
+1. Team expertise with Vite/TanStack/Zustand/Mantine stack from multiple successful projects
+2. The internal tool nature of this application (reduced SEO importance compared to public-facing apps)
+3. Equivalent technical merits of both stacks for the project requirements
+4. Application of Winston's principles: "Developer productivity is architecture" and "Rule of Three before abstraction"
+
+**Decision**: Selected Vite with React 18/19, TanStack Router v1.x, TanStack Query v5.x, Zustand v5.x, Mantine v8.3.x, CSS Modules, Oxlint v1.x, Oxfmt latest, Vitest + React Testing Library v4.x
+
+**Rationale**:
+- Aligns with "Developer productivity is architecture" principle - leveraging existing expertise accelerates delivery
+- Team has proven track record with this stack across multiple projects
+- Stack provides excellent performance, maintainability, and developer experience
+- Minimal trade-offs: Next.js offers slightly better out-of-box performance/SEO benefits, but chosen stack offers equivalent capabilities with significant team expertise advantage
+- Migration path remains clear for any future reassessment if requirements change
+
+**Implications**:
+- Backend (Python/FastAPI) and database (PostgreSQL) recommendations unchanged
+- Architecture remains modular monolith
+- Frontend implementation will leverage team's existing expertise and tooling
+- Documentation updated to reflect informed deviation from initial research recommendation based on contextual factors
 - **Deployment Frequency**: How often new versions are released (target: weekly)
 - **Lead Time**: Time from commit to production (target: <1 day)
 - **Change Failure Rate**: Percentage of deployments causing incidents (target: <5%)
