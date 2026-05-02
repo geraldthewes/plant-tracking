@@ -54,7 +54,7 @@ The system must reliably enable QR code scanning in outdoor garden conditions, m
 
 ### MVP - Minimum Viable Product
 The essential components for proving the concept:
-- QR label generation system using Phomemo M120 printer
+- QR label generation system using Phomemo M120 printer (supports 40x30mm and 50x70mm formats)
 - Simple data storage (markdown files) for plant records
 - Basic plant information capture from seed packets
 - Label attachment and QR scanning functionality
@@ -67,7 +67,7 @@ Features that make the system competitive:
 - Automated data analysis scripts for identifying plant care patterns
 - Photo attachment capability for visual progress tracking
 - Export/import functionality for data backup and sharing
-- Enhanced labeling options (different sizes, colors)
+- Enhanced labeling options (colors, custom templates)
 - Advanced Hermes agent capabilities for predictive insights
 
 ### Vision (Future)
@@ -220,7 +220,7 @@ Both clients communicate with the same backend API and share the same data store
 - Automated data analysis scripts for identifying plant care patterns
 - Photo attachment capability for visual progress tracking
 - Export/import functionality for data backup and sharing
-- Enhanced labeling options (different sizes, colors)
+- Enhanced labeling options (colors, custom templates)
 - Advanced Hermes agent capabilities for predictive insights and multimodal interactions
 
 **Phase 3 (Expansion):**
