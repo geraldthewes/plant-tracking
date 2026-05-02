@@ -810,5 +810,281 @@ class TestEndToEnd(unittest.TestCase):
         self.assertTrue(loaded.data['seed_packet_id'].startswith('SPKT-'))
 
 
+class TestLabelFormat(unittest.TestCase):
+    def test_label_format_creation(self):
+        """Test LabelFormat creation and properties"""
+        from commands.label_format import LabelFormat
+        fmt_40x30 = LabelFormat(width_mm=40, height_mm=30, orientation="landscape", name="40x30mm",
+                                text_column_width=100, column_gap=8, margin=8,
+                                latin_name_offset_from_bottom=20, qr_code_top_offset=0, qr_code_bottom_margin=6)
+        self.assertEqual(fmt_40x30.width_mm, 40)
+        self.assertEqual(fmt_40x30.height_mm, 30)
+        self.assertEqual(fmt_40x30.orientation, "landscape")
+        self.assertEqual(fmt_40x30.name, "40x30mm")
+        self.assertEqual(fmt_40x30.text_column_width, 100)
+        self.assertEqual(fmt_40x30.column_gap, 8)
+        self.assertEqual(fmt_40x30.margin, 8)
+
+        # Test pixel calculations
+        expected_width_px = int(40 * 203 / 25.4)
+        expected_height_px = int(30 * 203 / 25.4)
+        self.assertEqual(fmt_40x30.width_px, expected_width_px)
+        self.assertEqual(fmt_40x30.height_px, expected_height_px)
+
+    def test_get_label_format(self):
+        """Test getting label formats by string"""
+        from commands.label_format import get_label_format
+        fmt_40x30 = get_label_format("40x30mm")
+        self.assertEqual(fmt_40x30.name, "40x30mm")
+        self.assertEqual(fmt_40x30.width_mm, 40)
+        self.assertEqual(fmt_40x30.height_mm, 30)
+        self.assertEqual(fmt_40x30.text_column_width, 100)
+
+        fmt_50x70 = get_label_format("50x70mm")
+        self.assertEqual(fmt_50x70.name, "50x70mm")
+        self.assertEqual(fmt_50x70.width_mm, 50)
+        self.assertEqual(fmt_50x70.height_mm, 70)
+        self.assertEqual(fmt_50x70.text_column_width, 80)
+
+        # Test invalid format
+        with self.assertRaises(ValueError):
+            get_label_format("invalid-format")
+
+    def test_is_format_supported(self):
+        """Test format support checking"""
+        from commands.label_format import is_format_supported
+        self.assertTrue(is_format_supported("40x30mm"))
+        self.assertTrue(is_format_supported("50x70mm"))
+        self.assertFalse(is_format_supported("invalid-format"))
+
+
+class TestPrintLabelWithFormat(unittest.TestCase):
+    def setUp(self):
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.test_db = self.test_dir / "test_database"
+        self.test_db.mkdir()
+
+        self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
+        os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
+
+        from commands.plant_model import Plant
+        self.Plant = Plant
+
+        # Create a test plant
+        plant_data = {
+            'variety_name': 'Test Variety',
+            'latin_name': 'Testus varietyus',
+            'planting_date': '2026-06-01',
+        }
+        self.test_plant = Plant(plant_data)
+        self.test_plant_id = self.test_plant.data['id']
+
+        plant_file = self.test_db / f"{self.test_plant_id}.md"
+        with open(plant_file, 'w') as f:
+            f.write(self.test_plant.to_markdown())
+
+    def tearDown(self):
+        if self.original_db:
+            os.environ["PLANT_DATABASE_DIR"] = self.original_db
+        else:
+            os.environ.pop("PLANT_DATABASE_DIR", None)
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    @unittest.mock.patch("commands.printer._select_printer")
+    @unittest.mock.patch("commands.printer._find_usb_phomemo_devices")
+    def test_print_label_40x30mm_format(self, mock_find_devices, mock_select_printer):
+        """Test print_label with 40x30mm format"""
+        mock_find_devices.return_value = [{
+            "model": "M120",
+            "bus": 1,
+            "address": 1,
+            "product_id": 0x5740,
+            "serial": "TEST123",
+            "description": "Phomemo M120 (bus 001, dev 001) serial=TEST123"
+        }]
+        mock_select_printer.return_value = mock_find_devices.return_value[0]
+
+        from commands.label_generator import create_label
+        from PIL import Image
+
+        # Test label generation with 40x30mm format
+        label_path = self.test_dir / "test_40x30_label.png"
+        generated_path = create_label(self.test_plant_id, label_path, "40x30mm")
+
+        self.assertTrue(generated_path.exists())
+
+        # Check dimensions
+        img = Image.open(generated_path)
+        width, height = img.size
+
+        # 40x30mm at 203 DPI should be approximately 320x236 pixels
+        expected_width = int(40 * 203 / 25.4)  # 319px
+        expected_height = int(30 * 203 / 25.4)  # 239px
+
+        self.assertEqual(width, expected_width)
+        self.assertEqual(height, expected_height)
+
+    @unittest.mock.patch("commands.printer._select_printer")
+    @unittest.mock.patch("commands.printer._find_usb_phomemo_devices")
+    def test_print_label_50x70mm_format(self, mock_find_devices, mock_select_printer):
+        """Test print_label with 50x70mm format"""
+        mock_find_devices.return_value = [{
+            "model": "M120",
+            "bus": 1,
+            "address": 1,
+            "product_id": 0x5740,
+            "serial": "TEST123",
+            "description": "Phomemo M120 (bus 001, dev 001) serial=TEST123"
+        }]
+        mock_select_printer.return_value = mock_find_devices.return_value[0]
+
+        from commands.label_generator import create_label
+        from PIL import Image
+
+        # Test label generation with 50x70mm format
+        label_path = self.test_dir / "test_50x70_label.png"
+        generated_path = create_label(self.test_plant_id, label_path, "50x70mm")
+
+        self.assertTrue(generated_path.exists())
+
+        # Check dimensions
+        img = Image.open(generated_path)
+        width, height = img.size
+
+        # 50x70mm at 203 DPI should be approximately 400x560 pixels
+        expected_width = int(50 * 203 / 25.4)  # 399px
+        expected_height = int(70 * 203 / 25.4)  # 559px
+
+        self.assertEqual(width, expected_width)
+        self.assertEqual(height, expected_height)
+
+    @unittest.mock.patch("commands.printer._select_printer")
+    @unittest.mock.patch("commands.printer._find_usb_phomemo_devices")
+    def test_print_label_no_print_flag(self, mock_find_devices, mock_select_printer):
+        """Test print_label with --no-print flag"""
+        mock_find_devices.return_value = [{
+            "model": "M120",
+            "bus": 1,
+            "address": 1,
+            "product_id": 0x5740,
+            "serial": "TEST123",
+            "description": "Phomemo M120 (bus 001, dev 001) serial=TEST123"
+        }]
+        mock_select_printer.return_value = mock_find_devices.return_value[0]
+
+        from commands.printer import print_label
+
+        # Test that label is generated but not printed when no_print=True
+        with unittest.mock.patch("commands.printer.subprocess.run") as mock_run:
+            mock_run.return_value.returncode = 0
+
+            result = print_label(self.test_plant_id, "40x30mm", no_print=True)
+
+            # Should return True (success)
+            self.assertTrue(result)
+
+            # Should not have called lp command for printing
+            mock_run.assert_not_called()
+
+    def test_print_label_invalid_format(self):
+        """Test print_label with invalid format"""
+        from commands.printer import print_label
+        result = print_label(self.test_plant_id, "invalid-format")
+        self.assertFalse(result)
+
+
+class TestLabelGenerationFormats(unittest.TestCase):
+    """Tests for label generation with different formats."""
+
+    def setUp(self):
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.test_db = self.test_dir / "test_database"
+        self.test_db.mkdir()
+
+        self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
+        os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
+
+        from commands.plant_model import Plant
+        self.Plant = Plant
+
+        # Create a test plant
+        plant_data = {
+            'variety_name': 'Test Variety',
+            'latin_name': 'Testus varietyus',
+            'planting_date': '2026-06-01',
+        }
+        plant = self.Plant(plant_data)
+        plant_file = self.test_db / f"{plant.data['id']}.md"
+        with open(plant_file, 'w') as f:
+            f.write(plant.to_markdown())
+        self.test_plant_id = plant.data['id']
+
+    def tearDown(self):
+        if self.original_db:
+            os.environ["PLANT_DATABASE_DIR"] = self.original_db
+        else:
+            os.environ.pop("PLANT_DATABASE_DIR", None)
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def test_label_dimensions_40x30mm(self):
+        """Test that generated label has correct dimensions for 40x30mm format"""
+        from commands.label_generator import create_label
+        from PIL import Image
+
+        label_path = self.test_dir / "test_label_40x30.png"
+        generated_path = create_label(self.test_plant_id, label_path, "40x30mm")
+
+        self.assertTrue(generated_path.exists())
+
+        img = Image.open(generated_path)
+        width, height = img.size
+
+        # 40x30mm at 203 DPI
+        expected_width = int(40 * 203 / 25.4)
+        expected_height = int(30 * 203 / 25.4)
+
+        self.assertEqual(width, expected_width)
+        self.assertEqual(height, expected_height)
+
+    def test_label_dimensions_50x70mm(self):
+        """Test that generated label has correct dimensions for 50x70mm format"""
+        from commands.label_generator import create_label
+        from PIL import Image
+
+        label_path = self.test_dir / "test_label_50x70.png"
+        generated_path = create_label(self.test_plant_id, label_path, "50x70mm")
+
+        self.assertTrue(generated_path.exists())
+
+        img = Image.open(generated_path)
+        width, height = img.size
+
+        # 50x70mm at 203 DPI
+        expected_width = int(50 * 203 / 25.4)
+        expected_height = int(70 * 203 / 25.4)
+
+        self.assertEqual(width, expected_width)
+        self.assertEqual(height, expected_height)
+
+    def test_label_default_format_is_40x30mm(self):
+        """Test that default format produces 40x30mm dimensions"""
+        from commands.label_generator import create_label
+        from PIL import Image
+
+        label_path = self.test_dir / "test_label_default.png"
+        generated_path = create_label(self.test_plant_id, label_path)
+
+        self.assertTrue(generated_path.exists())
+
+        img = Image.open(generated_path)
+        width, height = img.size
+
+        expected_width = int(40 * 203 / 25.4)
+        expected_height = int(30 * 203 / 25.4)
+
+        self.assertEqual(width, expected_width)
+        self.assertEqual(height, expected_height)
+
+
 if __name__ == '__main__':
     unittest.main()

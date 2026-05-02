@@ -4,9 +4,8 @@ Plant Tracking CLI - Main entry point for plant tracking commands
 """
 import argparse
 import sys
-import os
 from pathlib import Path
-from .plant_model import Plant, get_database_dir, ALL_FIELDS, LABEL_FIELDS, RECORD_ONLY
+from .plant_model import Plant, get_database_dir
 from .seed_packet_model import (
     SeedPacket, get_seed_packets_dir, find_matching, list_all,
     SEED_PACKET_FIELDS as PACKET_OPTIONAL_FIELDS,
@@ -26,13 +25,13 @@ def main():
     # create-plant subcommand
     plant_parser = subparsers.add_parser('create-plant', help='Create a new plant record')
 
-    # create-label subcommand
-    label_parser = subparsers.add_parser('create-label', help='Create a label for a plant')
-    label_parser.add_argument('plant_id', help='Plant ID for label generation')
-
-    # print-label subcommand
-    print_parser = subparsers.add_parser('print-label', help='Print a label for a plant')
+    # print-label subcommand (consolidated from create-label and print-label)
+    print_parser = subparsers.add_parser('print-label', help='Print a label for a plant (or generate image only)')
     print_parser.add_argument('plant_id', help='Plant ID or label file path')
+    print_parser.add_argument('--format', '-f', default='40x30mm',
+                              help='Label format (default: 40x30mm)')
+    print_parser.add_argument('--no-print', action='store_true',
+                              help='Generate label image only, do not print')
 
     # create-seed-packet subcommand
     subparsers.add_parser('create-seed-packet', help='Create a new seed packet record')
@@ -48,8 +47,6 @@ def main():
 
     if args.command == 'create-plant':
         create_plant(args)
-    elif args.command == 'create-label':
-        create_label(args)
     elif args.command == 'print-label':
         print_label(args)
     elif args.command == 'create-seed-packet':
@@ -141,8 +138,9 @@ def create_plant(args):
             print(f"Seed Packet: {plant_data['seed_packet_id']}")
         print(f"Saved to: {filepath}")
         print(f"\nNext steps:")
-        print(f"  1. Generate label: python -m commands.plant_tracking_cli create-label {plant.data['id']}")
-        print(f"  2. Print label: python -m commands.plant_tracking_cli print-label {plant.data['id']}")
+        print(f"  1. Generate/print label: plant-tracking print-label {plant.data['id']}")
+        print(f"  2. Generate image only: plant-tracking print-label {plant.data['id']} --no-print")
+        print(f"  3. Use 50x70mm format: plant-tracking print-label {plant.data['id']} --format 50x70mm")
 
     except Exception as e:
         print(f"\n\u2717 Error creating plant record: {e}")
@@ -239,33 +237,17 @@ def _prompt_record_fields(plant_data):
         _prompt_optional_field(field, description, plant_data)
 
 
-def create_label(args):
-    """Create a label for a plant"""
-    from .label_generator import create_label
-
-    try:
-        label_path = create_label(args.plant_id)
-        print(f"\u2713 Label created successfully: {label_path}")
-        print(f"  Review the label before printing:")
-        print(f"    python -m commands.plant_tracking_cli print-label {args.plant_id}")
-    except FileNotFoundError as e:
-        print(f"\u2717 Error: {e}")
-        print(f"  Make sure you've created a plant record first:")
-        print(f"    python -m commands.plant_tracking_cli create-plant")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\u2717 Error creating label: {e}")
-        sys.exit(1)
-
-
 def print_label(args):
-    """Print a label for a plant"""
+    """Print a label for a plant (consolidated create-label and print-label)"""
     from .printer import print_label
 
     try:
-        success = print_label(args.plant_id)
+        success = print_label(args.plant_id, args.format, args.no_print)
         if success:
-            print(f"\u2713 Label print job submitted successfully")
+            if args.no_print:
+                print(f"\u2713 Label image generated successfully")
+            else:
+                print(f"\u2713 Label print job submitted successfully")
         else:
             print(f"\u2717 Failed to submit label print job")
             sys.exit(1)

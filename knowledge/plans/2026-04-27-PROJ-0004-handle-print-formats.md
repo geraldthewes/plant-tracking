@@ -348,14 +348,14 @@ if __name__ == "__main__":
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Label format module can be imported: `python -c "from commands.label_format import LabelFormat"`
-- [ ] `get_label_format("40x30mm")` returns correct LabelFormat object with layout properties
-- [ ] `get_label_format("50x70mm")` returns correct LabelFormat object with layout properties
-- [ ] `create_label()` with format="40x30mm" produces image with correct dimensions
-- [ ] `create_label()` with format="50x70mm" produces image with correct dimensions
-- [ ] Existing functionality preserved: default format="40x30mm" matches original behavior
-- [ ] Label generator contains NO conditional statements checking format names
-- [ ] Unit tests pass: `python -m pytest tests/test_plant_tracking.py::TestLabelGeneration -v`
+- [x] Label format module can be imported: `python -c "from commands.label_format import LabelFormat"`
+- [x] `get_label_format("40x30mm")` returns correct LabelFormat object with layout properties
+- [x] `get_label_format("50x70mm")` returns correct LabelFormat object with layout properties
+- [x] `create_label()` with format="40x30mm" produces image with correct dimensions
+- [x] `create_label()` with format="50x70mm" produces image with correct dimensions
+- [x] Existing functionality preserved: default format="40x30mm" matches original behavior
+- [x] Label generator contains NO conditional statements checking format names
+- [x] Unit tests pass: `python -m pytest tests/test_plant_tracking.py::TestLabelGeneration -v`
 
 #### Manual Verification:
 - [ ] Generated 40x30mm labels match original appearance
@@ -594,12 +594,12 @@ if __name__ == "__main__":
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] `print_label()` function accepts format and no_print parameters
-- [ ] Correct CUPS media option passed based on format (`media=w40h30` for 40x30mm, `media=w50h70` for 50x70mm)
-- [ ] When `no_print=True`, label is generated but not sent to printer
-- [ ] When `no_print=False`, label is generated and sent to printer
-- [ ] Existing functionality preserved: default format="40x30mm", no_print=False matches original behavior
-- [ ] Unit tests pass: `python -m pytest tests/test_plant_tracking.py::TestPrinter -v`
+- [x] `print_label()` function accepts format and no_print parameters
+- [x] Correct CUPS media option passed based on format (`media=w40h30` for 40x30mm, `media=w50h70` for 50x70mm)
+- [x] When `no_print=True`, label is generated but not sent to printer
+- [x] When `no_print=False`, label is generated and sent to printer
+- [x] Existing functionality preserved: default format="40x30mm", no_print=False matches original behavior
+- [x] Unit tests pass: `python -m pytest tests/test_plant_tracking.py::TestPrinter -v`
 
 #### Manual Verification:
 - [ ] `print-label --format 40x30mm <plant-id>` prints labels correctly on 40x30mm rolls
@@ -989,12 +989,12 @@ if __name__ == "__main__":
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] `create-label` subcommand is removed from CLI
-- [ ] `print-label` subcommand accepts `--format` and `--no-print` arguments
-- [ ] Default behavior (`print-label <plant-id>`) matches original `print-label` behavior
-- [ ] `print-label <plant-id> --no-print` matches original `create-label` behavior
-- [ ] `print-label <plant-id> --format 50x70mm` generates 50x70mm format label
-- [ ] Unit tests pass: `python -m pytest tests/test_plant_tracking.py -v`
+- [x] `create-label` subcommand is removed from CLI
+- [x] `print-label` subcommand accepts `--format` and `--no-print` arguments
+- [x] Default behavior (`print-label <plant-id>`) matches original `print-label` behavior
+- [x] `print-label <plant-id> --no-print` matches original `create-label` behavior
+- [x] `print-label <plant-id> --format 50x70mm` generates 50x70mm format label
+- [x] Unit tests pass: `python -m pytest tests/test_plant_tracking.py -v`
 
 #### Manual Verification:
 - [ ] `plant-tracking print-label <plant-id>` works as original print-label
@@ -1259,12 +1259,12 @@ class TestLabelGeneration(unittest.TestCase):
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] All new unit tests pass:
+- [x] All new unit tests pass:
   - `TestLabelFormat`: Label format creation, retrieval, and validation
   - `TestPrintLabelWithFormat`: Print label with different formats and no-print flag
   - Updated `TestLabelGeneration`: Tests for both 40x30mm and 50x70mm formats
-- [ ] All existing unit tests still pass (backward compatibility)
-- [ ] Test suite runs successfully: `python -m pytest tests/ -v`
+- [x] All existing unit tests still pass (backward compatibility)
+- [x] Test suite runs successfully: `python -m pytest tests/ -v`
 
 #### Manual Verification:
 - [ ] End-to-end workflow test:

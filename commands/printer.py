@@ -8,6 +8,7 @@ import sys
 import time
 from pathlib import Path
 from .label_generator import create_label
+from .label_format import LabelFormatEnum, is_format_supported, get_label_format
 
 PHOMEMO_VENDOR_IDS = (0x0493, 0x0483)
 
@@ -91,17 +92,52 @@ def _select_printer(devices):
     return None
 
 
-def print_label(plant_id_or_path: str) -> bool:
+def print_label(plant_id_or_path: str, format_str: str = LabelFormatEnum.FORMAT_40X30MM.value, no_print: bool = False) -> bool:
     """
     Print a label for a plant
 
     Args:
         plant_id_or_path: Plant ID or path to label PNG file
+        format_str: Label format identifier (e.g., "40x30mm", "50x70mm")
+        no_print: If True, only generate label image without printing
 
     Returns:
-        True if print job was submitted successfully, False otherwise
+        True if operation was successful, False otherwise
     """
-    # Discover and select USB printer (for model info)
+    # Determine if input is a plant ID or file path
+    input_path = Path(plant_id_or_path)
+
+    if input_path.exists() and input_path.is_file():
+        # Direct file path provided
+        label_path = input_path
+        # Extract plant ID from filename if possible (for logging)
+        plant_id = input_path.stem.replace('_label', '')
+    else:
+        # Treat as plant ID, generate label first
+        plant_id = plant_id_or_path
+
+        # Validate format
+        if not is_format_supported(format_str):
+            print(f"Error: Unsupported label format '{format_str}'")
+            print(f"Supported formats: {[f.value for f in LabelFormatEnum]}")
+            return False
+
+        try:
+            label_path = create_label(plant_id, format_str=format_str)
+        except Exception as e:
+            print(f"Error generating label for printing: {e}")
+            return False
+
+    if not label_path or not label_path.exists():
+        print(f"Label file not found: {label_path}")
+        return False
+
+    # If no_print flag is set, we're done after generating the label
+    if no_print:
+        print(f"Label generated (no print): {label_path}")
+        return True
+
+    # Discover and select USB printer (only needed when actually printing)
     devices = _find_usb_phomemo_devices()
     if not devices:
         print("Error: No Phomemo USB printer found.")
@@ -113,27 +149,7 @@ def print_label(plant_id_or_path: str) -> bool:
         print("No printer selected. Aborting.")
         return False
 
-    # Determine if input is a plant ID or file path
-    input_path = Path(plant_id_or_path)
-
-    if input_path.exists() and input_path.is_file():
-        # Direct file path provided
-        label_path = input_path
-    else:
-        # Treat as plant ID, generate label first
-        plant_id = plant_id_or_path
-
-        try:
-            label_path = create_label(plant_id)
-        except Exception as e:
-            print(f"Error generating label for printing: {e}")
-            return False
-
-    if not label_path or not label_path.exists():
-        print(f"Label file not found: {label_path}")
-        return False
-
-    # Use lp command with media=w40h30 (works for M120)
+    # Use lp command with appropriate media option based on format
     # Extract model from selected description, default to M120
     model = selected.get('model', 'M120')
     # Normalize model name to queue name (e.g., "M120/M220" -> "M120")
@@ -141,10 +157,18 @@ def print_label(plant_id_or_path: str) -> bool:
         model = model.split('/')[0]
     queue_name = model  # assuming queue name matches model; adjust if needed
 
+    # Map format to CUPS media option
+    format_to_media = {
+        "40x30mm": "w40h30",
+        "50x70mm": "w50h70"
+    }
+
+    media_option = format_to_media.get(format_str, "w40h30")  # default to 40x30mm
+
     try:
-        # Print using lp with media=w40h30 option
+        # Print using lp with media option based on format
         result = subprocess.run(
-            ['lp', '-d', queue_name, '-o', 'media=w40h30', str(label_path)],
+            ['lp', '-d', queue_name, '-o', f'media={media_option}', str(label_path)],
             capture_output=True,
             text=False,
         )
@@ -171,10 +195,14 @@ def main():
 
     parser = argparse.ArgumentParser(description='Print plant label')
     parser.add_argument('plant_id_or_file', help='Plant ID or label file path')
+    parser.add_argument('--format', '-f', default=LabelFormatEnum.FORMAT_40X30MM.value,
+                        help=f'Label format (default: {LabelFormatEnum.FORMAT_40X30MM.value})')
+    parser.add_argument('--no-print', action='store_true',
+                        help='Generate label image only, do not print')
 
     args = parser.parse_args()
 
-    success = print_label(args.plant_id_or_file)
+    success = print_label(args.plant_id_or_file, args.format, args.no_print)
     return 0 if success else 1
 
 

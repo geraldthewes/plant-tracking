@@ -5,13 +5,118 @@ import qrcode
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from .plant_model import load_plant_from_file, get_database_dir
+from .label_format import LabelFormat, get_label_format, LabelFormatEnum
 
-# Label specifications (40x30mm at 203 DPI - typical printer resolution)
-LABEL_WIDTH_MM = 40
-LABEL_HEIGHT_MM = 30
-DPI = 203
-LABEL_WIDTH_PX = int(LABEL_WIDTH_MM * DPI / 25.4)  # 40mm -> 320px
-LABEL_HEIGHT_PX = int(LABEL_HEIGHT_MM * DPI / 25.4)  # 30mm -> 236px
+# Default format for backward compatibility
+DEFAULT_FORMAT = LabelFormatEnum.FORMAT_40X30MM.value
+
+
+def create_label(plant_id: str, output_path: Path = None, format_str: str = DEFAULT_FORMAT) -> Path:
+    """
+    Create a label for a plant with specified format
+
+    Args:
+        plant_id: The plant ID
+        output_path: Optional output path
+        format_str: Label format identifier (e.g., "40x30mm", "50x70mm")
+
+    Returns:
+        Path to the generated label image
+    """
+    database_dir = get_database_dir()
+    plant_file = database_dir / f"{plant_id}.md"
+
+    if not plant_file.exists():
+        raise FileNotFoundError(f"Plant record not found: {plant_id}")
+
+    plant = load_plant_from_file(plant_file)
+
+    if output_path is None:
+        output_path = database_dir / f"{plant_id}_label.png"
+
+    # Get format specification (includes layout configuration)
+    label_format = get_label_format(format_str)
+
+    # Get plant data
+    variety_text = plant.data.get('variety_name', 'Unknown Variety')
+    planting_date = plant.data.get('planting_date', '')
+    latin_text = plant.data.get('latin_name', '')
+
+    # Get fonts
+    font_large, font_medium, font_small = _get_font()
+
+    # Create label image with format-specific dimensions
+    label_image = Image.new('RGB', (label_format.width_px, label_format.height_px), 'white')
+    draw = ImageDraw.Draw(label_image)
+
+    # Measure text
+    name_w, name_h = _text_size(font_large, variety_text)
+    id_w, id_h = _text_size(font_small, plant_id)
+    date_w, date_h = _text_size(font_small, planting_date) if planting_date else (0, 0)
+    latin_w, latin_h = _text_size(font_medium, latin_text) if latin_text else (0, 0)
+
+    # Use layout configuration from format object (NO format name checks needed)
+    MARGIN = label_format.margin
+    TEXT_COLUMN_WIDTH = label_format.text_column_width
+    COLUMN_GAP = label_format.column_gap
+
+    # Vertical positions - using format configuration
+    name_y = MARGIN
+    id_y = name_y + name_h + 6
+    date_y = id_y + id_h + 6 if planting_date else None
+    # Position latin name using format configuration
+    latin_y = label_format.height_px - MARGIN - label_format.latin_name_offset_from_bottom
+
+    # QR code region - using format configuration
+    qr_x = MARGIN + TEXT_COLUMN_WIDTH + COLUMN_GAP
+    qr_y = id_y + label_format.qr_code_top_offset  # Start at offset from ID
+
+    # Calculate available space for QR code using format configuration
+    qr_width = label_format.width_px - qr_x - MARGIN
+    qr_height = label_format.height_px - qr_y - MARGIN - label_format.qr_code_bottom_margin  # Space above latin name
+
+    # Ensure minimum sizes
+    qr_width = max(qr_width, 60)
+    qr_height = max(qr_height, 60)
+
+    # Generate QR code to exactly fill the allocated space
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=6,  # smaller boxes for higher density
+        border=2,
+    )
+    qr.add_data(plant_id)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
+    # Resize to exactly fill the allocated space
+    qr_img = qr_img.resize((qr_width, qr_height))
+
+    # Draw text elements
+    # Plant name at top
+    draw.text((MARGIN, MARGIN), variety_text, fill='black', font=font_large)
+
+    # ID
+    draw.text((MARGIN, id_y), plant_id, fill='black', font=font_small)
+
+    # Date
+    if planting_date:
+        draw.text((MARGIN, id_y + id_h + 6), planting_date, fill='black', font=font_small)
+
+    # Latin name at bottom
+    if latin_text:
+        draw.text((MARGIN, latin_y), latin_text, fill='black', font=font_medium)
+
+    # Place QR code in its allocated region
+    label_image.paste(qr_img, (qr_x, qr_y))
+
+    # Convert to 1-bit black and white for printer compatibility
+    if label_image.mode != '1':
+        label_image = label_image.convert('1')
+
+    # Save the label with correct DPI for printing
+    label_image.save(output_path, 'PNG', dpi=(203, 203))
+    return output_path
 
 
 def _get_font():
@@ -35,120 +140,14 @@ def _text_size(font, text):
         width = int(font.getlength(text))
     else:
         width = len(text) * 6  # rough estimate
-    
+
     if hasattr(font, 'getbbox'):
         bbox = font.getbbox('Ag')
         height = bbox[3] - bbox[1]
     else:
         height = 20  # fallback
-    
+
     return width, height
-
-
-def create_label(plant_id: str, output_path: Path = None) -> Path:
-    """
-    Create a label for a plant (40x30mm at 203 DPI).
-
-    Layout:
-        [Plant Name]      (top-left)
-        [ID]         [QR ]
-        [Date]       [QR ]
-                     [QR ]
-                     [QR ]
-        [Latin Name] (bottom-left)
-    """
-    database_dir = get_database_dir()
-    plant_file = database_dir / f"{plant_id}.md"
-
-    if not plant_file.exists():
-        raise FileNotFoundError(f"Plant record not found: {plant_id}")
-
-    plant = load_plant_from_file(plant_file)
-
-    if output_path is None:
-        output_path = database_dir / f"{plant_id}_label.png"
-
-    # Get plant data
-    variety_text = plant.data.get('variety_name', 'Unknown Variety')
-    planting_date = plant.data.get('planting_date', '')
-    latin_text = plant.data.get('latin_name', '')
-
-    # Get fonts
-    font_large, font_medium, font_small = _get_font()
-
-    # Create label image
-    label_image = Image.new('RGB', (LABEL_WIDTH_PX, LABEL_HEIGHT_PX), 'white')
-    draw = ImageDraw.Draw(label_image)
-
-    # Measure text
-    name_w, name_h = _text_size(font_large, variety_text)
-    id_w, id_h = _text_size(font_small, plant_id)
-    date_w, date_h = _text_size(font_small, planting_date) if planting_date else (0, 0)
-    latin_w, latin_h = _text_size(font_medium, latin_text) if latin_text else (0, 0)
-
-    # Define explicit regions
-    MARGIN = 8
-    TEXT_COLUMN_WIDTH = 100  # Fixed width for text column
-    COLUMN_GAP = 8
-    
-    # Vertical positions
-    name_y = MARGIN
-    id_y = name_y + name_h + 6
-    date_y = id_y + id_h + 6 if planting_date else None
-    latin_y = LABEL_HEIGHT_PX - MARGIN - 20  # 20px from bottom
-    
-    # QR code region
-    qr_x = MARGIN + TEXT_COLUMN_WIDTH + COLUMN_GAP
-    qr_y = id_y  # Start at same level as ID
-    qr_width = LABEL_WIDTH_PX - qr_x - MARGIN
-    qr_height = latin_y - qr_y - 6  # Space above latin name
-    
-    # Ensure minimum sizes
-    qr_width = max(qr_width, 60)
-    qr_height = max(qr_height, 60)
-
-    # Generate QR code to exactly fill the allocated space
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=6,  # smaller boxes for higher density
-        border=2,
-    )
-    qr.add_data(plant_id)
-    qr.make(fit=True)
-    qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
-    # Resize to exactly fill the allocated space
-    qr_img = qr_img.resize((qr_width, qr_height))
-
-    # Draw text elements
-    # Plant name at top
-    draw.text((MARGIN, MARGIN), variety_text, fill='black', font=font_large)
-    
-    # ID
-    draw.text((MARGIN, id_y), plant_id, fill='black', font=font_small)
-    
-    # Date
-    if planting_date:
-        draw.text((MARGIN, id_y + id_h + 6), planting_date, fill='black', font=font_small)
-    
-    # Latin name at bottom
-    if latin_text:
-        draw.text((MARGIN, latin_y), latin_text, fill='black', font=font_medium)
-
-    # Place QR code in its allocated region
-    label_image.paste(qr_img, (qr_x, qr_y))
-
-    # Convert to 1-bit black and white for better printer compatibility
-    # Use a threshold to get pure black/white
-    if label_image.mode != '1':
-        label_image = label_image.convert('1')
-
-    # Convert to 1-bit black and white for printer compatibility
-    if label_image.mode != '1':
-        label_image = label_image.convert('1')
-    # Save the label with correct DPI for printing
-    label_image.save(output_path, 'PNG', dpi=(DPI, DPI))
-    return output_path
 
 
 def main():
@@ -158,12 +157,14 @@ def main():
     parser = argparse.ArgumentParser(description='Generate plant label')
     parser.add_argument('plant_id', help='Plant ID')
     parser.add_argument('--output', '-o', help='Output file path')
+    parser.add_argument('--format', '-f', default=DEFAULT_FORMAT,
+                        help=f'Label format (default: {DEFAULT_FORMAT})')
 
     args = parser.parse_args()
 
     try:
         output_path = Path(args.output) if args.output else None
-        label_path = create_label(args.plant_id, output_path)
+        label_path = create_label(args.plant_id, output_path, args.format)
         print(f"Label generated: {label_path}")
     except Exception as e:
         print(f"Error generating label: {e}")
