@@ -101,39 +101,47 @@ The interactive prompt flow:
      - **(C) Skip ("unknown")**: No packet info available; enter fields directly on the plant
 3. **Plant-specific fields**: Enter planting date (required for label)
 
-After saving, the output shows the generated plant ID, seed packet ID (if any), file path, and commands to generate and print a label.
-
-### `create-label`
-
-Generate a 40x30mm PNG label with a QR code encoding the plant ID.
-
-```bash
-python -m commands.plant_tracking_cli create-label <plant_id>
-```
-
-Example:
-```bash
-python -m commands.plant_tracking_cli create-label YEHA-2026-001
-```
-
-The label is saved to `database/<plant_id>_label.png` and contains:
-- **Left side**: variety name, Latin name, and planting date
-- **Right side**: QR code encoding the plant ID
-- **Bottom**: variety name and planting date
+After saving, the output shows the generated plant ID, seed packet ID (if any), file path, and next steps for generating or printing a label.
 
 ### `print-label`
 
-Send a label to the Phomemo M120 Bluetooth printer via the phomemo-tools pipeline.
+Generate and/or print a label for a plant. This command replaces the former `create-label` and `print-label` commands.
 
 ```bash
-# Generate label and print in one step
+# Generate and print in one step (default: 40x30mm)
 python -m commands.plant_tracking_cli print-label <plant_id>
+
+# Generate label image only (no printing)
+python -m commands.plant_tracking_cli print-label <plant_id> --no-print
+
+# Use a different label format
+python -m commands.plant_tracking_cli print-label <plant_id> --format 50x70mm
 
 # Print an existing label file
 python -m commands.plant_tracking_cli print-label database/YEHA-2026-001_label.png
 ```
 
-The command accepts either a plant ID (generates the label first) or a direct path to a label PNG file.
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--format`, `-f` | Label format: `40x30mm` (default) or `50x70mm` |
+| `--no-print` | Generate the label image file without sending it to the printer |
+
+**Supported formats:**
+
+| Format | Dimensions | Orientation |
+|--------|-----------|-------------|
+| `40x30mm` | 40mm × 30mm | Landscape (width along roll) |
+| `50x70mm` | 50mm × 70mm | Portrait (height along roll) |
+
+**Label layout:**
+
+The generated label is saved to `database/<plant_id>_label.png` and contains:
+- **Text column (left)**: variety name at top, plant ID and planting date in middle, Latin name at bottom
+- **QR code (right)**: encodes the plant ID for scanning
+
+The command accepts either a plant ID (generates the label first) or a direct path to an existing label PNG file.
 
 ## Plant ID Format
 
