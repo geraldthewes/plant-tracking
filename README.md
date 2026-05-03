@@ -1,95 +1,110 @@
-# Phomemo M120 Printer Setup for QR Code Printing
+# Plant Tracking CLI
 
-## Summary of Setup
+CLI tool for tracking plants, seed packets, and genera with automatic QR code label generation for thermal label printers.
 
-This guide documents the setup of a Phomemo M120 thermal label printer on Ubuntu 24.04 for printing QR codes (and other raster images) using the community-developed `phomemo-tools` CUPS driver.
+## Features
 
-### Steps Performed
+- Track plants with unique IDs, planting dates, and metadata
+- Manage seed packets with fuzzy-matching search
+- Organize plants by genus
+- Generate QR code labels for Phomemo M120 thermal label printer
+- Fuzzy matching for plant and seed packet lookups
 
-1. **Installed Dependencies**
-   - CUPS (`cups`)
-   - Python Imaging Library (`python3-pil`)
-   - Python USB bindings (`python3-usb`)
+## Requirements
 
-2. **Built and Installed phomemo-tools**
-   - Cloned the repository: `git clone https://github.com/vivier/phomemo-tools.git`
-   - Built the CUPS driver in the `cups` subdirectory: `make`
-   - Installed the driver: `sudo make install`
-   - Restarted CUPS: `sudo systemctl restart cups`
+- Python 3.12+
+- [uv](https://github.com/astral-sh/uv) package manager
+- [just](https://github.com/casey/just) (for build commands)
+- Phomemo M120 printer (optional, for label printing)
 
-3. **Configured the Printer**
-   - Connected the M120 via USB cable (appeared as `/dev/usb/lp4`)
-   - Enabled `FileDevice` in `/etc/cups/cups-files.conf` to allow device URIs like `/dev/usb/lp4`
-   - Added the printer to CUPS:
-     ```bash
-     sudo lpadmin -p M120 -E -v /dev/usb/lp4 -P /usr/share/cups/model/Phomemo/Phomemo-M120.ppd.gz
-     ```
-   - Verified the printer uses the correct PPD (`Phomemo M120`) and is ready.
+## Installation
 
-4. **Tested Printing**
-   - Generated a QR code with `qrencode`
-   - Printed the QR code image to the M120 printer
-   - Confirmed successful output.
-
-## Usage Instructions
-
-### Generating a QR Code
-
-Install `qrencode` if not already present:
 ```bash
-sudo apt install qrencode
+# Quick install
+just install
+
+# Install with test dependencies
+just install-test
 ```
 
-Create a QR code PNG image:
+Or manually with uv:
+
 ```bash
-# Basic usage: qrencode -s <scale> -l <error_correction> -o <output_file> "<data>"
-qrencode -s 10 -l H -o mylabel.png "https://example.com/my-plan"
+uv pip install -e ".[test]"
 ```
 
-- `-s 10`: Scale factor (higher = larger QR code). Adjust to fit your label.
-- `-l H`: Error correction level (L, M, Q, H). H is highest robustness.
-- Replace the quoted string with your desired data (URL, text, etc.).
+## Usage
 
-### Printing to the M120
-
-Determine your label size (width x height in mm). Common sizes for the M120 include 50x30mm, 40x60mm, etc. Use the `media=wXXhYY` option where `XX` is width and `YY` is height.
-
-Example print command:
 ```bash
-lp -d M120 -o media=w50h30 mylabel.png
+# Via uv run
+uv run plant-tracking --help
+
+# Or after installation
+plant-tracking --help
 ```
 
-- `-d M120`: Specifies the printer name (as set in CUPS).
-- `-o media=w50h30`: Sets label size to 50mm width, 30mm height.
-- You can also print multiple copies: `-o copies=2`
+### Commands
 
-### Tips for Best Results
+- `plant-tracking plant` — Manage individual plants
+- `plant-tracking packet` — Manage seed packets
+- `plant-tracking genus` — Manage genera
+- `plant-tracking label` — Generate QR code labels for printing
 
-- Use high-contrast black-and-white images. The driver rasterizes images for thermal printing.
-- If the QR code is too large/small, adjust the `-s` factor in `qrencode` or regenerate at a different size.
-- For continuous label rolls, you may need to add `-o MediaType=Continuous` (check your label type).
-- Ensure the printer is loaded with labels and ready (green light).
+## Development
 
-### Troubleshooting
+```bash
+# Run all checks (lint, format, type-check, security, tests)
+just check
 
-- **Printer not found**: Verify USB connection with `ls -l /dev/usb/lp*` and `lpinfo -v | grep usb`.
-- **Filter errors**: Check CUPS error log: `tail -f /var/log/cups/error_log`.
-- **Bluetooth alternative**: If you prefer Bluetooth, pair the printer via your desktop Bluetooth settings, then use:
-  ```bash
-  sudo lpadmin -p M120-BT -E -v phomemo://<MAC_ADDRESS_WITHOUT_COLONS> -P /usr/share/cups/model/Phomemo/Phomemo-M120.ppd.gz
-  ```
-  Replace `<MAC_ADDRESS_WITHOUT_COLONS>` with the printer's Bluetooth MAC (e.g., `DC0D309023C7`).
+# Individual checks
+just lint          # Ruff linter
+just format        # Black formatter
+just type-check    # MyPy type checking
+just security-scan # Bandit security scan
+just test          # Pytest
+just clean         # Remove caches
+```
 
-### Maintenance
+## Dependencies
 
-- The `phomemo-tools` driver is installed system-wide. Updates can be made by pulling the repository and re-running `make install`.
-- Keep CUPS running: `sudo systemctl status cups`.
+| Package | Purpose |
+|---------|---------|
+| `qrcode[pil]` | QR code generation |
+| `Pillow` | Image processing |
+| `PyYAML` | Configuration files |
+| `pyusb` | USB printer communication |
+| `thefuzz[speedup]` | Fuzzy string matching |
+| `pytest` | Testing (optional) |
 
-## References
+## Project Structure
 
-- phomemo-tools GitHub: https://github.com/vivier/phomemo-tools
-- CUPS documentation: https://www.cups.org/
+```
+.
+├── commands/              # CLI application code
+│   ├── plant_tracking_cli.py   # Main entry point
+│   ├── plant_model.py      # Plant data model
+│   ├── seed_packet_model.py  # Seed packet data model
+│   ├── genus_model.py      # Genus data model
+│   ├── label_generator.py  # QR code label generation
+│   ├── label_format.py     # Label formatting
+│   └── printer.py          # Printer interface
+├── database/              # Plant records and generated labels
+├── phomemo-tools/         # Phomemo CUPS driver (third-party)
+├── scripts/               # Data migration scripts
+├── tests/                 # Test suite
+├── Justfile               # Build commands
+└── pyproject.toml         # Project metadata and dependencies
+```
 
---- 
+## Phomemo M120 Printer Setup
 
-*Setup completed by Gerald on $(date +%Y-%m-%d).*
+See [docs/PRINTER_SETUP.md](docs/PRINTER_SETUP.md) for detailed CUPS driver installation and printer configuration.
+
+Quick summary:
+1. Install `phomemo-tools` CUPS driver from the `phomemo-tools/` directory
+2. Configure CUPS with the M120 PPD
+3. Generate and print labels with `plant-tracking label`
+
+## License
+
+MIT

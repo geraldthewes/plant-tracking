@@ -19,6 +19,9 @@ test = [
 [project.scripts]
 plant-tracking = "commands.plant_tracking_cli:main"
 
+[tool.hatch.build.targets.wheel]
+packages = ["commands"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
