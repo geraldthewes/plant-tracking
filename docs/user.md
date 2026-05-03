@@ -27,6 +27,16 @@ When creating a plant record, the system looks for a matching seed packet by var
 
 **"Unknown" case**: If you don't have packet information available (e.g., saved seeds), choose the "unknown" option and the fields are stored directly on the plant record.
 
+## Genus Database
+
+A **genus record** stores a unique (variety name, Latin name) pair. By storing this information once, you eliminate redundant data entry when creating multiple plant records of the same variety. The genus database also provides fuzzy matching to find similar variety names even with typos.
+
+**Relationship**: One genus → many plants.
+
+When creating a plant record, the system looks for a matching genus by variety name and Latin name. If found, it links the plant to that genus via `genus_id`. If no exact match exists, you can create a new genus, select from existing entries, or use fuzzy search.
+
+**"Unknown" case**: If you skip genus lookup, the Latin name is stored directly on the plant record and `genus_id` is set to `"unknown"`.
+
 ## Commands
 
 ### `create-seed-packet`
@@ -84,7 +94,7 @@ python -m commands.plant_tracking_cli show-seed-packet SPKT-001
 
 ### `create-plant`
 
-Create a new plant record. The system first looks up a matching seed packet, then asks for remaining plant-specific fields.
+Create a new plant record. The system first looks up a matching genus, then asks for remaining plant-specific fields.
 
 ```bash
 python -m commands.plant_tracking_cli create-plant
@@ -93,15 +103,57 @@ python -m commands.plant_tracking_cli create-plant
 The interactive prompt flow:
 
 1. **Variety identification**: Enter variety name and Latin name (required for label)
-2. **Seed packet lookup**:
-   - **Existing match found**: Confirm to use it (skips packet fields), or choose another option
+2. **Genus lookup**:
+   - **Existing match found**: Confirm to use it (links genus to plant), or choose another option
    - **No match found**: Choose one of:
-     - **(A) Create new seed packet now**: Enter packet fields, creates the packet, links it to the plant
-     - **(B) Select existing from list**: Pick from `list-seed-packets` output
-     - **(C) Skip ("unknown")**: No packet info available; enter fields directly on the plant
+     - **(A) Create new genus now**: Creates the genus from your variety/Latin name, links it to the plant
+     - **(B) Select existing from list**: Pick from `list-genera` output
+     - **(C) Skip ("unknown")**: No genus reference; Latin name stored directly on plant
+     - **(F) Fuzzy search**: Find similar genus names (tolerates typos)
 3. **Plant-specific fields**: Enter planting date (required for label)
 
-After saving, the output shows the generated plant ID, seed packet ID (if any), file path, and next steps for generating or printing a label.
+After saving, the output shows the generated plant ID, genus ID (if any), file path, and next steps for generating or printing a label.
+
+### `create-genus`
+
+Create a standalone genus record that can be referenced by multiple plants.
+
+```bash
+python -m commands.plant_tracking_cli create-genus
+```
+
+The interactive prompt asks for:
+
+| Field | Example | Description |
+|-------|---------|-------------|
+| Variety name | Yellow Habanero | Common name of the plant variety |
+| Latin name | Capsicum chinense | Scientific name |
+
+If a matching genus already exists (same variety + Latin name), the system warns you and asks if you want to create a duplicate anyway.
+
+### `list-genera`
+
+Display all genus records in a table for reference during plant creation.
+
+```bash
+python -m commands.plant_tracking_cli list-genera
+```
+
+Output:
+```
+ID           Variety                     Latin Name
+------------ -------------------------  -------------------------
+GENUS-001    Yellow Habanero            Capsicum chinense
+GENUS-002    Avocado                    Persea americana
+```
+
+### `show-genus <id>`
+
+Show full details of a specific genus record.
+
+```bash
+python -m commands.plant_tracking_cli show-genus GENUS-001
+```
 
 ### `print-label`
 
@@ -164,15 +216,21 @@ Plant records are stored as markdown files with YAML frontmatter:
 - `id`, `variety_name`, `latin_name`, `brand`
 - `days_to_maturity`, `germination_time`, `planting_depth`
 - `spacing`, `sun_requirements`, `indoor_start_time`
-- `planting_date`, `created_at`, `updated_at`, `seed_packet_id`
+- `planting_date`, `created_at`, `updated_at`, `seed_packet_id`, `genus_id`
 
-The `created_at` and `updated_at` fields use ISO 8601 format. The `seed_packet_id` field references a seed packet record (or `"unknown"` if no packet is linked).
+The `created_at` and `updated_at` fields use ISO 8601 format. The `seed_packet_id` field references a seed packet record (or `"unknown"` if no packet is linked). The `genus_id` field references a genus record (or `"unknown"` if no genus is linked).
 
 ### Seed Packet Storage
 
 Seed packet records are stored in a separate subdirectory:
 
 **Location**: `database/seed_packets/SPKT-NNN.md`
+
+### Genus Storage
+
+Genus records are stored in a separate subdirectory:
+
+**Location**: `database/genera/GENUS-NNN.md`
 
 **Example plant file with seed packet reference**:
 ```yaml

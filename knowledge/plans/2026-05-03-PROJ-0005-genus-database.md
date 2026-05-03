@@ -212,16 +212,16 @@ def list_all() -> list['Genus']:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Genus model creates valid records: `python -c "from commands.genus_model import Genus; g = Genus({'variety_name': 'Test', 'latin_name': 'Testulus'}); assert g.data['id'] == 'GENUS-001'"`
-- [ ] Validation rejects missing required fields
-- [ ] Markdown round-trip works: save → load → compare
-- [ ] find_matching returns correct genus / None
-- [ ] list_all returns all genera
-- [ ] ID generation follows GENUS-NNN format and increments properly
+- [x] Genus model creates valid records: `python -c "from commands.genus_model import Genus; g = Genus({'variety_name': 'Test', 'latin_name': 'Testulus'}); assert g.data['id'] == 'GENUS-001'"`
+- [x] Validation rejects missing required fields
+- [x] Markdown round-trip works: save → load → compare
+- [x] find_matching returns correct genus / None
+- [x] list_all returns all genera
+- [x] ID generation follows GENUS-NNN format and increments properly
 
 #### Manual Verification:
-- [ ] New file creates proper YAML frontmatter in database/genera/
-- [ ] ID format matches GENUS-NNN pattern
+- [x] New file creates proper YAML frontmatter in database/genera/
+- [x] ID format matches GENUS-NNN pattern
 
 ---
 
@@ -356,15 +356,15 @@ Modify plant model to include genus_id reference and adjust validation logic to 
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Plant model accepts genus_id field
-- [ ] Validation rejects invalid genus_id formats
-- [ ] get_genus() returns correct Genus object or None
-- [ ] Plant with genus_id saves/loads correctly
-- [ ] Plant with genus_id: 'unknown' is valid
+- [x] Plant model accepts genus_id field
+- [x] Validation rejects invalid genus_id formats
+- [x] get_genus() returns correct Genus object or None
+- [x] Plant with genus_id saves/loads correctly
+- [x] Plant with genus_id: 'unknown' is valid
 
 #### Manual Verification:
-- [ ] Plant records can store genus_id references
-- [ ] Invalid genus_id formats are rejected
+- [x] Plant records can store genus_id references
+- [x] Invalid genus_id formats are rejected
 
 ---
 
@@ -506,15 +506,15 @@ Add dedicated CLI commands for managing genus records independently of plants.
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] create-genus subcommand registered and callable
-- [ ] list-genera returns correct count
-- [ ] show-genus resolves and displays genus data
-- [ ] Duplicate warning works when creating genus with matching variety+latin
+- [x] create-genus subcommand registered and callable
+- [x] list-genera returns correct count
+- [x] show-genus resolves and displays genus data
+- [x] Duplicate warning works when creating genus with matching variety+latin
 
 #### Manual Verification:
-- [ ] Interactive prompts work for creating genus records
-- [ ] List command shows table of all genera
-- [ ] Show command displays full genus details
+- [x] Interactive prompts work for creating genus records
+- [x] List command shows table of all genera
+- [x] Show command displays full genus details
 
 ---
 
@@ -722,17 +722,17 @@ Modify the create-plant flow to first ask for variety name, perform genus lookup
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Modified create-plant flow prompts for variety name first
-- [ ] Genus lookup works for exact matches
-- [ ] Three-path workflow (create/select/skip) functions correctly
-- [ ] genus_id field is stored in plant records when genus is used
-- [ ] Backward compatibility maintained for existing plant records
+- [x] Modified create-plant flow prompts for variety name first
+- [x] Genus lookup works for exact matches
+- [x] Three-path workflow (create/select/skip) functions correctly
+- [x] genus_id field is stored in plant records when genus is used
+- [x] Backward compatibility maintained for existing plant records
 
 #### Manual Verification:
-- [ ] Interactive flow works: variety name → genus lookup → create/select/skip/fuzzy
-- [ ] Created genus records are properly saved to database/genera/
-- [ ] Plant records store genus_id references correctly
-- [ ] Latin name is still captured for backward compatibility during transition
+- [x] Interactive flow works: variety name → genus lookup → create/select/skip/fuzzy
+- [x] Created genus records are properly saved to database/genera/
+- [x] Plant records store genus_id references correctly
+- [x] Latin name is still captured for backward compatibility during transition
 
 ---
 
@@ -794,15 +794,15 @@ Update the label generation system to resolve Latin name from genus database whe
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Label generation uses Latin name from genus database when genus_id present
-- [ ] Label generation falls back to direct Latin name field when genus_id absent or invalid
-- [ ] Label generation works with existing plant records (backward compatibility)
-- [ ] Label generation works with new plant records referencing genus
+- [x] Label generation uses Latin name from genus database when genus_id present
+- [x] Label generation falls back to direct Latin name field when genus_id absent or invalid
+- [x] Label generation works with existing plant records (backward compatibility)
+- [x] Label generation works with new plant records referencing genus
 
 #### Manual Verification:
-- [ ] Labels display correct Latin name for plants with genus references
-- [ ] Labels display correct Latin name for existing plants without genus references
-- [ ] Label images are generated properly in both cases
+- [x] Labels display correct Latin name for plants with genus references
+- [x] Labels display correct Latin name for existing plants without genus references
+- [x] Label images are generated properly in both cases
 
 ---
 
@@ -908,15 +908,15 @@ Integrate a fuzzy matching library to allow approximate genus name searches duri
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] thefuzz library is installed and importable
-- [ ] Fuzzy search function returns correct matches for similar names
-- [ ] Fuzzy search rejects poor matches (low similarity scores)
-- [ ] Fuzzy search workflow integrated into genus choice prompt
+- [x] thefuzz library is installed and importable
+- [x] Fuzzy search function returns correct matches for similar names
+- [x] Fuzzy search rejects poor matches (low similarity scores)
+- [x] Fuzzy search workflow integrated into genus choice prompt
 
 #### Manual Verification:
-- [ ] Fuzzy search option appears in prompt when library available
-- [ ] Fuzzy search suggests correct genus for misspelled variety names
-- [ ] Fuzzy search falls back to create when no good match found
+- [x] Fuzzy search option appears in prompt when library available
+- [x] Fuzzy search suggests correct genus for misspelled variety names
+- [x] Fuzzy search falls back to create when no good match found
 
 ---
 
@@ -1078,17 +1078,17 @@ if __name__ == "__main__":
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Migration script runs without errors
-- [ ] Dry-run mode shows what would be changed without making changes
-- [ ] Actual run creates genus records for unique (variety_name, latin_name) pairs
-- [ ] Actual run updates plant records with genus_id references
-- [ ] Migration is idempotent (safe to re-run)
+- [x] Migration script runs without errors
+- [x] Dry-run mode shows what would be changed without making changes
+- [x] Actual run creates genus records for unique (variety_name, latin_name) pairs
+- [x] Actual run updates plant records with genus_id references
+- [x] Migration is idempotent (safe to re-run)
 
 #### Manual Verification:
-- [ ] Migration correctly counts unique genus pairs from existing data
-- [ ] Generated genus records have correct format in database/genera/
-- [ ] Updated plant records contain genus_id references
-- [ ] Plants without genus data remain unchanged
+- [x] Migration correctly counts unique genus pairs from existing data
+- [x] Generated genus records have correct format in database/genera/
+- [x] Updated plant records contain genus_id references
+- [x] Plants without genus data remain unchanged
 
 ---
 
@@ -1110,15 +1110,15 @@ Update user-facing and technical documentation to reflect the new genus database
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Documentation builds/render without errors
-- [ ] Genus database concepts documented
-- [ ] All new CLI commands documented with examples
-- [ ] Database specification updated with genus schema
+- [x] Documentation builds/render without errors
+- [x] Genus database concepts documented
+- [x] All new CLI commands documented with examples
+- [x] Database specification updated with genus schema
 
 #### Manual Verification:
-- [ ] User documentation explains genus database benefits
-- [ ] Command reference includes create-genus, list-genera, show-genus
-- [ ] Database specs show genus storage format and plant genus_id field
+- [x] User documentation explains genus database benefits
+- [x] Command reference includes create-genus, list-genera, show-genus
+- [x] Database specs show genus storage format and plant genus_id field
 
 ---
 

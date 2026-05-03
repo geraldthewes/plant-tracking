@@ -40,7 +40,26 @@ def create_label(plant_id: str, output_path: Path = None, format_str: str = DEFA
     # Get plant data
     variety_text = plant.data.get('variety_name', 'Unknown Variety')
     planting_date = plant.data.get('planting_date', '')
-    latin_text = plant.data.get('latin_name', '')
+
+    # Get Latin name from genus reference if available, otherwise from direct field
+    latin_text = ''
+    if 'genus_id' in plant.data and plant.data['genus_id'] not in (None, 'unknown'):
+        from commands.genus_model import load_from_file, get_genera_dir
+        genus_id = plant.data['genus_id']
+        genera_dir = get_genera_dir()
+        if genera_dir.exists():
+            genus_file = genera_dir / f"{genus_id}.md"
+            if genus_file.exists():
+                try:
+                    genus = load_from_file(genus_file)
+                    if genus:
+                        latin_text = genus.data.get('latin_name', '')
+                except Exception:
+                    pass
+
+    # Fallback to direct Latin name field (for backward compatibility)
+    if not latin_text:
+        latin_text = plant.data.get('latin_name', '')
 
     # Get fonts
     font_large, font_medium, font_small = _get_font()

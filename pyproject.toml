@@ -8,6 +8,7 @@ dependencies = [
     "Pillow>=10.0.0",
     "PyYAML>=6.0",
     "pyusb>=1.2.0",
+    "thefuzz[speedup]>=0.22.0",
 ]
 
 [project.optional-dependencies]

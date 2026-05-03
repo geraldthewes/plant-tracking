@@ -15,7 +15,7 @@ LABEL_FIELDS = ['variety_name', 'latin_name', 'planting_date']
 ALL_FIELDS = [
     'variety_name', 'latin_name', 'brand', 'days_to_maturity',
     'germination_time', 'planting_depth', 'spacing', 'sun_requirements',
-    'indoor_start_time', 'planting_date', 'seed_packet_id'
+    'indoor_start_time', 'planting_date', 'seed_packet_id', 'genus_id'
 ]
 
 # All label fields are required
@@ -36,6 +36,11 @@ def get_database_dir() -> Path:
     return Path(os.environ.get("PLANT_DATABASE_DIR", "database"))
 
 
+def get_genera_dir() -> Path:
+    """Get the genera directory path."""
+    return Path(os.environ.get("PLANT_DATABASE_DIR", "database")) / "genera"
+
+
 class Plant:
     """Represents a plant record"""
 
@@ -51,6 +56,11 @@ class Plant:
         for field in REQUIRED_FIELDS:
             if field not in self.data:
                 raise ValueError(f"Missing required field: {field}")
+
+        # Validate genus_id format if present
+        if 'genus_id' in self.data and self.data['genus_id'] not in (None, 'unknown'):
+            if not re.match(r'^GENUS-\d{3}$', self.data['genus_id']):
+                raise ValueError("genus_id must match GENUS-NNN format or be 'unknown'")
 
         # Validate date format
         if 'planting_date' in self.data:
@@ -131,6 +141,13 @@ class Plant:
             return None
         return load_seed_packet(spkt_id)
 
+    def get_genus(self) -> Optional['Genus']:
+        """Load and return the referenced Genus, or None."""
+        genus_id = self.data.get('genus_id')
+        if not genus_id or genus_id == 'unknown':
+            return None
+        return load_genus(genus_id)
+
 
 def load_seed_packet(packet_id: str):
     """Load a seed packet by ID. Returns None if not found."""
@@ -161,3 +178,16 @@ def load_plant_from_file(file_path: Path) -> Plant:
     frontmatter = parts[1]
     data = yaml.safe_load(frontmatter)
     return Plant(data)
+
+
+def load_genus(genus_id: str):
+    """Load a genus by ID. Returns None if not found."""
+    from commands.genus_model import load_from_file as load_genus_from_file, get_genera_dir as get_genera_dir_path
+
+    genera_dir = get_genera_dir_path()
+    if not genera_dir.exists():
+        return None
+    filepath = genera_dir / f"{genus_id}.md"
+    if filepath.exists():
+        return load_genus_from_file(filepath)
+    return None

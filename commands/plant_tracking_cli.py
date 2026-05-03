@@ -10,12 +10,26 @@ from .seed_packet_model import (
     SeedPacket, get_seed_packets_dir, find_matching, list_all,
     SEED_PACKET_FIELDS as PACKET_OPTIONAL_FIELDS,
 )
+from .genus_model import (
+    Genus, get_genera_dir, find_matching as find_genus_matching, list_all as list_all_genera
+)
+
+# Fuzzy matching for genus name searches
+try:
+    from thefuzz import process, fuzz
+    FUZZY_MATCHING_AVAILABLE = True
+except ImportError:
+    FUZZY_MATCHING_AVAILABLE = False
+    process = None
+    fuzz = None
 
 # Ensure database directories exist
 DATABASE_DIR = get_database_dir()
 DATABASE_DIR.mkdir(exist_ok=True)
 PACKETS_DIR = get_seed_packets_dir()
 PACKETS_DIR.mkdir(exist_ok=True)
+GENERA_DIR = get_genera_dir()
+GENERA_DIR.mkdir(exist_ok=True)
 
 
 def main():
@@ -43,6 +57,16 @@ def main():
     show_spkt_parser = subparsers.add_parser('show-seed-packet', help='Show seed packet details')
     show_spkt_parser.add_argument('packet_id', help='Seed packet ID')
 
+    # create-genus subcommand
+    subparsers.add_parser('create-genus', help='Create a new genus record')
+
+    # list-genera subcommand
+    subparsers.add_parser('list-genera', help='List all genera')
+
+    # show-genus subcommand
+    show_genus_parser = subparsers.add_parser('show-genus', help='Show genus details')
+    show_genus_parser.add_argument('genus_id', help='Genus ID')
+
     args = parser.parse_args()
 
     if args.command == 'create-plant':
@@ -55,6 +79,12 @@ def main():
         list_seed_packets(args)
     elif args.command == 'show-seed-packet':
         show_seed_packet(args)
+    elif args.command == 'create-genus':
+        create_genus(args)
+    elif args.command == 'list-genera':
+        list_genera(args)
+    elif args.command == 'show-genus':
+        show_genus(args)
     else:
         parser.print_help()
 
@@ -78,45 +108,58 @@ def _prompt_optional_field(field, description, plant_data):
 
 
 def create_plant(args):
-    """Create a new plant record through interactive prompts with seed packet lookup."""
+    """Create a new plant record through interactive prompts with genus lookup."""
     print("=== Create New Plant Record ===")
     print("Fields needed for the label are required; record-keeping fields are optional.")
     print()
 
     plant_data = {}
 
-    # Phase 1: Ask for variety + latin to look up seed packet
-    print("--- Variety identification (used for label & seed packet lookup) ---")
+    # Phase 1: Ask for variety name to look up genus
+    print("--- Variety identification (used for label & genus lookup) ---")
     _prompt_field('variety_name', 'Variety name (e.g., Yellow Habanero)', plant_data)
+
+    # For now, we still need latin_name for backward compatibility during transition
     _prompt_field('latin_name', 'Latin name (e.g., Capsicum chinense)', plant_data)
 
-    # Look up existing seed packet
-    existing_packet = find_matching(plant_data['variety_name'], plant_data['latin_name'])
+    # Look up existing genus
+    existing_genus = find_genus_matching(plant_data['variety_name'], plant_data['latin_name'])
 
-    if existing_packet:
-        print(f"\n\u2713 Found matching seed packet: {existing_packet.data['id']} - {existing_packet.data['variety_name']}")
-        confirm = input("Use this seed packet? (Y/n): ").strip().lower()
+    if existing_genus:
+        print(f"\n\u2713 Found matching genus: {existing_genus.data['id']} - {existing_genus.data['variety_name']}")
+        print(f"  Latin name: {existing_genus.data['latin_name']}")
+        confirm = input("Use this genus? (Y/n): ").strip().lower()
         if confirm != 'n':
-            plant_data['seed_packet_id'] = existing_packet.data['id']
-            print("Seed packet fields will be skipped (already stored in seed packet).")
+            plant_data['genus_id'] = existing_genus.data['id']
+            print("Genus fields will be skipped (already stored in genus).")
         else:
-            packet_choice = _prompt_packet_choice(plant_data)
-            if packet_choice == 'skip':
-                plant_data['seed_packet_id'] = 'unknown'
-                _prompt_record_fields(plant_data)
-            elif packet_choice == 'create':
-                plant_data['seed_packet_id'] = _create_packet_inline(plant_data)
-            elif packet_choice == 'select':
-                plant_data['seed_packet_id'] = _select_existing_packet()
+            genus_choice = _prompt_genus_choice(plant_data)
+            if genus_choice == 'skip':
+                plant_data['genus_id'] = 'unknown'
+            elif genus_choice == 'create':
+                plant_data['genus_id'] = _create_genus_inline(plant_data)
+            elif genus_choice == 'fuzzy':
+                matched_genus_id = _fuzzy_search_genus(plant_data['variety_name'])
+                if matched_genus_id:
+                    plant_data['genus_id'] = matched_genus_id
+                else:
+                    plant_data['genus_id'] = _create_genus_inline(plant_data)
+            elif genus_choice == 'select':
+                plant_data['genus_id'] = _select_existing_genus()
     else:
-        packet_choice = _prompt_packet_choice(plant_data)
-        if packet_choice == 'skip':
-            plant_data['seed_packet_id'] = 'unknown'
-            _prompt_record_fields(plant_data)
-        elif packet_choice == 'create':
-            plant_data['seed_packet_id'] = _create_packet_inline(plant_data)
-        elif packet_choice == 'select':
-            plant_data['seed_packet_id'] = _select_existing_packet()
+        genus_choice = _prompt_genus_choice(plant_data)
+        if genus_choice == 'skip':
+            plant_data['genus_id'] = 'unknown'
+        elif genus_choice == 'create':
+            plant_data['genus_id'] = _create_genus_inline(plant_data)
+        elif genus_choice == 'fuzzy':
+            matched_genus_id = _fuzzy_search_genus(plant_data['variety_name'])
+            if matched_genus_id:
+                plant_data['genus_id'] = matched_genus_id
+            else:
+                plant_data['genus_id'] = _create_genus_inline(plant_data)
+        elif genus_choice == 'select':
+            plant_data['genus_id'] = _select_existing_genus()
 
     # Phase 2: Plant-specific required field (always asked)
     print()
@@ -134,8 +177,8 @@ def create_plant(args):
 
         print(f"\n\u2713 Plant record created successfully!")
         print(f"ID: {plant.data['id']}")
-        if plant_data.get('seed_packet_id') and plant_data['seed_packet_id'] != 'unknown':
-            print(f"Seed Packet: {plant_data['seed_packet_id']}")
+        if plant_data.get('genus_id') and plant_data['genus_id'] != 'unknown':
+            print(f"Genus: {plant_data['genus_id']}")
         print(f"Saved to: {filepath}")
         print(f"\nNext steps:")
         print(f"  1. Generate/print label: plant-tracking print-label {plant.data['id']}")
@@ -235,6 +278,94 @@ def _prompt_record_fields(plant_data):
     ]
     for field, description in record_fields:
         _prompt_optional_field(field, description, plant_data)
+
+
+def _prompt_genus_choice(plant_data):
+    """Prompt user to choose genus handling method.
+
+    Returns 'create', 'select', 'fuzzy', or 'skip'.
+    """
+    print()
+    print("No matching genus found. How would you like to proceed?")
+    print("  (A) Create a new genus now")
+    print("  (B) Select an existing genus from list")
+    print("  (C) Skip - enter Latin name manually (no genus reference)")
+    if FUZZY_MATCHING_AVAILABLE:
+        print("  (F) Fuzzy search for similar genus names")
+    choice = input("Choose [A/B/C" + ("/F" if FUZZY_MATCHING_AVAILABLE else "") + "]: ").strip().upper()
+    if choice == 'A':
+        return 'create'
+    elif choice == 'B':
+        return 'select'
+    elif choice == 'F' and FUZZY_MATCHING_AVAILABLE:
+        return 'fuzzy'
+    else:
+        return 'skip'
+
+
+def _create_genus_inline(plant_data):
+    """Create a genus inline during plant creation.
+
+    Returns the created genus ID.
+    """
+    print()
+    print("--- Create new genus ---")
+    genus_data = {
+        'variety_name': plant_data['variety_name'],
+        'latin_name': plant_data['latin_name'],
+    }
+
+    genus = Genus(genus_data)
+    filepath = GENERA_DIR / f"{genus.data['id']}.md"
+    with open(filepath, 'w') as f:
+        f.write(genus.to_markdown())
+    print(f"\n\u2713 Genus created: {genus.data['id']}")
+    return genus.data['id']
+
+
+def _select_existing_genus():
+    """Show existing genera and let user select by ID.
+
+    Returns the selected genus ID or None.
+    """
+    genera = list_all_genera()
+    if not genera:
+        print("No genera exist yet.")
+        return None
+
+    print()
+    print("Existing genera:")
+    for g in genera:
+        print(f"  {g.data['id']:<12} {g.data['variety_name']:<25} {g.data['latin_name']:<25}")
+    print()
+    genus_id = input("Enter genus ID to use (or empty to skip): ").strip()
+    if genus_id:
+        return genus_id
+    return None
+
+
+def _fuzzy_search_genus(variety_name: str):
+    """Search for genus using fuzzy matching on variety_name.
+
+    Returns matched genus ID if good match found, otherwise None.
+    """
+    if not FUZZY_MATCHING_AVAILABLE:
+        return None
+
+    genera = list_all_genera()
+    if not genera:
+        return None
+
+    genus_choices = {g.data['variety_name']: g.data['id'] for g in genera}
+    variety_names = list(genus_choices.keys())
+
+    match_result = process.extractOne(variety_name, variety_names, scorer=fuzz.token_set_ratio)
+
+    if match_result and match_result[1] >= 80:
+        matched_variety, score = match_result
+        return genus_choices[matched_variety]
+
+    return None
 
 
 def print_label(args):
@@ -355,6 +486,86 @@ def show_seed_packet(args):
     print()
     print(f"  Created: {packet.data.get('created_at', 'N/A')}")
     print(f"  Updated: {packet.data.get('updated_at', 'N/A')}")
+
+
+def create_genus(args):
+    """Create a new genus through interactive prompts."""
+    print("=== Create New Genus ===")
+    print()
+
+    genus_data = {}
+
+    print("--- Required fields ---")
+    _prompt_field('variety_name', 'Variety name (e.g., Yellow Habanero)', genus_data)
+    _prompt_field('latin_name', 'Latin name (e.g., Capsicum chinense)', genus_data)
+
+    existing = find_genus_matching(genus_data['variety_name'], genus_data['latin_name'])
+    if existing:
+        print(f"\n\u26a0 A matching genus already exists:")
+        print(f"  ID: {existing.data['id']}")
+        print(f"  Variety: {existing.data['variety_name']} ({existing.data['latin_name']})")
+        resp = input("\nCreate anyway? (y/N): ").strip().lower()
+        if resp != 'y':
+            print("Cancelled.")
+            return
+
+    print()
+    print("--- No optional fields for genus ---")
+
+    try:
+        genus = Genus(genus_data)
+        filepath = GENERA_DIR / f"{genus.data['id']}.md"
+
+        with open(filepath, 'w') as f:
+            f.write(genus.to_markdown())
+
+        print(f"\n\u2713 Genus created successfully!")
+        print(f"ID: {genus.data['id']}")
+        print(f"Saved to: {filepath}")
+    except Exception as e:
+        print(f"\n\u2717 Error creating genus: {e}")
+        sys.exit(1)
+
+
+def list_genera(args):
+    """List all genera in a table format."""
+    genera = list_all_genera()
+    if not genera:
+        print("No genera found.")
+        return
+
+    header = f"{'ID':<12} {'Variety':<25} {'Latin Name':<25}"
+    separator = f"{'-'*12}  {'-'*25}  {'-'*25}"
+    print(header)
+    print(separator)
+    for g in genera:
+        print(f"{g.data['id']:<12} {g.data['variety_name']:<25} {g.data['latin_name']:<25}")
+
+
+def show_genus(args):
+    """Show full details of a genus."""
+    from .genus_model import load_from_file
+
+    filepath = GENERA_DIR / f"{args.genus_id}.md"
+    if not filepath.exists():
+        print(f"\u2717 Genus not found: {args.genus_id}")
+        sys.exit(1)
+        return
+
+    genus = load_from_file(filepath)
+    print(f"=== Genus: {genus.data['id']} ===")
+    print()
+    fields_to_show = [
+        ('variety_name', 'Variety'),
+        ('latin_name', 'Latin Name'),
+    ]
+    for field, label in fields_to_show:
+        val = genus.data.get(field)
+        if val:
+            print(f"  {label:<22} {val}")
+    print()
+    print(f"  Created: {genus.data.get('created_at', 'N/A')}")
+    print(f"  Updated: {genus.data.get('updated_at', 'N/A')}")
 
 
 if __name__ == "__main__":

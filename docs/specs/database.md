@@ -7,8 +7,9 @@ This document specifies the database format and storage mechanism for the Plant 
 The system tracks two entity types:
 - **Plants**: Individual growing records with planting dates and IDs
 - **Seed Packets**: Reusable variety information records (brand, days to maturity, etc.)
+- **Genera**: Unique (variety name, Latin name) pairs that eliminate redundant data entry
 
-Plants reference seed packets via `seed_packet_id`, eliminating denormalized data across plant records.
+Plants reference seed packets via `seed_packet_id`, and genus records via `genus_id`, eliminating denormalized data across plant records.
 
 ## Storage Location
 
@@ -16,6 +17,8 @@ Plants reference seed packets via `seed_packet_id`, eliminating denormalized dat
 - **Plant file naming**: `{plant_id}.md` (e.g., `HABY-2026-001.md`)
 - **Seed packets directory**: `database/seed_packets/`
 - **Seed packet file naming**: `SPKT-NNN.md` (e.g., `SPKT-001.md`)
+- **Genera directory**: `database/genera/`
+- **Genus file naming**: `GENUS-NNN.md` (e.g., `GENUS-001.md`)
 - **Atomic Operations**: All write operations use temporary files + rename to prevent corruption
 - **Concurrency Control**: File locking (fcntl) prevents concurrent writes to the same record
 
@@ -38,7 +41,8 @@ spacing: "18 inches"
 sun_requirements: "Full sun"
 indoor_start_time: "8 weeks before last frost"
 planting_date: "2026-04-15"
-seed_packet_id: "SPKT-001"
+  seed_packet_id: "SPKT-001"
+genus_id: "GENUS-001"
 created_at: "2026-04-22T10:30:00Z"
 updated_at: "2026-04-22T10:30:00Z"
 ---
@@ -60,6 +64,7 @@ updated_at: "2026-04-22T10:30:00Z"
 | `indoor_start_time` | string | No | When to start indoors *(deprecated on plants — use seed packet)* |
 | `planting_date` | string (YYYY-MM-DD) | Yes | Date when the plant was planted |
 | `seed_packet_id` | string | No | References a seed packet (`SPKT-NNN`) or `"unknown"` |
+| `genus_id` | string | No | References a genus (`GENUS-NNN`) or `"unknown"` |
 | `created_at` | string (ISO 8601) | Yes | Timestamp when record was created |
 | `updated_at` | string (ISO 8601) | Yes | Timestamp when record was last updated |
 
@@ -131,12 +136,54 @@ updated_at: '2026-04-25T00:00:00Z'
 
 **Unique key**: `(variety_name, latin_name)` — no two packets may share the same variety and Latin name combination.
 
+## Genus File Format
+
+Genus records store unique (variety name, Latin name) pairs. Each genus is stored as a markdown file with YAML frontmatter.
+
+### Genus Storage Location
+
+- **Directory**: `database/genera/`
+- **File naming**: `GENUS-NNN.md` (zero-padded 3-digit sequence)
+- **Same atomic operations and concurrency controls as plant files**
+
+### Frontmatter Schema
+
+```yaml
+---
+variety_name: Yellow Habanero
+latin_name: Capsicum chinense
+id: GENUS-001
+created_at: '2026-05-03T00:00:00Z'
+updated_at: '2026-05-03T00:00:00Z'
+---
+```
+
+### Genus Field Definitions
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes (auto-generated) | Unique identifier in GENUS-NNN format |
+| `variety_name` | string | Yes | Common name of the plant variety |
+| `latin_name` | string | Yes | Scientific/Latin name |
+| `created_at` | string (ISO 8601) | Yes | Timestamp when record was created |
+| `updated_at` | string (ISO 8601) | Yes | Timestamp when record was last updated |
+
+**Unique key**: `(variety_name, latin_name)` — no two genera may share the same variety and Latin name combination.
+
 ## Relationship: Plants ↔ Seed Packets
 
 - A plant references a seed packet via `seed_packet_id`
 - `seed_packet_id` must match `^SPKT-\d{3}$` or be `"unknown"`
 - When `seed_packet_id` is present and valid, the referenced seed packet file must exist (referential integrity)
 - A seed packet can be referenced by zero or many plants (one-to-many)
+
+## Relationship: Plants ↔ Genera
+
+- A plant references a genus via `genus_id`
+- `genus_id` must match `^GENUS-\d{3}$` or be `"unknown"`
+- When `genus_id` is present and valid, the referenced genus file must exist (referential integrity)
+- A genus can be referenced by zero or many plants (one-to-many)
+- Label generation resolves Latin name from genus database when `genus_id` is present, falling back to direct `latin_name` field for backward compatibility
 
 ## Data Integrity Measures
 
@@ -152,7 +199,8 @@ The markdown storage design includes a clear migration path to Postgres:
 
 1. **Schema Mapping**: Direct mapping of frontmatter fields to database columns
 2. **Seed Packets Table**: `seed_packets` table with columns matching the seed packet schema
-3. **Plants Table**: Gains a `seed_packet_id` foreign key column referencing `seed_packets`
+3. **Genera Table**: `genera` table with columns matching the genus schema
+4. **Plants Table**: Gains `seed_packet_id` and `genus_id` foreign key columns
 4. **Content Storage**: Observational notes stored in a separate `observations` table or as JSONB
 5. **ID Generation**: Database sequences replace file-based sequencing
 6. **Backward Compatibility**: Dual-write capability during migration period
@@ -168,6 +216,9 @@ The markdown storage design includes a clear migration path to Postgres:
 6. **Uniqueness**: `id` must be unique across all records of the same type
 7. **Seed Packet Uniqueness**: `(variety_name, latin_name)` must be unique across all seed packets
 8. **Referential Integrity**: `seed_packet_id` on plants must resolve to an existing seed packet file (or be `"unknown"`)
+9. **ID Format (Genera)**: Must match regex `^GENUS-\d{3}$`
+10. **Genus Uniqueness**: `(variety_name, latin_name)` must be unique across all genera
+11. **Referential Integrity**: `genus_id` on plants must resolve to an existing genus file (or be `"unknown"`)
 
 ## Example Complete File — Plant
 
@@ -178,6 +229,7 @@ variety_name: Yellow Habanero
 latin_name: Capsicum chinense
 planting_date: "2026-04-15"
 seed_packet_id: "SPKT-001"
+genus_id: "GENUS-001"
 created_at: "2026-04-22T10:30:00Z"
 ---
 
@@ -221,9 +273,27 @@ updated_at: '2026-04-25T00:00:00Z'
 *Created: 2026-04-25*
 ```
 
+## Example Complete File — Genus
+
+```markdown
+---
+variety_name: Yellow Habanero
+latin_name: Capsicum chinense
+id: GENUS-001
+created_at: '2026-05-03T00:00:00Z'
+updated_at: '2026-05-03T00:00:00Z'
+---
+
+# Genus Record for Yellow Habanero
+
+*ID: GENUS-001*
+
+*Created: 2026-05-03*
+```
+
 ## Backup and Recovery
 
-1. **Manual Backup**: Copy the entire `database/` directory (includes both `database/*.md` and `database/seed_packets/*.md`)
+1. **Manual Backup**: Copy the entire `database/` directory (includes `database/*.md`, `database/seed_packets/*.md`, and `database/genera/*.md`)
 2. **Export Functionality**: CLI commands to export data to CSV/JSON
 3. **Import Functionality**: CLI commands to import data from CSV/JSON
 4. **Version Control**: Repository tracks schema changes but not data files (by .gitignore)
