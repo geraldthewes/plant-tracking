@@ -1,6 +1,7 @@
 """
 Plant data model and validation
 """
+
 import os
 import re
 from datetime import datetime, timezone
@@ -9,23 +10,36 @@ from typing import Dict, Any, Optional
 import yaml
 
 # Fields needed for label generation (all required)
-LABEL_FIELDS = ['variety_name', 'latin_name', 'planting_date']
+LABEL_FIELDS = ["variety_name", "latin_name", "planting_date"]
 
 # All available fields (record-keeping)
 ALL_FIELDS = [
-    'variety_name', 'latin_name', 'brand', 'days_to_maturity',
-    'germination_time', 'planting_depth', 'spacing', 'sun_requirements',
-    'indoor_start_time', 'planting_date', 'seed_packet_id', 'genus_id'
+    "variety_name",
+    "latin_name",
+    "brand",
+    "days_to_maturity",
+    "germination_time",
+    "planting_depth",
+    "spacing",
+    "sun_requirements",
+    "indoor_start_time",
+    "planting_date",
+    "seed_packet_id",
+    "genus_id",
 ]
 
 # All label fields are required
-REQUIRED_FIELDS = ['variety_name', 'latin_name', 'planting_date']
+REQUIRED_FIELDS = ["variety_name", "latin_name", "planting_date"]
 
 # Fields for record-keeping only (not used in labels)
 RECORD_ONLY = [
-    'brand', 'days_to_maturity', 'germination_time',
-    'planting_depth', 'spacing', 'sun_requirements',
-    'indoor_start_time'
+    "brand",
+    "days_to_maturity",
+    "germination_time",
+    "planting_depth",
+    "spacing",
+    "sun_requirements",
+    "indoor_start_time",
 ]
 
 # Configurable database directory (overridden for testing via PLANT_DATABASE_DIR env var)
@@ -48,8 +62,8 @@ class Plant:
         self.data = data
         self.validate()
         # Generate ID if not present
-        if 'id' not in self.data:
-            self.data['id'] = self.generate_id()
+        if "id" not in self.data:
+            self.data["id"] = self.generate_id()
 
     def validate(self):
         """Validate plant data"""
@@ -58,14 +72,14 @@ class Plant:
                 raise ValueError(f"Missing required field: {field}")
 
         # Validate genus_id format if present
-        if 'genus_id' in self.data and self.data['genus_id'] not in (None, 'unknown'):
-            if not re.match(r'^GENUS-\d{3}$', self.data['genus_id']):
+        if "genus_id" in self.data and self.data["genus_id"] not in (None, "unknown"):
+            if not re.match(r"^GENUS-\d{3}$", self.data["genus_id"]):
                 raise ValueError("genus_id must match GENUS-NNN format or be 'unknown'")
 
         # Validate date format
-        if 'planting_date' in self.data:
+        if "planting_date" in self.data:
             try:
-                datetime.strptime(self.data['planting_date'], '%Y-%m-%d')
+                datetime.strptime(self.data["planting_date"], "%Y-%m-%d")
             except ValueError:
                 raise ValueError("planting_date must be in YYYY-MM-DD format")
 
@@ -74,9 +88,9 @@ class Plant:
         now = datetime.now(timezone.utc)
 
         # Set timestamps in ISO 8601 format
-        if 'created_at' not in self.data:
-            self.data['created_at'] = now.strftime('%Y-%m-%dT%H:%M:%SZ')
-        self.data['updated_at'] = now.strftime('%Y-%m-%dT%H:%M:%SZ')
+        if "created_at" not in self.data:
+            self.data["created_at"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.data["updated_at"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         frontmatter = yaml.dump(self.data, default_flow_style=False, sort_keys=False)
         body = (
@@ -88,16 +102,16 @@ class Plant:
 
     def generate_id(self) -> str:
         """Generate plant ID in VARIETY-YYYY-SEQ format"""
-        variety = self.data['variety_name']
+        variety = self.data["variety_name"]
         # Extract abbreviation (first 2 letters of each word, max 4 chars)
         words = variety.upper().split()
-        abbrev = ''.join([word[:2] for word in words if word.isalpha()])[:4]
+        abbrev = "".join([word[:2] for word in words if word.isalpha()])[:4]
         if not abbrev:
             abbrev = variety[:4].upper()
 
-        planting_date_val = self.data.get('planting_date', '')
+        planting_date_val = self.data.get("planting_date", "")
         if planting_date_val:
-            year = datetime.strptime(planting_date_val, '%Y-%m-%d').year
+            year = datetime.strptime(planting_date_val, "%Y-%m-%d").year
         else:
             year = datetime.now(timezone.utc).year
 
@@ -116,16 +130,16 @@ class Plant:
         if database_dir.exists():
             for file in database_dir.glob("*.md"):
                 try:
-                    with open(file, 'r') as f:
+                    with open(file, "r") as f:
                         content = f.read()
                         # Extract YAML frontmatter
-                        if content.startswith('---'):
-                            parts = content.split('---', 2)
+                        if content.startswith("---"):
+                            parts = content.split("---", 2)
                             if len(parts) >= 3:
                                 frontmatter = parts[1]
                                 data = yaml.safe_load(frontmatter)
-                                if 'id' in data:
-                                    match = pattern.match(data['id'])
+                                if "id" in data:
+                                    match = pattern.match(data["id"])
                                     if match:
                                         seq = int(match.group(1))
                                         max_seq = max(max_seq, seq)
@@ -134,17 +148,17 @@ class Plant:
 
         return max_seq + 1
 
-    def get_seed_packet(self) -> Optional['SeedPacket']:
+    def get_seed_packet(self) -> Optional["SeedPacket"]:
         """Load and return the referenced SeedPacket, or None."""
-        spkt_id = self.data.get('seed_packet_id')
-        if not spkt_id or spkt_id == 'unknown':
+        spkt_id = self.data.get("seed_packet_id")
+        if not spkt_id or spkt_id == "unknown":
             return None
         return load_seed_packet(spkt_id)
 
-    def get_genus(self) -> Optional['Genus']:
+    def get_genus(self) -> Optional["Genus"]:
         """Load and return the referenced Genus, or None."""
-        genus_id = self.data.get('genus_id')
-        if not genus_id or genus_id == 'unknown':
+        genus_id = self.data.get("genus_id")
+        if not genus_id or genus_id == "unknown":
             return None
         return load_genus(genus_id)
 
@@ -165,13 +179,13 @@ def load_seed_packet(packet_id: str):
 
 def load_plant_from_file(file_path: Path) -> Plant:
     """Load a plant record from a markdown file"""
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         content = f.read()
 
-    if not content.startswith('---'):
+    if not content.startswith("---"):
         raise ValueError("Invalid plant file format: missing YAML frontmatter")
 
-    parts = content.split('---', 2)
+    parts = content.split("---", 2)
     if len(parts) < 3:
         raise ValueError("Invalid plant file format: malformed frontmatter")
 
@@ -182,7 +196,10 @@ def load_plant_from_file(file_path: Path) -> Plant:
 
 def load_genus(genus_id: str):
     """Load a genus by ID. Returns None if not found."""
-    from commands.genus_model import load_from_file as load_genus_from_file, get_genera_dir as get_genera_dir_path
+    from commands.genus_model import (
+        load_from_file as load_genus_from_file,
+        get_genera_dir as get_genera_dir_path,
+    )
 
     genera_dir = get_genera_dir_path()
     if not genera_dir.exists():

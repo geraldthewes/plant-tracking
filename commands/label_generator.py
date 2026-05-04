@@ -1,6 +1,7 @@
 """
 Label generation for plant tracking system
 """
+
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
@@ -11,7 +12,9 @@ from .label_format import LabelFormat, get_label_format, LabelFormatEnum
 DEFAULT_FORMAT = LabelFormatEnum.FORMAT_40X30MM.value
 
 
-def create_label(plant_id: str, output_path: Path = None, format_str: str = DEFAULT_FORMAT) -> Path:
+def create_label(
+    plant_id: str, output_path: Path = None, format_str: str = DEFAULT_FORMAT
+) -> Path:
     """
     Create a label for a plant with specified format
 
@@ -38,14 +41,15 @@ def create_label(plant_id: str, output_path: Path = None, format_str: str = DEFA
     label_format = get_label_format(format_str)
 
     # Get plant data
-    variety_text = plant.data.get('variety_name', 'Unknown Variety')
-    planting_date = plant.data.get('planting_date', '')
+    variety_text = plant.data.get("variety_name", "Unknown Variety")
+    planting_date = plant.data.get("planting_date", "")
 
     # Get Latin name from genus reference if available, otherwise from direct field
-    latin_text = ''
-    if 'genus_id' in plant.data and plant.data['genus_id'] not in (None, 'unknown'):
+    latin_text = ""
+    if "genus_id" in plant.data and plant.data["genus_id"] not in (None, "unknown"):
         from commands.genus_model import load_from_file, get_genera_dir
-        genus_id = plant.data['genus_id']
+
+        genus_id = plant.data["genus_id"]
         genera_dir = get_genera_dir()
         if genera_dir.exists():
             genus_file = genera_dir / f"{genus_id}.md"
@@ -53,19 +57,21 @@ def create_label(plant_id: str, output_path: Path = None, format_str: str = DEFA
                 try:
                     genus = load_from_file(genus_file)
                     if genus:
-                        latin_text = genus.data.get('latin_name', '')
+                        latin_text = genus.data.get("latin_name", "")
                 except Exception:
                     pass
 
     # Fallback to direct Latin name field (for backward compatibility)
     if not latin_text:
-        latin_text = plant.data.get('latin_name', '')
+        latin_text = plant.data.get("latin_name", "")
 
     # Get fonts
     font_large, font_medium, font_small = _get_font()
 
     # Create label image with format-specific dimensions
-    label_image = Image.new('RGB', (label_format.width_px, label_format.height_px), 'white')
+    label_image = Image.new(
+        "RGB", (label_format.width_px, label_format.height_px), "white"
+    )
     draw = ImageDraw.Draw(label_image)
 
     # Measure text
@@ -84,7 +90,9 @@ def create_label(plant_id: str, output_path: Path = None, format_str: str = DEFA
     id_y = name_y + name_h + 6
     date_y = id_y + id_h + 6 if planting_date else None
     # Position latin name using format configuration
-    latin_y = label_format.height_px - MARGIN - label_format.latin_name_offset_from_bottom
+    latin_y = (
+        label_format.height_px - MARGIN - label_format.latin_name_offset_from_bottom
+    )
 
     # QR code region - using format configuration
     qr_x = MARGIN + TEXT_COLUMN_WIDTH + COLUMN_GAP
@@ -92,7 +100,9 @@ def create_label(plant_id: str, output_path: Path = None, format_str: str = DEFA
 
     # Calculate available space for QR code using format configuration
     qr_width = label_format.width_px - qr_x - MARGIN
-    qr_height = label_format.height_px - qr_y - MARGIN - label_format.qr_code_bottom_margin  # Space above latin name
+    qr_height = (
+        label_format.height_px - qr_y - MARGIN - label_format.qr_code_bottom_margin
+    )  # Space above latin name
 
     # Ensure minimum sizes
     qr_width = max(qr_width, 60)
@@ -107,38 +117,40 @@ def create_label(plant_id: str, output_path: Path = None, format_str: str = DEFA
     )
     qr.add_data(plant_id)
     qr.make(fit=True)
-    qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
     # Resize to exactly fill the allocated space
     qr_img = qr_img.resize((qr_width, qr_height))
 
     # Draw text elements
     # Plant name at top
-    draw.text((MARGIN, MARGIN), variety_text, fill='black', font=font_large)
+    draw.text((MARGIN, MARGIN), variety_text, fill="black", font=font_large)
 
     # ID
-    draw.text((MARGIN, id_y), plant_id, fill='black', font=font_small)
+    draw.text((MARGIN, id_y), plant_id, fill="black", font=font_small)
 
     # Date
     if planting_date:
-        draw.text((MARGIN, id_y + id_h + 6), planting_date, fill='black', font=font_small)
+        draw.text(
+            (MARGIN, id_y + id_h + 6), planting_date, fill="black", font=font_small
+        )
 
     # Latin name at bottom
     if latin_text:
-        draw.text((MARGIN, latin_y), latin_text, fill='black', font=font_medium)
+        draw.text((MARGIN, latin_y), latin_text, fill="black", font=font_medium)
 
     # Place QR code in its allocated region
     label_image.paste(qr_img, (qr_x, qr_y))
-    
+
     # Rotate 90° for 50x70mm so text flows along the long (70mm) roll direction
     if format_str == "50x70mm":
         label_image = label_image.transpose(Image.ROTATE_90)
 
     # Convert to 1-bit black and white for printer compatibility
-    if label_image.mode != '1':
-        label_image = label_image.convert('1')
+    if label_image.mode != "1":
+        label_image = label_image.convert("1")
 
     # Save the label with correct DPI for printing
-    label_image.save(output_path, 'PNG', dpi=(203, 203))
+    label_image.save(output_path, "PNG", dpi=(203, 203))
     return output_path
 
 
@@ -159,13 +171,13 @@ def _get_font():
 
 def _text_size(font, text):
     """Get text width and height."""
-    if hasattr(font, 'getlength'):
+    if hasattr(font, "getlength"):
         width = int(font.getlength(text))
     else:
         width = len(text) * 6  # rough estimate
 
-    if hasattr(font, 'getbbox'):
-        bbox = font.getbbox('Ag')
+    if hasattr(font, "getbbox"):
+        bbox = font.getbbox("Ag")
         height = bbox[3] - bbox[1]
     else:
         height = 20  # fallback
@@ -177,11 +189,15 @@ def main():
     """Command line interface for label generation"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Generate plant label')
-    parser.add_argument('plant_id', help='Plant ID')
-    parser.add_argument('--output', '-o', help='Output file path')
-    parser.add_argument('--format', '-f', default=DEFAULT_FORMAT,
-                        help=f'Label format (default: {DEFAULT_FORMAT})')
+    parser = argparse.ArgumentParser(description="Generate plant label")
+    parser.add_argument("plant_id", help="Plant ID")
+    parser.add_argument("--output", "-o", help="Output file path")
+    parser.add_argument(
+        "--format",
+        "-f",
+        default=DEFAULT_FORMAT,
+        help=f"Label format (default: {DEFAULT_FORMAT})",
+    )
 
     args = parser.parse_args()
 

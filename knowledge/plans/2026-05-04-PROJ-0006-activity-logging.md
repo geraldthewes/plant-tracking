@@ -302,12 +302,12 @@ def delete_log_file() -> None:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] PlantLogEntry validates required fields and data types
-- [ ] Water amount normalization works for all supported units
-- [ ] Log file is created when first entry is added
-- [ ] Log entries are properly appended to file
-- [ ] Log entries can be loaded and filtered correctly
-- [ ] Invalid data raises appropriate validation errors
+- [x] PlantLogEntry validates required fields and data types
+- [x] Water amount normalization works for all supported units
+- [x] Log file is created when first entry is added
+- [x] Log entries are properly appended to file
+- [x] Log entries can be loaded and filtered correctly
+- [x] Invalid data raises appropriate validation errors
 
 #### Manual Verification:
 - [ ] Log file is created in `database/logs/` directory
@@ -565,12 +565,12 @@ def log_list(args):
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Log command appears in help output
-- [ ] All subcommands (humidity, water, fertilizer, note, list) are accessible
-- [ ] Invalid plant IDs are rejected with clear error messages
-- [ ] Missing required arguments trigger appropriate error messages
-- [ ] Date defaults to current date when not provided
-- [ ] Water amount normalization works correctly
+- [x] Log command appears in help output
+- [x] All subcommands (humidity, water, fertilizer, note, list) are accessible
+- [x] Invalid plant IDs are rejected with clear error messages
+- [x] Missing required arguments trigger appropriate error messages
+- [x] Date defaults to current date when not provided
+- [x] Water amount normalization works correctly
 
 #### Manual Verification:
 - [ ] `plant-tracking log` shows help for log subcommands
@@ -893,12 +893,12 @@ class TestPlantLogModel(unittest.TestCase):
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] All new unit tests pass (`pytest tests/test_plant_tracking.py::TestPlantLogModel`)
-- [ ] Water amount normalization handles all supported units correctly
-- [ ] Log entry validation rejects invalid data with appropriate messages
-- [ ] Log file creation and appending works correctly
-- [ ] Log loading and filtering returns correct entries
-- [ ] Integration with existing plant model works
+- [x] All new unit tests pass (`pytest tests/test_plant_tracking.py::TestPlantLogModel`)
+- [x] Water amount normalization handles all supported units correctly
+- [x] Log entry validation rejects invalid data with appropriate messages
+- [x] Log file creation and appending works correctly
+- [x] Log loading and filtering returns correct entries
+- [x] Integration with existing plant model works
 
 #### Manual Verification:
 - [ ] Tests run successfully and cover all new functionality
@@ -968,8 +968,8 @@ plant-tracking log YEHA-2026-001 list
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] README.md is updated with log command documentation
-- [ ] Documentation matches the actual command interface
+- [x] README.md is updated with log command documentation
+- [x] Documentation matches the actual command interface
 
 #### Manual Verification:
 - [ ] Documentation is clear and easy to understand

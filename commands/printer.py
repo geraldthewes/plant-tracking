@@ -1,6 +1,7 @@
 """
 Printing functionality for plant labels
 """
+
 import glob
 import os
 import subprocess
@@ -32,7 +33,7 @@ def _find_usb_phomemo_devices():
             for dev in usb.core.find(find_all=True, idVendor=vendor_id):
                 # Get model from product ID
                 product_id = dev.idProduct
-                if product_id == 0xb002:
+                if product_id == 0xB002:
                     model = "M02"
                 elif product_id == 0x8760:
                     model = "M110"
@@ -48,18 +49,22 @@ def _find_usb_phomemo_devices():
                 except Exception:
                     pass
 
-                description = f"Phomemo {model} (bus {dev.bus:03d}, dev {dev.address:03d})"
+                description = (
+                    f"Phomemo {model} (bus {dev.bus:03d}, dev {dev.address:03d})"
+                )
                 if serial:
                     description += f" serial={serial}"
 
-                devices.append({
-                    "model": model,
-                    "bus": dev.bus,
-                    "address": dev.address,
-                    "product_id": product_id,
-                    "serial": serial,
-                    "description": description,
-                })
+                devices.append(
+                    {
+                        "model": model,
+                        "bus": dev.bus,
+                        "address": dev.address,
+                        "product_id": product_id,
+                        "serial": serial,
+                        "description": description,
+                    }
+                )
     except Exception as e:
         print(f"Error scanning USB devices: {e}")
         print("You may need to run this command with appropriate USB permissions.")
@@ -92,7 +97,11 @@ def _select_printer(devices):
     return None
 
 
-def print_label(plant_id_or_path: str, format_str: str = LabelFormatEnum.FORMAT_40X30MM.value, no_print: bool = False) -> bool:
+def print_label(
+    plant_id_or_path: str,
+    format_str: str = LabelFormatEnum.FORMAT_40X30MM.value,
+    no_print: bool = False,
+) -> bool:
     """
     Print a label for a plant
 
@@ -111,7 +120,7 @@ def print_label(plant_id_or_path: str, format_str: str = LabelFormatEnum.FORMAT_
         # Direct file path provided
         label_path = input_path
         # Extract plant ID from filename if possible (for logging)
-        plant_id = input_path.stem.replace('_label', '')
+        plant_id = input_path.stem.replace("_label", "")
     else:
         # Treat as plant ID, generate label first
         plant_id = plant_id_or_path
@@ -151,30 +160,31 @@ def print_label(plant_id_or_path: str, format_str: str = LabelFormatEnum.FORMAT_
 
     # Use lp command with appropriate media option based on format
     # Extract model from selected description, default to M120
-    model = selected.get('model', 'M120')
+    model = selected.get("model", "M120")
     # Normalize model name to queue name (e.g., "M120/M220" -> "M120")
-    if '/' in model:
-        model = model.split('/')[0]
+    if "/" in model:
+        model = model.split("/")[0]
     queue_name = model  # assuming queue name matches model; adjust if needed
 
     # Map format to CUPS media option
-    format_to_media = {
-        "40x30mm": "w40h30",
-        "50x70mm": "w50h70"
-    }
+    format_to_media = {"40x30mm": "w40h30", "50x70mm": "w50h70"}
 
     media_option = format_to_media.get(format_str, "w40h30")  # default to 40x30mm
 
     try:
         # Print using lp with media option based on format
         result = subprocess.run(
-            ['lp', '-d', queue_name, '-o', f'media={media_option}', str(label_path)],
+            ["lp", "-d", queue_name, "-o", f"media={media_option}", str(label_path)],
             capture_output=True,
             text=False,
         )
 
         if result.returncode != 0:
-            stderr = result.stderr.decode('utf-8', errors='replace') if result.stderr else "Unknown error"
+            stderr = (
+                result.stderr.decode("utf-8", errors="replace")
+                if result.stderr
+                else "Unknown error"
+            )
             print(f"Printing failed: {stderr}")
             return False
 
@@ -193,12 +203,19 @@ def main():
     """Command line interface for printing"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Print plant label')
-    parser.add_argument('plant_id_or_file', help='Plant ID or label file path')
-    parser.add_argument('--format', '-f', default=LabelFormatEnum.FORMAT_40X30MM.value,
-                        help=f'Label format (default: {LabelFormatEnum.FORMAT_40X30MM.value})')
-    parser.add_argument('--no-print', action='store_true',
-                        help='Generate label image only, do not print')
+    parser = argparse.ArgumentParser(description="Print plant label")
+    parser.add_argument("plant_id_or_file", help="Plant ID or label file path")
+    parser.add_argument(
+        "--format",
+        "-f",
+        default=LabelFormatEnum.FORMAT_40X30MM.value,
+        help=f"Label format (default: {LabelFormatEnum.FORMAT_40X30MM.value})",
+    )
+    parser.add_argument(
+        "--no-print",
+        action="store_true",
+        help="Generate label image only, do not print",
+    )
 
     args = parser.parse_args()
 

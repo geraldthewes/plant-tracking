@@ -1,6 +1,7 @@
 """
 Seed packet data model and validation
 """
+
 import os
 import re
 from datetime import datetime, timezone
@@ -10,12 +11,18 @@ import yaml
 
 
 SEED_PACKET_FIELDS = [
-    'variety_name', 'latin_name', 'brand', 'days_to_maturity',
-    'germination_time', 'planting_depth', 'spacing', 'sun_requirements',
-    'indoor_start_time'
+    "variety_name",
+    "latin_name",
+    "brand",
+    "days_to_maturity",
+    "germination_time",
+    "planting_depth",
+    "spacing",
+    "sun_requirements",
+    "indoor_start_time",
 ]
 
-REQUIRED_FIELDS = ['variety_name', 'latin_name']
+REQUIRED_FIELDS = ["variety_name", "latin_name"]
 
 
 def get_seed_packets_dir() -> Path:
@@ -29,8 +36,8 @@ class SeedPacket:
     def __init__(self, data: Dict[str, Any]):
         self.data = data
         self.validate()
-        if 'id' not in self.data:
-            self.data['id'] = self.generate_id()
+        if "id" not in self.data:
+            self.data["id"] = self.generate_id()
 
     def validate(self):
         """Validate seed packet data"""
@@ -42,9 +49,9 @@ class SeedPacket:
         """Convert seed packet data to markdown with YAML frontmatter"""
         now = datetime.now(timezone.utc)
 
-        if 'created_at' not in self.data:
-            self.data['created_at'] = now.strftime('%Y-%m-%dT%H:%M:%SZ')
-        self.data['updated_at'] = now.strftime('%Y-%m-%dT%H:%M:%SZ')
+        if "created_at" not in self.data:
+            self.data["created_at"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.data["updated_at"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         frontmatter = yaml.dump(self.data, default_flow_style=False, sort_keys=False)
         body = (
@@ -68,15 +75,15 @@ class SeedPacket:
         if packets_dir.exists():
             for file in packets_dir.glob("*.md"):
                 try:
-                    with open(file, 'r') as f:
+                    with open(file, "r") as f:
                         content = f.read()
-                        if content.startswith('---'):
-                            parts = content.split('---', 2)
+                        if content.startswith("---"):
+                            parts = content.split("---", 2)
                             if len(parts) >= 3:
                                 frontmatter = parts[1]
                                 data = yaml.safe_load(frontmatter)
-                                if 'id' in data:
-                                    match = pattern.match(data['id'])
+                                if "id" in data:
+                                    match = pattern.match(data["id"])
                                     if match:
                                         seq = int(match.group(1))
                                         max_seq = max(max_seq, seq)
@@ -88,7 +95,7 @@ class SeedPacket:
 
 def find_matching(variety_name: str, latin_name: str) -> Optional[SeedPacket]:
     """Find an existing seed packet matching variety_name and latin_name.
-    
+
     Returns the matching SeedPacket or None if no match exists.
     """
     packets_dir = get_seed_packets_dir()
@@ -98,8 +105,10 @@ def find_matching(variety_name: str, latin_name: str) -> Optional[SeedPacket]:
     for file in packets_dir.glob("*.md"):
         try:
             packet = load_from_file(file)
-            if (packet.data.get('variety_name') == variety_name and
-                    packet.data.get('latin_name') == latin_name):
+            if (
+                packet.data.get("variety_name") == variety_name
+                and packet.data.get("latin_name") == latin_name
+            ):
                 return packet
         except Exception:
             continue
@@ -125,13 +134,13 @@ def list_all() -> List[SeedPacket]:
 
 def load_from_file(file_path: Path) -> SeedPacket:
     """Load a seed packet record from a markdown file"""
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         content = f.read()
 
-    if not content.startswith('---'):
+    if not content.startswith("---"):
         raise ValueError("Invalid seed packet file format: missing YAML frontmatter")
 
-    parts = content.split('---', 2)
+    parts = content.split("---", 2)
     if len(parts) < 3:
         raise ValueError("Invalid seed packet file format: malformed frontmatter")
 

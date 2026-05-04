@@ -1,12 +1,14 @@
 """
 Label format specifications for plant tracking system
 """
+
 from dataclasses import dataclass
 from enum import Enum
 
 
 class LabelFormatEnum(Enum):
     """Supported label formats"""
+
     FORMAT_40X30MM = "40x30mm"
     FORMAT_50X70MM = "50x70mm"
 
@@ -14,6 +16,7 @@ class LabelFormatEnum(Enum):
 @dataclass
 class LabelFormat:
     """Label format specifications with layout configuration"""
+
     width_mm: float
     height_mm: float
     orientation: str  # "landscape" or "portrait" relative to roll direction
@@ -51,7 +54,7 @@ LABEL_FORMATS = {
         margin=8,
         latin_name_offset_from_bottom=20,
         qr_code_top_offset=0,  # Start at same level as ID
-        qr_code_bottom_margin=6  # Space above latin name
+        qr_code_bottom_margin=6,  # Space above latin name
     ),
     LabelFormatEnum.FORMAT_50X70MM.value: LabelFormat(
         width_mm=70,
@@ -63,16 +66,18 @@ LABEL_FORMATS = {
         column_gap=8,
         margin=8,
         latin_name_offset_from_bottom=20,
-        qr_code_top_offset=0,   # Start at same level as ID
-        qr_code_bottom_margin=20 # More space above latin name for tall label
-    )
+        qr_code_top_offset=0,  # Start at same level as ID
+        qr_code_bottom_margin=20,  # More space above latin name for tall label
+    ),
 }
 
 
 def get_label_format(format_str: str) -> LabelFormat:
     """Get LabelFormat by string identifier"""
     if format_str not in LABEL_FORMATS:
-        raise ValueError(f"Unsupported label format: {format_str}. Supported formats: {list(LABEL_FORMATS.keys())}")
+        raise ValueError(
+            f"Unsupported label format: {format_str}. Supported formats: {list(LABEL_FORMATS.keys())}"
+        )
     return LABEL_FORMATS[format_str]
 
 
