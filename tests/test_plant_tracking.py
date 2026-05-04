@@ -842,9 +842,9 @@ class TestLabelFormat(unittest.TestCase):
 
         fmt_50x70 = get_label_format("50x70mm")
         self.assertEqual(fmt_50x70.name, "50x70mm")
-        self.assertEqual(fmt_50x70.width_mm, 50)
-        self.assertEqual(fmt_50x70.height_mm, 70)
-        self.assertEqual(fmt_50x70.text_column_width, 80)
+        self.assertEqual(fmt_50x70.width_mm, 70)
+        self.assertEqual(fmt_50x70.height_mm, 50)
+        self.assertEqual(fmt_50x70.text_column_width, 120)
 
         # Test invalid format
         with self.assertRaises(ValueError):

@@ -54,12 +54,12 @@ LABEL_FORMATS = {
         qr_code_bottom_margin=6  # Space above latin name
     ),
     LabelFormatEnum.FORMAT_50X70MM.value: LabelFormat(
-        width_mm=50,
-        height_mm=70,
-        orientation="portrait",  # height > width (longer dimension along roll)
+        width_mm=70,
+        height_mm=50,
+        orientation="portrait",  # rendered wide, then rotated 90° so text flows along 70mm roll direction
         name="50x70mm",
         # Layout configuration for 50x70mm (adjusted for portrait)
-        text_column_width=80,   # Narrower text column for tall label
+        text_column_width=120,  # Wider text column for the 70mm canvas width
         column_gap=8,
         margin=8,
         latin_name_offset_from_bottom=20,

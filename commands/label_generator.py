@@ -128,6 +128,10 @@ def create_label(plant_id: str, output_path: Path = None, format_str: str = DEFA
 
     # Place QR code in its allocated region
     label_image.paste(qr_img, (qr_x, qr_y))
+    
+    # Rotate 90° for 50x70mm so text flows along the long (70mm) roll direction
+    if format_str == "50x70mm":
+        label_image = label_image.transpose(Image.ROTATE_90)
 
     # Convert to 1-bit black and white for printer compatibility
     if label_image.mode != '1':
