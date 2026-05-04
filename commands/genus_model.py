@@ -107,6 +107,22 @@ def find_matching(variety_name: str, latin_name: str) -> Optional['Genus']:
     return None
 
 
+def find_by_variety_name(variety_name: str) -> Optional['Genus']:
+    """Find existing genus by variety_name only (case-insensitive)"""
+    genera_dir = get_genera_dir()
+    if not genera_dir.exists():
+        return None
+
+    for file in genera_dir.glob("*.md"):
+        try:
+            genus = load_from_file(file)
+            if genus.data.get('variety_name', '').lower() == variety_name.lower():
+                return genus
+        except Exception:
+            continue  # Skip unreadable files
+    return None
+
+
 def list_all() -> List['Genus']:
     """Load all genus records"""
     genera = []
