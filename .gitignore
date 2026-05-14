@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Node
+node_modules/
+
+# BMad / tooling temp files
+.#*
+*.backup
+.opencode/plans/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
