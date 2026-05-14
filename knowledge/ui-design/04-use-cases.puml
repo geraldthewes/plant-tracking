@@ -8,11 +8,17 @@ package "Mobile Web App (Garden Use)" {
   usecase (Quick-Log Activity) as uc_quicklog
   usecase (View Plant Detail) as uc_detail
   usecase (Add Observation Note) as uc_note
+  usecase (Add Plant) as uc_addplant
+  usecase (Add Variety) as uc_addvariety
+  usecase (Add Seed Packet) as uc_addpacket
+  usecase (Add Origin) as uc_addorigin
 }
 
 package "Desktop Web App (Home Use)" {
-  usecase (Create Plant Record) as uc_create
-  usecase (Enter Seed Packet Info) as uc_seed
+  usecase (Manage Varieties) as uc_varieties
+  usecase (Manage Seed Packets) as uc_packets
+  usecase (Manage Origins) as uc_origins
+  usecase (Add Plant) as uc_create
   usecase (Design & Print Labels) as uc_label
   usecase (View Dashboard) as uc_dashboard
   usecase (Compare Plants) as uc_compare
@@ -33,8 +39,14 @@ g --> uc_photo
 g --> uc_quicklog
 g --> uc_detail
 g --> uc_note
+g --> uc_addplant
+g --> uc_addvariety
+g --> uc_addpacket
+g --> uc_addorigin
+g --> uc_varieties
+g --> uc_packets
+g --> uc_origins
 g --> uc_create
-g --> uc_seed
 g --> uc_label
 g --> uc_dashboard
 g --> uc_compare
@@ -48,7 +60,13 @@ g --> uc_change
 
 uc_scan --> uc_detail
 uc_quicklog --> uc_detail
-uc_create --> uc_label
+uc_addplant --> uc_varieties : selects from
+uc_addplant --> uc_packets : selects from
+uc_addplant --> uc_label
+uc_addvariety --> uc_varieties
+uc_addpacket --> uc_packets
+uc_addpacket --> uc_origins : links to
+uc_addorigin --> uc_origins
 uc_analyze --> uc_recommend
 uc_hcompare --> uc_recommend
 uc_change --> uc_detail : updates plant record

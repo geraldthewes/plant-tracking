@@ -11,7 +11,10 @@ skinparam shadowing false
 rectangle "Plant Tracking" as root
 rectangle "Dashboard" as dash
 rectangle "Plant Detail" as detail
-rectangle "Create Plant" as create
+rectangle "Add Plant" as add_plant
+rectangle "Manage Varieties" as varieties
+rectangle "Manage Seed Packets" as packets
+rectangle "Manage Origins" as origins
 rectangle "Label Studio" as label
 rectangle "Activity Logger" as logger
 rectangle "Compare View" as compare
@@ -20,7 +23,10 @@ rectangle "Settings" as settings
 
 root --> dash
 root --> detail
-root --> create
+root --> add_plant
+root --> varieties
+root --> packets
+root --> origins
 root --> label
 root --> logger
 root --> compare
@@ -36,9 +42,22 @@ detail --> [Care Timeline]
 detail --> [Photo Gallery]
 detail --> [Quick Actions]
 
-create --> [Seed Packet Form]
-create --> [Auto Plant ID]
-create --> [Label Preview]
+add_plant --> [Select Variety]
+add_plant --> [Select Seed Packet]
+add_plant --> [Plant ID Preview]
+add_plant --> [Label Preview]
+
+varieties --> [Variety List]
+varieties --> [Add New Variety]
+varieties --> [Variety Detail]
+
+packets --> [Packet List]
+packets --> [Add New Seed Packet]
+packets --> [Packet Detail]
+
+origins --> [Origin List]
+origins --> [Add New Origin]
+origins --> [Origin Detail]
 
 label --> [Template Selector]
 label --> [Label Designer]

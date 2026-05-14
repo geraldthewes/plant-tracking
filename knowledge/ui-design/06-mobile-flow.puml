@@ -29,17 +29,44 @@ component "Quick Log Modal" as logmodal {
   component "Note" as note_btn
 }
 
+component "Add Plant" as addplant {
+  component "Select Variety" as select_variety
+  component "Select Seed Packet" as select_packet
+  component "Plant ID Preview" as plant_id
+  component "Label Preview" as label_preview
+}
+
+component "Manage Varieties" as varieties {
+  component "Variety List" as var_list
+  component "Add New Variety" as add_variety
+}
+
+component "Manage Seed Packets" as packets {
+  component "Packet List" as pkt_list
+  component "Add New Packet" as add_packet
+  component "Link Origin" as link_origin
+}
+
+component "Manage Origins" as origins {
+  component "Origin List" as origin_list
+  component "Add New Origin" as add_origin
+}
+
 component "QR Scanner\n(Fullscreen)" as scanner
 
 component "Camera Capture" as camera
 
 home --> dashboard
 dashboard --> detail : tap card
+dashboard --> addplant : "+" icon
 dashboard --> scanner : scan icon
+dashboard --> varieties : manage icon
 scanner --> detail : scan success
 detail --> logmodal : FAB tap
 detail --> camera : camera icon
 logmodal --> detail : save & close
 camera --> detail : attach photo
 dashboard --> camera : quick photo
+addplant --> varieties : pick variety
+addplant --> packets : pick packet
 @enduml
