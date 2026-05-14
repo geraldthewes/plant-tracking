@@ -1,0 +1,62 @@
+@startuml
+!theme cerulean
+title Plant Tracking System - UI Screen Map
+
+skinparam rectangle {
+  BackgroundColor #f0f7ff
+  BorderColor #3b82f6
+}
+skinparam shadowing false
+
+rectangle "Plant Tracking" as root
+rectangle "Dashboard" as dash
+rectangle "Plant Detail" as detail
+rectangle "Create Plant" as create
+rectangle "Label Studio" as label
+rectangle "Activity Logger" as logger
+rectangle "Compare View" as compare
+rectangle "Scan Screen" as scan
+rectangle "Settings" as settings
+
+root --> dash
+root --> detail
+root --> create
+root --> label
+root --> logger
+root --> compare
+root --> scan
+root --> settings
+
+dash --> [Plant List]
+dash --> [Quick Stats]
+dash --> [Search / Filters]
+
+detail --> [Overview Header]
+detail --> [Care Timeline]
+detail --> [Photo Gallery]
+detail --> [Quick Actions]
+
+create --> [Seed Packet Form]
+create --> [Auto Plant ID]
+create --> [Label Preview]
+
+label --> [Template Selector]
+label --> [Label Designer]
+label --> [Print Queue]
+
+logger --> [Watering Log]
+logger --> [Fertilizer Log]
+logger --> [Humidity Log]
+logger --> [Note Entry]
+
+compare --> [Side-by-Side]
+compare --> [Growth Charts]
+compare --> [Gap Analysis]
+
+scan --> [QR Scanner]
+scan --> [Camera Capture]
+
+settings --> [Printer Config]
+settings --> [Export / Import]
+settings --> [Backup / Restore]
+@enduml

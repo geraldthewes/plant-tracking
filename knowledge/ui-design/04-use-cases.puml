@@ -1,0 +1,56 @@
+@startuml
+left to right direction
+actor Gardener as g
+
+package "Mobile Web App (Garden Use)" {
+  usecase (Scan QR Code) as uc_scan
+  usecase (Capture Photo) as uc_photo
+  usecase (Quick-Log Activity) as uc_quicklog
+  usecase (View Plant Detail) as uc_detail
+  usecase (Add Observation Note) as uc_note
+}
+
+package "Desktop Web App (Home Use)" {
+  usecase (Create Plant Record) as uc_create
+  usecase (Enter Seed Packet Info) as uc_seed
+  usecase (Design & Print Labels) as uc_label
+  usecase (View Dashboard) as uc_dashboard
+  usecase (Compare Plants) as uc_compare
+  usecase (Export / Import Data) as uc_data
+  usecase (Generate Reports) as uc_report
+}
+
+package "Hermes Agent (Telegram)" {
+  usecase (Query Plant Data) as uc_query
+  usecase (Analyze Plant Health) as uc_analyze
+  usecase (Compare Plants) as uc_hcompare
+  usecase (Get Recommendations) as uc_recommend
+  usecase (Make Changes on Behalf) as uc_change
+}
+
+g --> uc_scan
+g --> uc_photo
+g --> uc_quicklog
+g --> uc_detail
+g --> uc_note
+g --> uc_create
+g --> uc_seed
+g --> uc_label
+g --> uc_dashboard
+g --> uc_compare
+g --> uc_data
+g --> uc_report
+g --> uc_query
+g --> uc_analyze
+g --> uc_hcompare
+g --> uc_recommend
+g --> uc_change
+
+uc_scan --> uc_detail
+uc_quicklog --> uc_detail
+uc_create --> uc_label
+uc_analyze --> uc_recommend
+uc_hcompare --> uc_recommend
+uc_change --> uc_detail : updates plant record
+uc_note --> uc_detail
+@enduml

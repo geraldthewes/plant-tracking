@@ -1,0 +1,59 @@
+@startuml
+!theme cerulean
+skinparam state {
+  BackgroundColor #eef6ff
+  BorderColor #2563eb
+  ArrowColor #6b7280
+}
+
+title Plant Record Lifecycle - State Diagram
+
+[*] --> Seed_Packet_Entered : Create plant record
+
+Seed_Packet_Entered --> Indoor_Seedling : Record germination date
+
+Indoor_Seedling --> Indoor_Growing : Seedling develops
+
+Indoor_Growing --> Transplanted_Outdoor : Transplant event
+
+Transplanted_Outdoor --> Flowering : First flowers observed
+
+Flowering --> Fruiting : First fruit set
+
+Fruiting --> Harvesting : First harvest
+
+Harvesting --> Season_Complete : Final harvest
+
+Season_Complete --> Dormant : End of season
+
+Dormant --> Indoor_Seedling : New season
+Dormant --> [*] : Plant end-of-life
+
+note top of Seed_Packet_Entered
+  Initial data entry from\nseed packet
+end note
+
+note bottom of Indoor_Growing
+  Track: indoor temp,\nhumidity, fertilizer
+end note
+
+note bottom of Transplanted_Outdoor
+  Record: new location,\noutdoor conditions
+end note
+
+note bottom of Flowering
+  Track: conditions,\nwatering, weather
+end note
+
+note bottom of Harvesting
+  Record: dates,\nquantity, quality
+end note
+
+note bottom of Season_Complete
+  Record: total yield,\nseason learnings
+end note
+
+note bottom of Dormant
+  Available actions at all states:\n- Log watering, fertilizer, humidity\n- Add notes and photos\n- Consult Hermes agent
+end note
+@enduml

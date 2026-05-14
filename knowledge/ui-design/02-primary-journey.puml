@@ -1,0 +1,72 @@
+@startuml
+!theme cerulean
+skinparam activity {
+  BackgroundColor #f0f7ff
+  BorderColor #3b82f6
+}
+skinparam condition {
+  BackgroundColor #fef3c7
+  BorderColor #f59e0b
+}
+skinparam start {
+  BackgroundColor #22c55e
+  BorderColor #16a34a
+}
+skinparam stop {
+  BackgroundColor #ef4444
+  BorderColor #dc2626
+}
+
+title Primary User Journey - Create & Track Plant
+
+start
+
+if (On Desktop?) then (Yes)
+  :Open web app on laptop;
+
+  :Enter seed packet info;\n(variety, latin name, brand,\nplanting specs);
+  :System generates unique ID\n(VARIETY-YYYY-SEQ);
+
+  :Preview QR label;
+  :Send to Phomemo M120 printer;
+  :Attach label to plant pot;
+
+else (No)
+  :Open mobile web app;
+
+  :Scan QR code on plant label;
+  :View or create plant record;
+endif
+
+if (New Plant?) then (Yes)
+  :Fill in plant details;
+else (No)
+  :Load plant record;
+endif
+
+partition "Ongoing Care" {
+  :Open plant detail view;
+
+  if (Log Activity?) then (Yes)
+    :Select activity type\n(water, fertilizer, humidity, note);
+    :Record activity details;
+    :Save to plant log;
+  else (No)
+    if (Consult Hermes?) then (Yes)
+      :Message Hermes via Telegram\nwith plant ID;
+      :Receive analysis & insights;
+      :Record insight as note;
+    else (No)
+      :Review plant history;
+    endif
+  endif
+}
+
+partition "End of Season" {
+  :Review full care timeline;
+  :Compare with other plants;
+  :Capture yield data & learnings;
+}
+
+stop
+@enduml

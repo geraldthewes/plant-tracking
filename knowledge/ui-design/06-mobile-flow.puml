@@ -1,0 +1,45 @@
+@startuml
+skinparam component {
+  BackgroundColor white
+  BorderColor #333
+  Shadowing false
+}
+
+title Mobile App - Main Screens Flow
+
+component "Splash / Home" as home <<entry point>>
+
+component "Dashboard\n(Plant List)" as dashboard {
+  component "Search Bar" as search
+  component "Filter Chips\n(variety, location, status)" as filters
+  component "Plant Cards Grid" as cards
+}
+
+component "Plant Detail" as detail {
+  component "Plant Header\n(ID, variety, status)" as header
+  component "Care Timeline" as timeline
+  component "Photo Strip" as photostrip
+  component "Action FAB" as fab
+}
+
+component "Quick Log Modal" as logmodal {
+  component "Water" as water_btn
+  component "Fertilizer" as fert_btn
+  component "Humidity" as humid_btn
+  component "Note" as note_btn
+}
+
+component "QR Scanner\n(Fullscreen)" as scanner
+
+component "Camera Capture" as camera
+
+home --> dashboard
+dashboard --> detail : tap card
+dashboard --> scanner : scan icon
+scanner --> detail : scan success
+detail --> logmodal : FAB tap
+detail --> camera : camera icon
+logmodal --> detail : save & close
+camera --> detail : attach photo
+dashboard --> camera : quick photo
+@enduml

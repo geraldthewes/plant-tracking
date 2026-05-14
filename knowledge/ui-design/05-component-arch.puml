@@ -1,0 +1,87 @@
+@startuml
+skinparam component {
+  BackgroundColor #f8fafc
+  BorderColor #475569
+}
+skinparam rectangle {
+  BackgroundColor #f1f5f9
+  BorderColor #64748b
+}
+
+title Plant Tracking - Application Component Architecture
+
+package "Client Layer" {
+  package "Mobile Web App" as mobile {
+    component [QR Scanner] as scanner
+    component [Camera Module] as camera
+    component [Quick Log Panel] as quicklog
+    component [Plant Detail View] as mobile_detail
+    component [Dashboard View] as mobile_dash
+  }
+
+  package "Desktop Web App" as desktop {
+    component [Dashboard] as dash
+    component [Plant Creator Form] as creator
+    component [Label Designer] as label_designer
+    component [Plant Detail View] as desktop_detail
+    component [Compare View] as compare
+    component [Data Management] as data_mgmt
+  }
+}
+
+package "Backend API (Python)" as backend {
+  component [Plant Records API] as api_plants
+  component [Activity Log API] as api_logs
+  component [Label Generation Service] as api_labels
+  component [Photo Storage API] as api_photos
+  component [Analytics Service] as api_analytics
+  component [Export/Import Service] as api_export
+}
+
+package "Hermes Agent (Telegram)" as hermes {
+  component [Telegram Bot Interface] as telegram
+  component [Plant Data Fetcher] as hermes_fetcher
+  component [Analysis Engine] as hermes_analyze
+  component [API Caller] as hermes_api
+}
+
+package "Data Layer" as datalayer {
+  component [plants.md] as plants_db
+  component [logs/plant-activity-log.md] as logs_db
+  component [seed_packets/] as seeds_db
+  component [genera/] as genera_db
+  component [photos/] as photos_store
+}
+
+' Client -> API connections
+scanner --> api_plants : GET plant by ID
+camera --> api_photos : upload photo
+quicklog --> api_logs : POST log entry
+mobile_detail --> api_plants : GET plant detail
+mobile_dash --> api_plants : list plants
+dash --> api_plants : list, stats
+creator --> api_plants : CREATE plant
+label_designer --> api_labels : generate label
+desktop_detail --> api_plants : GET plant detail
+compare --> api_analytics : compare plants
+data_mgmt --> api_export : export/import
+
+' Hermes -> API connections
+telegram --> hermes_fetcher : user query
+hermes_fetcher --> hermes_api : API call
+hermes_api --> api_plants : GET plant data
+hermes_api --> api_logs : GET logs
+hermes_analyze --> telegram : insights response
+hermes_api --> api_logs : POST note on behalf
+
+' API -> Data connections
+api_plants --> plants_db
+api_logs --> logs_db
+api_photos --> photos_store
+api_plants --> seeds_db
+api_plants --> genera_db
+api_analytics --> plants_db
+api_analytics --> logs_db
+api_export --> plants_db
+api_export --> logs_db
+@enduml
