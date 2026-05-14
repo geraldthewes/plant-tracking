@@ -1,21 +1,27 @@
 @startuml
-!theme cerulean
 skinparam activity {
   BackgroundColor #f0f7ff
   BorderColor #3b82f6
+  FontColor #1e293b
 }
 skinparam condition {
   BackgroundColor #fef3c7
   BorderColor #f59e0b
+  FontColor #1e293b
 }
 skinparam start {
-  BackgroundColor #22c55e
-  BorderColor #16a34a
+  BackgroundColor #16a34a
+  BorderColor #15803d
+  FontColor #ffffff
 }
 skinparam stop {
-  BackgroundColor #ef4444
-  BorderColor #dc2626
+  BackgroundColor #dc2626
+  BorderColor #b91c1c
+  FontColor #ffffff
 }
+skinparam defaultFontColor #1e293b
+skinparam arrowColor #475569
+skinparam shadowing false
 
 title Primary User Journey - Create & Track Plant
 

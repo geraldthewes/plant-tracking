@@ -1,4 +1,7 @@
 @startuml
+skinparam defaultFontColor #1e293b
+skinparam arrowColor #475569
+skinparam shadowing false
 left to right direction
 actor Gardener as g
 

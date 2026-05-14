@@ -2,8 +2,12 @@
 skinparam component {
   BackgroundColor white
   BorderColor #333
+  FontColor #1e293b
   Shadowing false
 }
+skinparam defaultFontColor #1e293b
+skinparam arrowColor #475569
+skinparam shadowing false
 
 title Mobile App - Main Screens Flow
 

@@ -1,11 +1,13 @@
 @startuml
-!theme cerulean
 title Plant Tracking System - UI Screen Map
 
 skinparam rectangle {
   BackgroundColor #f0f7ff
   BorderColor #3b82f6
+  FontColor #1e293b
 }
+skinparam defaultFontColor #1e293b
+skinparam arrowColor #475569
 skinparam shadowing false
 
 rectangle "Plant Tracking" as root

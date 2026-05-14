@@ -2,11 +2,16 @@
 skinparam component {
   BackgroundColor #f8fafc
   BorderColor #475569
+  FontColor #1e293b
 }
 skinparam rectangle {
   BackgroundColor #f1f5f9
   BorderColor #64748b
+  FontColor #1e293b
 }
+skinparam defaultFontColor #1e293b
+skinparam arrowColor #475569
+skinparam shadowing false
 
 title Plant Tracking - Application Component Architecture
 

@@ -1,10 +1,12 @@
 @startuml
-!theme cerulean
 skinparam state {
   BackgroundColor #eef6ff
   BorderColor #2563eb
-  ArrowColor #6b7280
+  FontColor #1e293b
 }
+skinparam defaultFontColor #1e293b
+skinparam arrowColor #475569
+skinparam shadowing false
 
 title Plant Record Lifecycle - State Diagram
 
