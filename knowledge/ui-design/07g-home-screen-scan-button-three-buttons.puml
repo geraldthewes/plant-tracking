@@ -8,17 +8,13 @@ skinparam rectangle {
   borderColor #e2e8f0
 }
 
-title Home Screen - Portrait / Mobile (Single Column, Equal Width)
-
-' Force a tall, narrow portrait aspect ratio
-' Concept: Make the screen definition favor height over width
+title Home Screen - Portrait / Mobile (Single Column Layout)
 
 rectangle "Screen" as screen {
 
   rectangle "Header" as header {
     rectangle "🌱 Plant Tracking" as app_title
     rectangle "⚙️ Settings" as settings_icon
-    ' Make header full width
   }
 
   rectangle "Main" as main {
@@ -27,31 +23,24 @@ rectangle "Screen" as screen {
       rectangle "📱 Scan Plant QR Code" as scan_button_label
       rectangle "Tap to activate camera and scan QR code" as scan_hint
       rectangle "Or enter ID manually" as manual_entry_hint
-      ' Make this button full width
     }
 
     rectangle "Action Button Row" as button_row {
-      ' Create three equal width buttons in a row
       rectangle "Button 1: Plant Care" as btn_plant_care {
         rectangle "🌿 Plant Care" as btn1_label
         rectangle "💧5" as btn1_badge
       }
-      
+
       rectangle "Button 2: Activity Log" as btn_activity_log {
         rectangle "📓 Activity Log" as btn2_label
       }
-      
+
       rectangle "Button 3: More Features" as btn_more {
         rectangle "☰ More" as btn3_label
       }
-      
-      ' Force equal width for the three buttons
-      btn_plant_care -[hidden]-> btn_activity_log
-      btn_activity_log -[hidden]-> btn_more
     }
   }
 
-  ' Strict vertical flow: header -> main content
   header -[hidden]down-> main
   main -[hidden]down-> scanner_button
   scanner_button -[hidden]down-> button_row
