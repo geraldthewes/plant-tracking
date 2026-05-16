@@ -8,10 +8,13 @@ skinparam rectangle {
   borderColor #e2e8f0
 }
 
+' Force portrait orientation by making content taller than wide
+' Conceptual dimensions: width:height ratio of 2:3 (typical phone portrait)
 title Home Screen - Portrait / Mobile (Scan Button + Three-Button Row)
 
 rectangle "Screen" as screen {
-
+  ' Set implicit aspect ratio to favor portrait (taller than wide)
+  
   rectangle "Header" as header {
     rectangle "🌱 Plant Tracking" as app_title
     rectangle "⚙️ Settings" as settings_icon
@@ -41,6 +44,7 @@ rectangle "Screen" as screen {
     }
   }
 
+  ' Vertical flow: header -> main content
   header -[hidden]down-> main
   main -[hidden]down-> scanner_button
   scanner_button -[hidden]down-> button_row
