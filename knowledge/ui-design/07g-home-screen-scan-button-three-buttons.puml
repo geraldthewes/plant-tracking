@@ -8,13 +8,10 @@ skinparam rectangle {
   borderColor #e2e8f0
 }
 
-' Force portrait orientation by making content significantly taller than wide
-' Using multiple spacers to ensure height > width regardless of initial layout assumptions
-title Home Screen - Portrait / Mobile (Scan Button + Three-Button Row)
+title Home Screen - Portrait / Mobile (Single Column Layout)
 
 rectangle "Screen" as screen {
-  ' Set implicit aspect ratio to strongly favor portrait (much taller than wide)
-  
+
   rectangle "Header" as header {
     rectangle "🌱 Plant Tracking" as app_title
     rectangle "⚙️ Settings" as settings_icon
@@ -22,24 +19,10 @@ rectangle "Screen" as screen {
 
   rectangle "Main" as main {
 
-    rectangle "Vertical Spacer Top 1" as top_spacer1 {
-    }
-    rectangle "Vertical Spacer Top 2" as top_spacer2 {
-    }
-    rectangle "Vertical Spacer Top 3" as top_spacer3 {
-    }
-
     rectangle "Primary Interaction: SCAN BUTTON" as scanner_button {
       rectangle "📱 Scan Plant QR Code" as scan_button_label
       rectangle "Tap to activate camera and scan QR code" as scan_hint
       rectangle "Or enter ID manually" as manual_entry_hint
-    }
-
-    rectangle "Vertical Spacer Middle 1" as middle_spacer1 {
-    }
-    rectangle "Vertical Spacer Middle 2" as middle_spacer2 {
-    }
-    rectangle "Vertical Spacer Middle 3" as middle_spacer3 {
     }
 
     rectangle "Action Button Row" as button_row {
@@ -56,27 +39,10 @@ rectangle "Screen" as screen {
         rectangle "☰ More" as btn3_label
       }
     }
-    
-    rectangle "Vertical Spacer Bottom 1" as bottom_spacer1 {
-    }
-    rectangle "Vertical Spacer Bottom 2" as bottom_spacer2 {
-    }
-    rectangle "Vertical Spacer Bottom 3" as bottom_spacer3 {
-    }
   }
 
-  ' Vertical flow with multiple spacers to strongly favor portrait orientation
   header -[hidden]down-> main
-  main -[hidden]down-> top_spacer1
-  top_spacer1 -[hidden]down-> top_spacer2
-  top_spacer2 -[hidden]down-> top_spacer3
-  top_spacer3 -[hidden]down-> scanner_button
-  scanner_button -[hidden]down-> middle_spacer1
-  middle_spacer1 -[hidden]down-> middle_spacer2
-  middle_spacer2 -[hidden]down-> middle_spacer3
-  middle_spacer3 -[hidden]down-> button_row
-  button_row -[hidden]down-> bottom_spacer1
-  bottom_spacer1 -[hidden]down-> bottom_spacer2
-  bottom_spacer2 -[hidden]down-> bottom_spacer3
+  main -[hidden]down-> scanner_button
+  scanner_button -[hidden]down-> button_row
 }
 @enduml
