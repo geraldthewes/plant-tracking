@@ -88,11 +88,11 @@
             cursor: pointer;
         }
         .expand-form {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
+            display: none;
         }
-        .expand-form.open { max-height: 300px; }
+        .expand-form.open {
+            display: block;
+        }
         .status-badge {
             padding: 2px 8px;
             border-radius: 12px;
