@@ -7,9 +7,23 @@ dist/
 build/
 .eggs/
 *.egg
+*.eggs/
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
+.ipynb_checkpoints/
+.tox/
+.coverage
+htmlcov/
+*.so
+venv/
+.venv/
+env/
+.env/
+pyvenv.cfg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Node
 node_modules/
@@ -24,3 +38,8 @@ node_modules/
 .idea/
 *.swp
 *.swo
+
+# Emacs
+.#*
+#*#
+*~
