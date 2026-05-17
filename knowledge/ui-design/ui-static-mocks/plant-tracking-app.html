@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Tracking - Interactive Mock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .iphone-frame {
+            position: relative;
+            background-color: #f5f5f5;
+            border-radius: 36px;
+            width: 390px;
+            height: 844px;
+            margin: 40px auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .iphone-frame::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 20px;
+            background-color: #f5f5f5;
+            border-radius: 0 0 10px 10px;
+        }
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+        .screen.hidden-screen {
+            transform: translateX(100%);
+        }
+        .screen.back-hidden {
+            transform: translateX(-30%);
+        }
+        .screen-content {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+        }
+        .screen-content::-webkit-scrollbar { width: 0; }
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .quick-action-btn {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .quick-action-btn:active { transform: scale(0.95); background: #f0fdf4; }
+        .alert-item {
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .alert-item:active { background: rgba(0,0,0,0.04); }
+        .timeline-item {
+            padding-left: 28px;
+            position: relative;
+            cursor: pointer;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 28px;
+            bottom: -16px;
+            width: 2px;
+            background: #e5e7eb;
+        }
+        .timeline-item:last-child::before { display: none; }
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        .photo-thumb {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+            background: #e5e7eb;
+        }
+        .chat-bar {
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            cursor: pointer;
+        }
+        .expand-form { display: none; }
+        .expand-form.open { display: block; }
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .scanner-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            color: white;
+        }
+        .scan-line {
+            width: 200px;
+            height: 2px;
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: scanPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes scanPulse {
+            0%, 100% { transform: translateY(-40px); opacity: 0.5; }
+            50% { transform: translateY(40px); opacity: 1; }
+        }
+        .toast {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="iphone-frame">
+
+        <!-- ==================== HOME SCREEN ==================== -->
+        <div id="screen-home" class="screen">
+            <div class="screen-content" style="background-color: white; padding: 20px;">
+                <!-- Status Bar -->
+                <div class="flex justify-between items-center text-xs text-gray-500 mb-4">
+                    <span>10:41 AM</span>
+                    <span>87%</span>
+                </div>
+
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center space-x-2 text-xl font-bold text-emerald-600">
+                        <span>🌱</span>
+                        <span>Plant Tracking</span>
+                    </div>
+                    <button class="text-2xl text-gray-400 hover:text-gray-600 cursor-pointer">⚙️</button>
+                </div>
+
+                <!-- Scan Button -->
+                <div class="mb-8">
+                    <button onclick="activateScanner()"
+                            class="w-full bg-emerald-600 text-white py-8 px-6 rounded-3xl flex flex-col items-center justify-center shadow-lg hover:bg-emerald-700 transition-colors"
+                            id="scanButton">
+                        <div class="text-4xl mb-2">📱</div>
+                        <div class="text-lg font-semibold">Scan Plant QR Code</div>
+                        <div class="text-sm text-emerald-100">Tap to activate camera and scan QR code</div>
+                        <div class="text-xs text-emerald-200 mt-1">Or enter ID manually</div>
+                    </button>
+                </div>
+
+                <!-- Action Button Row -->
+                <div class="grid grid-cols-3 gap-4">
+                    <button class="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center shadow hover:bg-gray-50 transition-colors relative">
+                        <div class="text-2xl mb-2">🌿</div>
+                        <div class="font-medium text-center">Plant Care</div>
+                        <div class="badge">5</div>
+                    </button>
+                    <button class="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center shadow hover:bg-gray-50 transition-colors">
+                        <div class="text-2xl mb-2">📓</div>
+                        <div class="font-medium text-center">Activity Log</div>
+                    </button>
+                    <button class="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center shadow hover:bg-gray-50 transition-colors">
+                        <div class="text-2xl mb-2">☰</div>
+                        <div class="font-medium text-center">More</div>
+                    </button>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div class="mt-10 pt-4 border-t border-gray-200 flex justify-around text-sm text-gray-500">
+                    <div class="flex flex-col items-center">
+                        <span class="text-xl">🏠</span>
+                        <span class="mt-1">Home</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xl">🔍</span>
+                        <span class="mt-1">Search</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xl">📊</span>
+                        <span class="mt-1">Stats</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xl">👤</span>
+                        <span class="mt-1">Profile</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scanner Overlay (hidden by default) -->
+            <div id="scanner-overlay" class="scanner-overlay" style="display:none;">
+                <div class="text-5xl mb-4">📷</div>
+                <div class="text-lg font-semibold mb-2">Scanning...</div>
+                <div class="text-sm text-emerald-200 mb-6">Point camera at QR code</div>
+                <div class="w-52 h-52 border-2 border-emerald-400 rounded-xl flex items-center justify-center relative overflow-hidden">
+                    <div class="scan-line"></div>
+                    <div class="text-6xl opacity-30">⬜</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== DETAIL SCREEN ==================== -->
+        <div id="screen-detail" class="screen hidden-screen">
+            <div class="screen-content" style="background-color: #fafafa;">
+                <!-- Status Bar -->
+                <div class="flex justify-between items-center text-xs text-gray-500 px-5 pt-3 pb-1">
+                    <span>10:41 AM</span>
+                    <span>87%</span>
+                </div>
+
+                <!-- 1. STICKY HEADER -->
+                <div class="sticky top-0 z-20 bg-white border-b border-gray-100 px-4 py-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <button class="text-gray-400 text-xl" onclick="goHome()">←</button>
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-mono font-bold text-gray-900 text-sm">HABY-2026-001</span>
+                                    <span class="status-badge bg-green-100 text-green-700">🌿 Vegetative</span>
+                                </div>
+                                <div class="text-sm text-gray-500">Yellow Habanero</div>
+                            </div>
+                        </div>
+                        <button class="text-gray-400 text-lg">⋮</button>
+                    </div>
+                </div>
+
+                <!-- 2. QUICK ACTION BAR -->
+                <div class="bg-white px-4 py-3 border-b border-gray-100">
+                    <div class="flex justify-around">
+                        <button class="quick-action-btn" onclick="toggleForm('water')">
+                            <span class="text-xl">💧</span>
+                            <span class="text-[10px] text-gray-500 mt-0.5">Water</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="toggleForm('feed')">
+                            <span class="text-xl">🧪</span>
+                            <span class="text-[10px] text-gray-500 mt-0.5">Feed</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="toggleForm('condition')">
+                            <span class="text-xl">🌡️</span>
+                            <span class="text-[10px] text-gray-500 mt-0.5">Condition</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="toggleForm('photo')">
+                            <span class="text-xl">📷</span>
+                            <span class="text-[10px] text-gray-500 mt-0.5">Photo</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="toggleForm('note')">
+                            <span class="text-xl">📝</span>
+                            <span class="text-[10px] text-gray-500 mt-0.5">Note</span>
+                        </button>
+                    </div>
+
+                    <!-- Inline Forms -->
+                    <div id="form-water" class="expand-form bg-green-50 rounded-xl mt-2 p-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-sm text-green-800">💧 Log Watering</span>
+                            <button onclick="toggleForm('water')" class="text-gray-400">✕</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <div>
+                                <label class="text-xs text-gray-500">Amount</label>
+                                <div class="flex items-center">
+                                    <input type="number" class="w-full border rounded-lg px-2 py-1.5 text-sm" placeholder="8" value="8">
+                                    <select class="border rounded-lg ml-1 px-2 py-1.5 text-xs bg-white">
+                                        <option>oz</option><option>mL</option><option>L</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Method</label>
+                                <select class="w-full border rounded-lg px-2 py-1.5 text-sm mt-1">
+                                    <option>Hand Water</option><option>Drip</option><option>Soaker</option><option>Shower</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 mb-2">
+                            <label class="text-xs text-gray-500">Date</label>
+                            <input type="datetime-local" class="border rounded-lg px-2 py-1 text-xs flex-1" value="2026-05-17T10:41">
+                        </div>
+                        <button class="w-full bg-green-600 text-white py-2 rounded-xl text-sm font-semibold" onclick="saveEntry('Watered — 8 oz, hand water')">Save</button>
+                    </div>
+
+                    <div id="form-feed" class="expand-form bg-amber-50 rounded-xl mt-2 p-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-sm text-amber-800">🧪 Log Fertilizer</span>
+                            <button onclick="toggleForm('feed')" class="text-gray-400">✕</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <div>
+                                <label class="text-xs text-gray-500">Product</label>
+                                <input type="text" class="w-full border rounded-lg px-2 py-1.5 text-sm mt-1" placeholder="e.g. Liquid NPK 5-5-5">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Dilution</label>
+                                <select class="w-full border rounded-lg px-2 py-1.5 text-sm mt-1">
+                                    <option>Full Strength</option><option selected>1/2 Strength</option><option>1/4 Strength</option><option>Custom</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 mb-2">
+                            <label class="text-xs text-gray-500">NPK</label>
+                            <input type="text" class="border rounded-lg px-2 py-1 text-xs flex-1" placeholder="5-5-5">
+                        </div>
+                        <button class="w-full bg-amber-600 text-white py-2 rounded-xl text-sm font-semibold" onclick="saveEntry('Fertilized — Liquid NPK 5-5-5, 1/2 strength')">Save</button>
+                    </div>
+
+                    <div id="form-condition" class="expand-form bg-blue-50 rounded-xl mt-2 p-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-sm text-blue-800">🌡️ Record Conditions</span>
+                            <button onclick="toggleForm('condition')" class="text-gray-400">✕</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <div>
+                                <label class="text-xs text-gray-500">Temp (°F)</label>
+                                <input type="number" class="w-full border rounded-lg px-2 py-1.5 text-sm mt-1" placeholder="82">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Humidity (%)</label>
+                                <input type="number" class="w-full border rounded-lg px-2 py-1.5 text-sm mt-1" placeholder="65">
+                            </div>
+                        </div>
+                        <input type="text" class="w-full border rounded-lg px-2 py-1.5 text-sm mb-2" placeholder="Notes (optional)">
+                        <button class="w-full bg-blue-600 text-white py-2 rounded-xl text-sm font-semibold" onclick="saveEntry('Conditions recorded')">Save</button>
+                    </div>
+
+                    <div id="form-photo" class="expand-form bg-purple-50 rounded-xl mt-2 p-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-sm text-purple-800">📷 Capture Photo</span>
+                            <button onclick="toggleForm('photo')" class="text-gray-400">✕</button>
+                        </div>
+                        <div class="bg-gray-200 rounded-xl h-32 flex items-center justify-center mb-2">
+                            <span class="text-gray-400 text-sm">Camera Preview</span>
+                        </div>
+                        <input type="text" class="w-full border rounded-lg px-2 py-1.5 text-sm mb-2" placeholder="Caption (optional)">
+                        <div class="flex space-x-2">
+                            <button class="flex-1 bg-purple-600 text-white py-2 rounded-xl text-sm font-semibold" onclick="saveEntry('Photo attached')">Save</button>
+                            <button class="px-3 bg-gray-200 text-gray-600 py-2 rounded-xl text-sm" onclick="toggleForm('photo')">Retake</button>
+                        </div>
+                    </div>
+
+                    <div id="form-note" class="expand-form bg-gray-50 rounded-xl mt-2 p-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-sm text-gray-700">📝 Add Observation</span>
+                            <button onclick="toggleForm('note')" class="text-gray-400">✕</button>
+                        </div>
+                        <textarea class="w-full border rounded-lg px-2 py-1.5 text-sm mb-2" rows="2" placeholder="What do you observe?"></textarea>
+                        <div class="flex space-x-1 mb-2 overflow-x-auto">
+                            <span class="text-xs bg-gray-200 px-2 py-1 rounded-full cursor-pointer">Observation</span>
+                            <span class="text-xs bg-gray-200 px-2 py-1 rounded-full cursor-pointer">Pest</span>
+                            <span class="text-xs bg-gray-200 px-2 py-1 rounded-full cursor-pointer">Disease</span>
+                            <span class="text-xs bg-gray-200 px-2 py-1 rounded-full cursor-pointer">Treatment</span>
+                        </div>
+                        <button class="w-full bg-gray-700 text-white py-2 rounded-xl text-sm font-semibold" onclick="saveEntry('Note added')">Save</button>
+                    </div>
+                </div>
+
+                <!-- 3. CARE NEEDED PANEL -->
+                <div class="px-4 py-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Care Needed</h3>
+                        <span class="text-xs text-gray-400">3 items</span>
+                    </div>
+
+                    <div class="alert-item bg-red-50 border border-red-100 mb-1.5 flex items-start space-x-2" onclick="toggleForm('water')">
+                        <span class="text-red-500 mt-0.5">🔴</span>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-red-800">Watering Overdue</div>
+                            <div class="text-xs text-red-600">Last watered 3 days ago · typical: every 1–2 days</div>
+                        </div>
+                        <span class="text-xs text-red-400">→</span>
+                    </div>
+
+                    <div class="alert-item bg-amber-50 border border-amber-100 mb-1.5 flex items-start space-x-2">
+                        <span class="text-amber-500 mt-0.5">⚠️</span>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-amber-800">Heat Alert</div>
+                            <div class="text-xs text-amber-600">95°F forecast today · consider shade cloth</div>
+                        </div>
+                        <span class="text-xs text-gray-400" onclick="event.stopPropagation(); this.parentElement.style.opacity='0.5'">✓ done</span>
+                    </div>
+
+                    <div class="alert-item bg-blue-50 border border-blue-100 flex items-start space-x-2">
+                        <span class="text-blue-500 mt-0.5">📋</span>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-blue-800">Transplant Window</div>
+                            <div class="text-xs text-blue-600">8 weeks indoors · last frost in 1 week</div>
+                        </div>
+                        <span class="text-xs text-gray-400">→</span>
+                    </div>
+                </div>
+
+                <!-- 4. RECENT ACTIVITY LOG -->
+                <div class="px-4 py-3">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Recent Activity</h3>
+                        <button class="text-xs text-emerald-600">View All →</button>
+                    </div>
+
+                    <div class="space-y-0">
+                        <div class="timeline-item py-2">
+                            <div class="timeline-dot bg-green-100 text-green-600">💧</div>
+                            <div class="text-xs text-gray-400">Today, 8:15 AM</div>
+                            <div class="text-sm text-gray-700">Watered — 8 oz, hand water</div>
+                        </div>
+                        <div class="timeline-item py-2">
+                            <div class="timeline-dot bg-amber-100 text-amber-600">🧪</div>
+                            <div class="text-xs text-gray-400">Yesterday, 3:00 PM</div>
+                            <div class="text-sm text-gray-700">Fertilized — Liquid NPK 5-5-5, 1/2 strength</div>
+                        </div>
+                        <div class="timeline-item py-2">
+                            <div class="timeline-dot bg-purple-100 text-purple-600">📷</div>
+                            <div class="text-xs text-gray-400">Jun 10, 11:30 AM</div>
+                            <div class="text-sm text-gray-700">Photo attached</div>
+                            <div class="mt-1 h-16 w-20 rounded-lg bg-gray-200"></div>
+                        </div>
+                        <div class="timeline-item py-2">
+                            <div class="timeline-dot bg-gray-100 text-gray-600">📝</div>
+                            <div class="text-xs text-gray-400">Jun 10, 11:28 AM</div>
+                            <div class="text-sm text-gray-700">Slight wilting noticed during heat wave</div>
+                        </div>
+                        <div class="timeline-item py-2">
+                            <div class="timeline-dot bg-blue-100 text-blue-600">🌡️</div>
+                            <div class="text-xs text-gray-400">Jun 09, 6:00 PM</div>
+                            <div class="text-sm text-gray-700">Conditions — 95°F, 40% humidity</div>
+                        </div>
+                        <div class="timeline-item py-2">
+                            <div class="timeline-dot bg-green-100 text-green-600">💧</div>
+                            <div class="text-xs text-gray-400">Jun 08, 7:00 AM</div>
+                            <div class="text-sm text-gray-700">Watered — 6 oz, drip irrigation</div>
+                        </div>
+                        <div class="timeline-item py-2">
+                            <div class="timeline-dot bg-purple-100 text-purple-600">📷</div>
+                            <div class="text-xs text-gray-400">Jun 05, 2:00 PM</div>
+                            <div class="text-sm text-gray-700">Photo attached — new growth appearing</div>
+                        </div>
+                        <div class="timeline-item py-2">
+                            <div class="timeline-dot bg-gray-100 text-gray-600">📝</div>
+                            <div class="text-xs text-gray-400">May 29, 10:00 AM</div>
+                            <div class="text-sm text-gray-700">Transplanted to garden bed 3, row 2</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. PHOTO STRIP -->
+                <div class="px-4 py-3 border-t border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Photos</h3>
+                        <button class="text-xs text-emerald-600">View All →</button>
+                    </div>
+                    <div class="flex space-x-2 overflow-x-auto pb-1">
+                        <div class="photo-thumb bg-green-200 flex items-center justify-center"><span class="text-xs">🌱</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">Apr 1</span></div>
+                        <div class="photo-thumb bg-green-300 flex items-center justify-center"><span class="text-xs">🌿</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">Apr 15</span></div>
+                        <div class="photo-thumb bg-green-400 flex items-center justify-center"><span class="text-xs">🪴</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">May 5</span></div>
+                        <div class="photo-thumb bg-green-500 flex items-center justify-center"><span class="text-xs">🌿</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">May 29</span></div>
+                        <div class="photo-thumb bg-yellow-300 flex items-center justify-center"><span class="text-xs">🌿</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">Jun 5</span></div>
+                        <div class="photo-thumb bg-orange-200 flex items-center justify-center"><span class="text-xs">🥀</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">Jun 10</span></div>
+                        <button class="flex-shrink-0 w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center" onclick="toggleForm('photo')"><span class="text-gray-400 text-xl">+</span></button>
+                    </div>
+                </div>
+
+                <!-- 6. HERMES CHAT (Collapsed) -->
+                <div id="hermes-collapsed" class="chat-bar px-4 py-2.5 flex items-center justify-between" onclick="toggleHermes()">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg">🤖</span>
+                        <span class="text-sm text-gray-600">Ask Hermes about HABY-2026-001</span>
+                    </div>
+                    <span class="text-gray-400 text-sm">▲</span>
+                </div>
+
+                <!-- 6b. HERMES CHAT (Expanded) -->
+                <div id="hermes-expanded" class="hidden bg-white border-t border-gray-100">
+                    <div class="h-48 overflow-y-auto px-4 py-3 space-y-2">
+                        <div class="flex items-start space-x-2">
+                            <span class="text-sm">🤖</span>
+                            <div class="bg-gray-50 rounded-xl rounded-tl-none px-3 py-2 max-w-[85%]">
+                                <div class="text-xs text-gray-700">Based on your data: watering increased during heat wave, likely overwatering rather than fertilizer deficiency.</div>
+                                <div class="text-[10px] text-gray-400 mt-1">12 watering events · 3 fertilizer apps · 8 days of conditions</div>
+                                <button class="mt-1 text-xs text-emerald-600 font-medium" onclick="showToast('Insight logged to activity history')">Log this insight →</button>
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <div class="bg-emerald-600 text-white rounded-xl rounded-tr-none px-3 py-2 max-w-[85%]">
+                                <div class="text-xs">What's causing the yellowing on lower leaves?</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-4 pb-2 flex space-x-1.5 overflow-x-auto">
+                        <button class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full whitespace-nowrap">Compare with other Habaneros</button>
+                        <button class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full whitespace-nowrap">Predict harvest date</button>
+                        <button class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full whitespace-nowrap">Care schedule on track?</button>
+                    </div>
+                    <div class="px-4 pb-4 flex space-x-2">
+                        <input type="text" class="flex-1 border rounded-xl px-3 py-2 text-sm" placeholder="Ask about this plant...">
+                        <button class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold" onclick="showToast('Query sent to Hermes')">Send</button>
+                    </div>
+                </div>
+
+                <!-- 7. BOTTOM NAVIGATION -->
+                <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-2 flex justify-around">
+                    <button class="flex flex-col items-center py-1 px-4" onclick="goHome()">
+                        <span class="text-xl">📱</span>
+                        <span class="text-[10px] text-gray-500 mt-0.5">Scan Another</span>
+                    </button>
+                    <div class="flex-1"></div>
+                    <button class="flex flex-col items-center py-1 px-4" onclick="showToast('Plant Info: seed packet data, planting dates, location history')">
+                        <span class="text-xl">ℹ️</span>
+                        <span class="text-[10px] text-gray-500 mt-0.5">Plant Info</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toast -->
+            <div id="toast" class="toast"></div>
+        </div>
+    </div>
+
+    <script>
+        // Screen navigation
+        function showDetail() {
+            document.getElementById('screen-home').classList.add('back-hidden');
+            document.getElementById('screen-detail').classList.remove('hidden-screen');
+        }
+
+        function goHome() {
+            document.getElementById('screen-home').classList.remove('back-hidden');
+            document.getElementById('screen-detail').classList.add('hidden-screen');
+            document.getElementById('scanner-overlay').style.display = 'none';
+        }
+
+        // Scanner simulation
+        function activateScanner() {
+            document.getElementById('scanner-overlay').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('scanner-overlay').style.display = 'none';
+                showDetail();
+            }, 2000);
+        }
+
+        // Form toggle
+        function toggleForm(type) {
+            const forms = ['water', 'feed', 'condition', 'photo', 'note'];
+            forms.forEach(f => {
+                const el = document.getElementById('form-' + f);
+                if (f === type) {
+                    el.classList.toggle('open');
+                } else {
+                    el.classList.remove('open');
+                }
+            });
+        }
+
+        function saveEntry(summary) {
+            showToast('✓ ' + summary);
+            const formEl = event.target.closest('.expand-form');
+            const type = formEl.id.replace('form-', '');
+            toggleForm(type);
+        }
+
+        // Hermes toggle
+        function toggleHermes() {
+            const collapsed = document.getElementById('hermes-collapsed');
+            const expanded = document.getElementById('hermes-expanded');
+            if (expanded.classList.contains('hidden')) {
+                expanded.classList.remove('hidden');
+                collapsed.classList.add('hidden');
+            } else {
+                expanded.classList.add('hidden');
+                collapsed.classList.remove('hidden');
+            }
+        }
+
+        // Toast notification
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+    </script>
+</body>
+</html>
