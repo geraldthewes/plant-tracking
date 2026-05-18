@@ -6,14 +6,34 @@
     <title>Plant Tracking - Interactive Mock</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        :root {
+            /* Core */
+            --terracotta: #B04E2E;
+            --saddle-brown: #6B4226;
+            --warm-cream: #F8F1E3;
+            --golden-earth: #7A5C14;
+            --burnt-sienna: #A04010;
+            /* Semantic */
+            --growth-green: #4A6B2E;
+            --dry-amber: #8A6400;
+            --overdue-red: #A0342E;
+            --tip-teal: #4A6B7A;
+            /* Neutrals */
+            --n-900: #2C1810;
+            --n-700: #4A3728;
+            --n-500: #7A6552;
+            --n-300: #A89888;
+            --n-200: #D4C8B8;
+            --n-100: #EDE5D8;
+        }
         .iphone-frame {
             position: relative;
-            background-color: #f5f5f5;
+            background-color: var(--n-200);
             border-radius: 36px;
             width: 390px;
             height: 844px;
             margin: 40px auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(44,24,16,0.2);
             overflow: hidden;
         }
         .iphone-frame::before {
@@ -24,7 +44,7 @@
             transform: translateX(-50%);
             width: 120px;
             height: 20px;
-            background-color: #f5f5f5;
+            background-color: var(--n-200);
             border-radius: 0 0 10px 10px;
         }
         .screen {
@@ -51,7 +71,7 @@
             position: absolute;
             top: -5px;
             right: -5px;
-            background-color: #ef4444;
+            background-color: var(--overdue-red);
             color: white;
             border-radius: 50%;
             width: 20px;
@@ -70,20 +90,22 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: white;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            background: var(--n-100);
+            border: 1px solid var(--n-200);
+            box-shadow: 0 1px 3px rgba(44,24,16,0.08);
             cursor: pointer;
             transition: all 0.15s;
         }
-        .quick-action-btn:active { transform: scale(0.95); background: #f0fdf4; }
+        .quick-action-btn:active { transform: scale(0.95); background: var(--n-200); }
+        .quick-action-btn .qa-icon { font-size: 20px; }
+        .quick-action-btn .qa-label { font-size: 10px; color: var(--n-500); margin-top: 2px; }
         .alert-item {
             padding: 10px 12px;
             border-radius: 10px;
             cursor: pointer;
             transition: background 0.15s;
         }
-        .alert-item:active { background: rgba(0,0,0,0.04); }
+        .alert-item:active { background: rgba(44,24,16,0.04); }
         .timeline-item {
             padding-left: 28px;
             position: relative;
@@ -96,7 +118,7 @@
             top: 28px;
             bottom: -16px;
             width: 2px;
-            background: #e5e7eb;
+            background: var(--n-200);
         }
         .timeline-item:last-child::before { display: none; }
         .timeline-dot {
@@ -109,7 +131,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 9px;
         }
         .photo-thumb {
             width: 60px;
@@ -118,11 +140,11 @@
             overflow: hidden;
             flex-shrink: 0;
             position: relative;
-            background: #e5e7eb;
+            background: var(--n-200);
         }
         .chat-bar {
-            background: white;
-            border-top: 1px solid #e5e7eb;
+            background: var(--warm-cream);
+            border-top: 1px solid var(--n-200);
             cursor: pointer;
         }
         .expand-form { display: none; }
@@ -147,8 +169,8 @@
         .scan-line {
             width: 200px;
             height: 2px;
-            background: #10b981;
-            box-shadow: 0 0 8px #10b981;
+            background: var(--terracotta);
+            box-shadow: 0 0 8px var(--terracotta);
             animation: scanPulse 1.5s ease-in-out infinite;
         }
         @keyframes scanPulse {
@@ -160,7 +182,7 @@
             bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
+            background: var(--saddle-brown);
             color: white;
             padding: 8px 16px;
             border-radius: 20px;
@@ -171,398 +193,418 @@
             pointer-events: none;
         }
         .toast.show { opacity: 1; }
+
+        /* Input styling */
+        .form-input {
+            border: 1px solid var(--n-200);
+            border-radius: 8px;
+            padding: 6px 8px;
+            font-size: 13px;
+            background: white;
+            color: var(--n-700);
+            width: 100%;
+        }
+        .form-input::placeholder { color: var(--n-300); }
+        .form-input:focus { outline: none; border-color: var(--terracotta); box-shadow: 0 0 0 2px rgba(176,78,46,0.15); }
+        .form-label { font-size: 11px; color: var(--n-500); }
+        .btn-save {
+            width: 100%;
+            background: var(--burnt-sienna);
+            color: white;
+            padding: 8px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-save:active { opacity: 0.85; }
     </style>
 </head>
-<body class="bg-gray-100">
+<body style="background-color: #E8DDD0;">
 
     <div class="iphone-frame">
 
         <!-- ==================== HOME SCREEN ==================== -->
         <div id="screen-home" class="screen">
-            <div class="screen-content" style="background-color: white; padding: 20px;">
+            <div class="screen-content" style="background-color: var(--warm-cream); padding: 20px;">
                 <!-- Status Bar -->
-                <div class="flex justify-between items-center text-xs text-gray-500 mb-4">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--n-500);margin-bottom:16px;">
                     <span>10:41 AM</span>
                     <span>87%</span>
                 </div>
 
                 <!-- Header -->
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center space-x-2 text-xl font-bold text-emerald-600">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                    <div style="display:flex;align-items:center;gap:8px;font-size:20px;font-weight:700;color:var(--terracotta);">
                         <span>🌱</span>
                         <span>Plant Tracking</span>
                     </div>
-                    <button class="text-2xl text-gray-400 hover:text-gray-600 cursor-pointer">⚙️</button>
+                    <button style="font-size:20px;color:var(--n-500);background:none;border:none;cursor:pointer;">⚙️</button>
                 </div>
 
                 <!-- Scan Button -->
-                <div class="mb-8">
+                <div style="margin-bottom:32px;">
                     <button onclick="activateScanner()"
-                            class="w-full bg-emerald-600 text-white py-8 px-6 rounded-3xl flex flex-col items-center justify-center shadow-lg hover:bg-emerald-700 transition-colors"
-                            id="scanButton">
-                        <div class="text-4xl mb-2">📱</div>
-                        <div class="text-lg font-semibold">Scan Plant QR Code</div>
-                        <div class="text-sm text-emerald-100">Tap to activate camera and scan QR code</div>
-                        <div class="text-xs text-emerald-200 mt-1">Or enter ID manually</div>
+                            id="scanButton"
+                            style="width:100%;background:var(--burnt-sienna);color:white;padding:32px 24px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(160,64,16,0.3);cursor:pointer;border:none;">
+                        <div style="font-size:36px;margin-bottom:8px;">📱</div>
+                        <div style="font-size:16px;font-weight:600;">Scan Plant QR Code</div>
+                        <div style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:4px;">Tap to activate camera and scan</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px;">Or enter ID manually</div>
                     </button>
                 </div>
 
                 <!-- Action Button Row -->
-                <div class="grid grid-cols-3 gap-4">
-                    <button class="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center shadow hover:bg-gray-50 transition-colors relative">
-                        <div class="text-2xl mb-2">🌿</div>
-                        <div class="font-medium text-center">Plant Care</div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                    <button style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(44,24,16,0.06);cursor:pointer;position:relative;">
+                        <div style="font-size:24px;margin-bottom:4px;">🌿</div>
+                        <div style="font-weight:500;text-align:center;color:var(--n-700);font-size:13px;">Plant Care</div>
                         <div class="badge">5</div>
                     </button>
-                    <button class="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center shadow hover:bg-gray-50 transition-colors">
-                        <div class="text-2xl mb-2">📓</div>
-                        <div class="font-medium text-center">Activity Log</div>
+                    <button style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(44,24,16,0.06);cursor:pointer;">
+                        <div style="font-size:24px;margin-bottom:4px;">📓</div>
+                        <div style="font-weight:500;text-align:center;color:var(--n-700);font-size:13px;">Activity Log</div>
                     </button>
-                    <button class="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center shadow hover:bg-gray-50 transition-colors">
-                        <div class="text-2xl mb-2">☰</div>
-                        <div class="font-medium text-center">More</div>
+                    <button style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(44,24,16,0.06);cursor:pointer;">
+                        <div style="font-size:24px;margin-bottom:4px;">☰</div>
+                        <div style="font-weight:500;text-align:center;color:var(--n-700);font-size:13px;">More</div>
                     </button>
                 </div>
 
                 <!-- Bottom Navigation -->
-                <div class="mt-10 pt-4 border-t border-gray-200 flex justify-around text-sm text-gray-500">
-                    <div class="flex flex-col items-center">
-                        <span class="text-xl">🏠</span>
-                        <span class="mt-1">Home</span>
+                <div style="margin-top:32px;padding-top:16px;border-top:1px solid var(--n-200);display:flex;justify-content:space-around;font-size:13px;color:var(--n-500);">
+                    <div style="display:flex;flex-direction:column;align-items:center;">
+                        <span style="font-size:20px;">🏠</span>
+                        <span style="margin-top:4px;font-size:11px;color:var(--terracotta);font-weight:600;">Home</span>
                     </div>
-                    <div class="flex flex-col items-center">
-                        <span class="text-xl">🔍</span>
-                        <span class="mt-1">Search</span>
+                    <div style="display:flex;flex-direction:column;align-items:center;">
+                        <span style="font-size:20px;">🔍</span>
+                        <span style="margin-top:4px;">Search</span>
                     </div>
-                    <div class="flex flex-col items-center">
-                        <span class="text-xl">📊</span>
-                        <span class="mt-1">Stats</span>
+                    <div style="display:flex;flex-direction:column;align-items:center;">
+                        <span style="font-size:20px;">📊</span>
+                        <span style="margin-top:4px;">Stats</span>
                     </div>
-                    <div class="flex flex-col items-center">
-                        <span class="text-xl">👤</span>
-                        <span class="mt-1">Profile</span>
+                    <div style="display:flex;flex-direction:column;align-items:center;">
+                        <span style="font-size:20px;">👤</span>
+                        <span style="margin-top:4px;">Profile</span>
                     </div>
                 </div>
             </div>
 
             <!-- Scanner Overlay (hidden by default) -->
             <div id="scanner-overlay" class="scanner-overlay" style="display:none;">
-                <div class="text-5xl mb-4">📷</div>
-                <div class="text-lg font-semibold mb-2">Scanning...</div>
-                <div class="text-sm text-emerald-200 mb-6">Point camera at QR code</div>
-                <div class="w-52 h-52 border-2 border-emerald-400 rounded-xl flex items-center justify-center relative overflow-hidden">
+                <div style="font-size:40px;margin-bottom:16px;">📷</div>
+                <div style="font-size:16px;font-weight:600;margin-bottom:8px;">Scanning...</div>
+                <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:24px;">Point camera at QR code</div>
+                <div style="width:208px;height:208px;border:2px solid var(--terracotta);border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
                     <div class="scan-line"></div>
-                    <div class="text-6xl opacity-30">⬜</div>
+                    <div style="font-size:48px;opacity:0.3;position:absolute;">⬜</div>
                 </div>
             </div>
         </div>
 
         <!-- ==================== DETAIL SCREEN ==================== -->
         <div id="screen-detail" class="screen hidden-screen">
-            <div class="screen-content" style="background-color: #fafafa;">
+            <div class="screen-content" style="background-color: var(--warm-cream);">
                 <!-- Status Bar -->
-                <div class="flex justify-between items-center text-xs text-gray-500 px-5 pt-3 pb-1">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--n-500);padding:12px 20px 4px;">
                     <span>10:41 AM</span>
                     <span>87%</span>
                 </div>
 
                 <!-- 1. STICKY HEADER -->
-                <div class="sticky top-0 z-20 bg-white border-b border-gray-100 px-4 py-3">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <button class="text-gray-400 text-xl" onclick="goHome()">←</button>
+                <div style="position:sticky;top:0;z-index:20;background:var(--warm-cream);border-bottom:1px solid var(--n-200);padding:12px 16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <button onclick="goHome()" style="color:var(--n-500);font-size:18px;background:none;border:none;cursor:pointer;">←</button>
                             <div>
-                                <div class="flex items-center space-x-2">
-                                    <span class="font-mono font-bold text-gray-900 text-sm">HABY-2026-001</span>
-                                    <span class="status-badge bg-green-100 text-green-700">🌿 Vegetative</span>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span style="font-family:monospace;font-weight:700;color:var(--n-900);font-size:13px;">HABY-2026-001</span>
+                                    <span class="status-badge" style="background:var(--growth-green);color:white;">🌿 Vegetative</span>
                                 </div>
-                                <div class="text-sm text-gray-500">Yellow Habanero</div>
+                                <div style="font-size:13px;color:var(--n-500);">Yellow Habanero</div>
                             </div>
                         </div>
-                        <button class="text-gray-400 text-lg">⋮</button>
+                        <button style="color:var(--n-500);font-size:16px;background:none;border:none;cursor:pointer;">⋮</button>
                     </div>
                 </div>
 
                 <!-- 2. QUICK ACTION BAR -->
-                <div class="bg-white px-4 py-3 border-b border-gray-100">
-                    <div class="flex justify-around">
+                <div style="background:var(--n-100);padding:12px 16px;border-bottom:1px solid var(--n-200);">
+                    <div style="display:flex;justify-content:space-around;">
                         <button class="quick-action-btn" onclick="toggleForm('water')">
-                            <span class="text-xl">💧</span>
-                            <span class="text-[10px] text-gray-500 mt-0.5">Water</span>
+                            <span class="qa-icon">💧</span>
+                            <span class="qa-label">Water</span>
                         </button>
                         <button class="quick-action-btn" onclick="toggleForm('feed')">
-                            <span class="text-xl">🧪</span>
-                            <span class="text-[10px] text-gray-500 mt-0.5">Feed</span>
+                            <span class="qa-icon">🧪</span>
+                            <span class="qa-label">Feed</span>
                         </button>
                         <button class="quick-action-btn" onclick="toggleForm('condition')">
-                            <span class="text-xl">🌡️</span>
-                            <span class="text-[10px] text-gray-500 mt-0.5">Condition</span>
+                            <span class="qa-icon">🌡️</span>
+                            <span class="qa-label">Condition</span>
                         </button>
                         <button class="quick-action-btn" onclick="toggleForm('photo')">
-                            <span class="text-xl">📷</span>
-                            <span class="text-[10px] text-gray-500 mt-0.5">Photo</span>
+                            <span class="qa-icon">📷</span>
+                            <span class="qa-label">Photo</span>
                         </button>
                         <button class="quick-action-btn" onclick="toggleForm('note')">
-                            <span class="text-xl">📝</span>
-                            <span class="text-[10px] text-gray-500 mt-0.5">Note</span>
+                            <span class="qa-icon">📝</span>
+                            <span class="qa-label">Note</span>
                         </button>
                     </div>
 
                     <!-- Inline Forms -->
-                    <div id="form-water" class="expand-form bg-green-50 rounded-xl mt-2 p-3">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-sm text-green-800">💧 Log Watering</span>
-                            <button onclick="toggleForm('water')" class="text-gray-400">✕</button>
+                    <div id="form-water" class="expand-form" style="background:rgba(74,107,46,0.08);border:1px solid rgba(74,107,46,0.2);border-radius:12px;margin-top:8px;padding:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-weight:600;font-size:13px;color:var(--growth-green);">💧 Log Watering</span>
+                            <button onclick="toggleForm('water')" style="color:var(--n-300);background:none;border:none;cursor:pointer;font-size:16px;">✕</button>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 mb-2">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
                             <div>
-                                <label class="text-xs text-gray-500">Amount</label>
-                                <div class="flex items-center">
-                                    <input type="number" class="w-full border rounded-lg px-2 py-1.5 text-sm" placeholder="8" value="8">
-                                    <select class="border rounded-lg ml-1 px-2 py-1.5 text-xs bg-white">
-                                        <option>oz</option><option>mL</option><option>L</option>
-                                    </select>
+                                <label class="form-label">Amount</label>
+                                <div style="display:flex;align-items:center;">
+                                    <input type="number" class="form-input" placeholder="8" value="8" style="margin-right:4px;">
+                                    <select class="form-input" style="width:50px;padding:6px 2px;font-size:11px;"><option>oz</option><option>mL</option><option>L</option></select>
                                 </div>
                             </div>
                             <div>
-                                <label class="text-xs text-gray-500">Method</label>
-                                <select class="w-full border rounded-lg px-2 py-1.5 text-sm mt-1">
-                                    <option>Hand Water</option><option>Drip</option><option>Soaker</option><option>Shower</option>
-                                </select>
+                                <label class="form-label">Method</label>
+                                <select class="form-input" style="margin-top:4px;"><option>Hand Water</option><option>Drip</option><option>Soaker</option><option>Shower</option></select>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-2 mb-2">
-                            <label class="text-xs text-gray-500">Date</label>
-                            <input type="datetime-local" class="border rounded-lg px-2 py-1 text-xs flex-1" value="2026-05-17T10:41">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                            <label class="form-label">Date</label>
+                            <input type="datetime-local" class="form-input" style="flex:1;font-size:11px;" value="2026-05-17T10:41">
                         </div>
-                        <button class="w-full bg-green-600 text-white py-2 rounded-xl text-sm font-semibold" onclick="saveEntry('Watered — 8 oz, hand water')">Save</button>
+                        <button class="btn-save" style="background:var(--growth-green);" onclick="saveEntry('Watered — 8 oz, hand water')">Save</button>
                     </div>
 
-                    <div id="form-feed" class="expand-form bg-amber-50 rounded-xl mt-2 p-3">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-sm text-amber-800">🧪 Log Fertilizer</span>
-                            <button onclick="toggleForm('feed')" class="text-gray-400">✕</button>
+                    <div id="form-feed" class="expand-form" style="background:rgba(138,100,0,0.06);border:1px solid rgba(138,100,0,0.2);border-radius:12px;margin-top:8px;padding:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-weight:600;font-size:13px;color:var(--dry-amber);">🧪 Log Fertilizer</span>
+                            <button onclick="toggleForm('feed')" style="color:var(--n-300);background:none;border:none;cursor:pointer;font-size:16px;">✕</button>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 mb-2">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
                             <div>
-                                <label class="text-xs text-gray-500">Product</label>
-                                <input type="text" class="w-full border rounded-lg px-2 py-1.5 text-sm mt-1" placeholder="e.g. Liquid NPK 5-5-5">
+                                <label class="form-label">Product</label>
+                                <input type="text" class="form-input" placeholder="e.g. Liquid NPK 5-5-5" style="margin-top:4px;">
                             </div>
                             <div>
-                                <label class="text-xs text-gray-500">Dilution</label>
-                                <select class="w-full border rounded-lg px-2 py-1.5 text-sm mt-1">
-                                    <option>Full Strength</option><option selected>1/2 Strength</option><option>1/4 Strength</option><option>Custom</option>
-                                </select>
+                                <label class="form-label">Dilution</label>
+                                <select class="form-input" style="margin-top:4px;"><option>Full</option><option selected>1/2</option><option>1/4</option><option>Custom</option></select>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-2 mb-2">
-                            <label class="text-xs text-gray-500">NPK</label>
-                            <input type="text" class="border rounded-lg px-2 py-1 text-xs flex-1" placeholder="5-5-5">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                            <label class="form-label">NPK</label>
+                            <input type="text" class="form-input" style="flex:1;font-size:11px;" placeholder="5-5-5">
                         </div>
-                        <button class="w-full bg-amber-600 text-white py-2 rounded-xl text-sm font-semibold" onclick="saveEntry('Fertilized — Liquid NPK 5-5-5, 1/2 strength')">Save</button>
+                        <button class="btn-save" style="background:var(--dry-amber);" onclick="saveEntry('Fertilized — Liquid NPK 5-5-5, 1/2 strength')">Save</button>
                     </div>
 
-                    <div id="form-condition" class="expand-form bg-blue-50 rounded-xl mt-2 p-3">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-sm text-blue-800">🌡️ Record Conditions</span>
-                            <button onclick="toggleForm('condition')" class="text-gray-400">✕</button>
+                    <div id="form-condition" class="expand-form" style="background:rgba(74,107,122,0.06);border:1px solid rgba(74,107,122,0.2);border-radius:12px;margin-top:8px;padding:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-weight:600;font-size:13px;color:var(--tip-teal);">🌡️ Record Conditions</span>
+                            <button onclick="toggleForm('condition')" style="color:var(--n-300);background:none;border:none;cursor:pointer;font-size:16px;">✕</button>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 mb-2">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
                             <div>
-                                <label class="text-xs text-gray-500">Temp (°F)</label>
-                                <input type="number" class="w-full border rounded-lg px-2 py-1.5 text-sm mt-1" placeholder="82">
+                                <label class="form-label">Temp (°F)</label>
+                                <input type="number" class="form-input" placeholder="82" style="margin-top:4px;">
                             </div>
                             <div>
-                                <label class="text-xs text-gray-500">Humidity (%)</label>
-                                <input type="number" class="w-full border rounded-lg px-2 py-1.5 text-sm mt-1" placeholder="65">
+                                <label class="form-label">Humidity (%)</label>
+                                <input type="number" class="form-input" placeholder="65" style="margin-top:4px;">
                             </div>
                         </div>
-                        <input type="text" class="w-full border rounded-lg px-2 py-1.5 text-sm mb-2" placeholder="Notes (optional)">
-                        <button class="w-full bg-blue-600 text-white py-2 rounded-xl text-sm font-semibold" onclick="saveEntry('Conditions recorded')">Save</button>
+                        <input type="text" class="form-input" placeholder="Notes (optional)" style="margin-bottom:8px;">
+                        <button class="btn-save" style="background:var(--tip-teal);" onclick="saveEntry('Conditions recorded')">Save</button>
                     </div>
 
-                    <div id="form-photo" class="expand-form bg-purple-50 rounded-xl mt-2 p-3">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-sm text-purple-800">📷 Capture Photo</span>
-                            <button onclick="toggleForm('photo')" class="text-gray-400">✕</button>
+                    <div id="form-photo" class="expand-form" style="background:rgba(122,92,20,0.06);border:1px solid rgba(122,92,20,0.2);border-radius:12px;margin-top:8px;padding:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-weight:600;font-size:13px;color:var(--golden-earth);">📷 Capture Photo</span>
+                            <button onclick="toggleForm('photo')" style="color:var(--n-300);background:none;border:none;cursor:pointer;font-size:16px;">✕</button>
                         </div>
-                        <div class="bg-gray-200 rounded-xl h-32 flex items-center justify-center mb-2">
-                            <span class="text-gray-400 text-sm">Camera Preview</span>
+                        <div style="background:var(--n-200);border-radius:12px;height:128px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
+                            <span style="color:var(--n-500);font-size:13px;">Camera Preview</span>
                         </div>
-                        <input type="text" class="w-full border rounded-lg px-2 py-1.5 text-sm mb-2" placeholder="Caption (optional)">
-                        <div class="flex space-x-2">
-                            <button class="flex-1 bg-purple-600 text-white py-2 rounded-xl text-sm font-semibold" onclick="saveEntry('Photo attached')">Save</button>
-                            <button class="px-3 bg-gray-200 text-gray-600 py-2 rounded-xl text-sm" onclick="toggleForm('photo')">Retake</button>
+                        <input type="text" class="form-input" placeholder="Caption (optional)" style="margin-bottom:8px;">
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn-save" style="background:var(--golden-earth);" onclick="saveEntry('Photo attached')">Save</button>
+                            <button style="padding:8px 12px;background:var(--n-200);color:var(--n-700);border-radius:12px;font-size:13px;border:none;cursor:pointer;" onclick="toggleForm('photo')">Retake</button>
                         </div>
                     </div>
 
-                    <div id="form-note" class="expand-form bg-gray-50 rounded-xl mt-2 p-3">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-sm text-gray-700">📝 Add Observation</span>
-                            <button onclick="toggleForm('note')" class="text-gray-400">✕</button>
+                    <div id="form-note" class="expand-form" style="background:rgba(122,101,82,0.08);border:1px solid rgba(122,101,82,0.2);border-radius:12px;margin-top:8px;padding:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-weight:600;font-size:13px;color:var(--n-700);">📝 Add Observation</span>
+                            <button onclick="toggleForm('note')" style="color:var(--n-300);background:none;border:none;cursor:pointer;font-size:16px;">✕</button>
                         </div>
-                        <textarea class="w-full border rounded-lg px-2 py-1.5 text-sm mb-2" rows="2" placeholder="What do you observe?"></textarea>
-                        <div class="flex space-x-1 mb-2 overflow-x-auto">
-                            <span class="text-xs bg-gray-200 px-2 py-1 rounded-full cursor-pointer">Observation</span>
-                            <span class="text-xs bg-gray-200 px-2 py-1 rounded-full cursor-pointer">Pest</span>
-                            <span class="text-xs bg-gray-200 px-2 py-1 rounded-full cursor-pointer">Disease</span>
-                            <span class="text-xs bg-gray-200 px-2 py-1 rounded-full cursor-pointer">Treatment</span>
+                        <textarea class="form-input" rows="2" placeholder="What do you observe?" style="margin-bottom:8px;resize:none;"></textarea>
+                        <div style="display:flex;gap:4px;margin-bottom:8px;overflow-x:auto;">
+                            <span style="font-size:11px;background:var(--n-200);color:var(--n-700);padding:4px 8px;border-radius:12px;cursor:pointer;white-space:nowrap;">Observation</span>
+                            <span style="font-size:11px;background:var(--n-200);color:var(--n-700);padding:4px 8px;border-radius:12px;cursor:pointer;white-space:nowrap;">Pest</span>
+                            <span style="font-size:11px;background:var(--n-200);color:var(--n-700);padding:4px 8px;border-radius:12px;cursor:pointer;white-space:nowrap;">Disease</span>
+                            <span style="font-size:11px;background:var(--n-200);color:var(--n-700);padding:4px 8px;border-radius:12px;cursor:pointer;white-space:nowrap;">Treatment</span>
                         </div>
-                        <button class="w-full bg-gray-700 text-white py-2 rounded-xl text-sm font-semibold" onclick="saveEntry('Note added')">Save</button>
+                        <button class="btn-save" style="background:var(--saddle-brown);" onclick="saveEntry('Note added')">Save</button>
                     </div>
                 </div>
 
                 <!-- 3. CARE NEEDED PANEL -->
-                <div class="px-4 py-3">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Care Needed</h3>
-                        <span class="text-xs text-gray-400">3 items</span>
+                <div style="padding:12px 16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <h3 style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;">Care Needed</h3>
+                        <span style="font-size:11px;color:var(--n-300);">3 items</span>
                     </div>
 
-                    <div class="alert-item bg-red-50 border border-red-100 mb-1.5 flex items-start space-x-2" onclick="toggleForm('water')">
-                        <span class="text-red-500 mt-0.5">🔴</span>
-                        <div class="flex-1">
-                            <div class="text-sm font-medium text-red-800">Watering Overdue</div>
-                            <div class="text-xs text-red-600">Last watered 3 days ago · typical: every 1–2 days</div>
+                    <div class="alert-item" style="background:rgba(160,52,46,0.06);border:1px solid rgba(160,52,46,0.3);margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;" onclick="toggleForm('water')">
+                        <span style="color:var(--overdue-red);margin-top:2px;font-size:12px;">🔴</span>
+                        <div style="flex:1;">
+                            <div style="font-size:13px;font-weight:500;color:var(--overdue-red);">Watering Overdue</div>
+                            <div style="font-size:11px;color:var(--n-500);">Last watered 3 days ago · typical: every 1–2 days</div>
                         </div>
-                        <span class="text-xs text-red-400">→</span>
+                        <span style="font-size:11px;color:var(--n-300);">→</span>
                     </div>
 
-                    <div class="alert-item bg-amber-50 border border-amber-100 mb-1.5 flex items-start space-x-2">
-                        <span class="text-amber-500 mt-0.5">⚠️</span>
-                        <div class="flex-1">
-                            <div class="text-sm font-medium text-amber-800">Heat Alert</div>
-                            <div class="text-xs text-amber-600">95°F forecast today · consider shade cloth</div>
+                    <div class="alert-item" style="background:rgba(138,100,0,0.06);border:1px solid rgba(138,100,0,0.3);margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;">
+                        <span style="color:var(--dry-amber);margin-top:2px;font-size:12px;">⚠️</span>
+                        <div style="flex:1;">
+                            <div style="font-size:13px;font-weight:500;color:var(--dry-amber);">Heat Alert</div>
+                            <div style="font-size:11px;color:var(--n-500);">95°F forecast today · consider shade cloth</div>
                         </div>
-                        <span class="text-xs text-gray-400" onclick="event.stopPropagation(); this.parentElement.style.opacity='0.5'">✓ done</span>
+                        <span style="font-size:11px;color:var(--n-300);cursor:pointer;" onclick="event.stopPropagation();this.parentElement.style.opacity='0.5'">✓ done</span>
                     </div>
 
-                    <div class="alert-item bg-blue-50 border border-blue-100 flex items-start space-x-2">
-                        <span class="text-blue-500 mt-0.5">📋</span>
-                        <div class="flex-1">
-                            <div class="text-sm font-medium text-blue-800">Transplant Window</div>
-                            <div class="text-xs text-blue-600">8 weeks indoors · last frost in 1 week</div>
+                    <div class="alert-item" style="background:rgba(74,107,122,0.06);border:1px solid rgba(74,107,122,0.3);margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;">
+                        <span style="color:var(--tip-teal);margin-top:2px;font-size:12px;">📋</span>
+                        <div style="flex:1;">
+                            <div style="font-size:13px;font-weight:500;color:var(--tip-teal);">Transplant Window</div>
+                            <div style="font-size:11px;color:var(--n-500);">8 weeks indoors · last frost in 1 week</div>
                         </div>
-                        <span class="text-xs text-gray-400">→</span>
+                        <span style="font-size:11px;color:var(--n-300);">→</span>
                     </div>
                 </div>
 
                 <!-- 4. RECENT ACTIVITY LOG -->
-                <div class="px-4 py-3">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Recent Activity</h3>
-                        <button class="text-xs text-emerald-600">View All →</button>
+                <div style="padding:12px 16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                        <h3 style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;">Recent Activity</h3>
+                        <button style="font-size:11px;color:var(--terracotta);background:none;border:none;cursor:pointer;font-weight:500;">View All →</button>
                     </div>
 
-                    <div class="space-y-0">
-                        <div class="timeline-item py-2">
-                            <div class="timeline-dot bg-green-100 text-green-600">💧</div>
-                            <div class="text-xs text-gray-400">Today, 8:15 AM</div>
-                            <div class="text-sm text-gray-700">Watered — 8 oz, hand water</div>
+                    <div style="display:flex;flex-direction:column;">
+                        <div class="timeline-item" style="padding:8px 0;">
+                            <div class="timeline-dot" style="background:rgba(74,107,46,0.15);color:var(--growth-green);">💧</div>
+                            <div style="font-size:11px;color:var(--n-300);">Today, 8:15 AM</div>
+                            <div style="font-size:13px;color:var(--n-700);">Watered — 8 oz, hand water</div>
                         </div>
-                        <div class="timeline-item py-2">
-                            <div class="timeline-dot bg-amber-100 text-amber-600">🧪</div>
-                            <div class="text-xs text-gray-400">Yesterday, 3:00 PM</div>
-                            <div class="text-sm text-gray-700">Fertilized — Liquid NPK 5-5-5, 1/2 strength</div>
+                        <div class="timeline-item" style="padding:8px 0;">
+                            <div class="timeline-dot" style="background:rgba(138,100,0,0.15);color:var(--dry-amber);">🧪</div>
+                            <div style="font-size:11px;color:var(--n-300);">Yesterday, 3:00 PM</div>
+                            <div style="font-size:13px;color:var(--n-700);">Fertilized — Liquid NPK 5-5-5, 1/2 strength</div>
                         </div>
-                        <div class="timeline-item py-2">
-                            <div class="timeline-dot bg-purple-100 text-purple-600">📷</div>
-                            <div class="text-xs text-gray-400">Jun 10, 11:30 AM</div>
-                            <div class="text-sm text-gray-700">Photo attached</div>
-                            <div class="mt-1 h-16 w-20 rounded-lg bg-gray-200"></div>
+                        <div class="timeline-item" style="padding:8px 0;">
+                            <div class="timeline-dot" style="background:rgba(122,92,20,0.15);color:var(--golden-earth);">📷</div>
+                            <div style="font-size:11px;color:var(--n-300);">Jun 10, 11:30 AM</div>
+                            <div style="font-size:13px;color:var(--n-700);">Photo attached</div>
+                            <div style="margin-top:4px;height:64px;width:80px;border-radius:8px;background:var(--n-200);"></div>
                         </div>
-                        <div class="timeline-item py-2">
-                            <div class="timeline-dot bg-gray-100 text-gray-600">📝</div>
-                            <div class="text-xs text-gray-400">Jun 10, 11:28 AM</div>
-                            <div class="text-sm text-gray-700">Slight wilting noticed during heat wave</div>
+                        <div class="timeline-item" style="padding:8px 0;">
+                            <div class="timeline-dot" style="background:rgba(122,101,82,0.15);color:var(--n-500);">📝</div>
+                            <div style="font-size:11px;color:var(--n-300);">Jun 10, 11:28 AM</div>
+                            <div style="font-size:13px;color:var(--n-700);">Slight wilting noticed during heat wave</div>
                         </div>
-                        <div class="timeline-item py-2">
-                            <div class="timeline-dot bg-blue-100 text-blue-600">🌡️</div>
-                            <div class="text-xs text-gray-400">Jun 09, 6:00 PM</div>
-                            <div class="text-sm text-gray-700">Conditions — 95°F, 40% humidity</div>
+                        <div class="timeline-item" style="padding:8px 0;">
+                            <div class="timeline-dot" style="background:rgba(74,107,122,0.15);color:var(--tip-teal);">🌡️</div>
+                            <div style="font-size:11px;color:var(--n-300);">Jun 09, 6:00 PM</div>
+                            <div style="font-size:13px;color:var(--n-700);">Conditions — 95°F, 40% humidity</div>
                         </div>
-                        <div class="timeline-item py-2">
-                            <div class="timeline-dot bg-green-100 text-green-600">💧</div>
-                            <div class="text-xs text-gray-400">Jun 08, 7:00 AM</div>
-                            <div class="text-sm text-gray-700">Watered — 6 oz, drip irrigation</div>
+                        <div class="timeline-item" style="padding:8px 0;">
+                            <div class="timeline-dot" style="background:rgba(74,107,46,0.15);color:var(--growth-green);">💧</div>
+                            <div style="font-size:11px;color:var(--n-300);">Jun 08, 7:00 AM</div>
+                            <div style="font-size:13px;color:var(--n-700);">Watered — 6 oz, drip irrigation</div>
                         </div>
-                        <div class="timeline-item py-2">
-                            <div class="timeline-dot bg-purple-100 text-purple-600">📷</div>
-                            <div class="text-xs text-gray-400">Jun 05, 2:00 PM</div>
-                            <div class="text-sm text-gray-700">Photo attached — new growth appearing</div>
+                        <div class="timeline-item" style="padding:8px 0;">
+                            <div class="timeline-dot" style="background:rgba(122,92,20,0.15);color:var(--golden-earth);">📷</div>
+                            <div style="font-size:11px;color:var(--n-300);">Jun 05, 2:00 PM</div>
+                            <div style="font-size:13px;color:var(--n-700);">Photo attached — new growth appearing</div>
                         </div>
-                        <div class="timeline-item py-2">
-                            <div class="timeline-dot bg-gray-100 text-gray-600">📝</div>
-                            <div class="text-xs text-gray-400">May 29, 10:00 AM</div>
-                            <div class="text-sm text-gray-700">Transplanted to garden bed 3, row 2</div>
+                        <div class="timeline-item" style="padding:8px 0;">
+                            <div class="timeline-dot" style="background:rgba(122,101,82,0.15);color:var(--n-500);">📝</div>
+                            <div style="font-size:11px;color:var(--n-300);">May 29, 10:00 AM</div>
+                            <div style="font-size:13px;color:var(--n-700);">Transplanted to garden bed 3, row 2</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 5. PHOTO STRIP -->
-                <div class="px-4 py-3 border-t border-gray-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Photos</h3>
-                        <button class="text-xs text-emerald-600">View All →</button>
+                <div style="padding:12px 16px;border-top:1px solid var(--n-200);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <h3 style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;">Photos</h3>
+                        <button style="font-size:11px;color:var(--terracotta);background:none;border:none;cursor:pointer;font-weight:500;">View All →</button>
                     </div>
-                    <div class="flex space-x-2 overflow-x-auto pb-1">
-                        <div class="photo-thumb bg-green-200 flex items-center justify-center"><span class="text-xs">🌱</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">Apr 1</span></div>
-                        <div class="photo-thumb bg-green-300 flex items-center justify-center"><span class="text-xs">🌿</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">Apr 15</span></div>
-                        <div class="photo-thumb bg-green-400 flex items-center justify-center"><span class="text-xs">🪴</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">May 5</span></div>
-                        <div class="photo-thumb bg-green-500 flex items-center justify-center"><span class="text-xs">🌿</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">May 29</span></div>
-                        <div class="photo-thumb bg-yellow-300 flex items-center justify-center"><span class="text-xs">🌿</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">Jun 5</span></div>
-                        <div class="photo-thumb bg-orange-200 flex items-center justify-center"><span class="text-xs">🥀</span><span class="absolute bottom-0.5 left-0.5 text-[8px] bg-black/50 text-white px-1 rounded">Jun 10</span></div>
-                        <button class="flex-shrink-0 w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center" onclick="toggleForm('photo')"><span class="text-gray-400 text-xl">+</span></button>
+                    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
+                        <div class="photo-thumb" style="background:var(--growth-green);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;">🌱</span><span style="position:absolute;bottom:2px;left:2px;font-size:8px;background:rgba(0,0,0,0.5);color:white;padding:1px 4px;border-radius:4px;">Apr 1</span></div>
+                        <div class="photo-thumb" style="background:#3D5A24;display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;">🌿</span><span style="position:absolute;bottom:2px;left:2px;font-size:8px;background:rgba(0,0,0,0.5);color:white;padding:1px 4px;border-radius:4px;">Apr 15</span></div>
+                        <div class="photo-thumb" style="background:var(--saddle-brown);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;">🪴</span><span style="position:absolute;bottom:2px;left:2px;font-size:8px;background:rgba(0,0,0,0.5);color:white;padding:1px 4px;border-radius:4px;">May 5</span></div>
+                        <div class="photo-thumb" style="background:var(--growth-green);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;">🌿</span><span style="position:absolute;bottom:2px;left:2px;font-size:8px;background:rgba(0,0,0,0.5);color:white;padding:1px 4px;border-radius:4px;">May 29</span></div>
+                        <div class="photo-thumb" style="background:var(--golden-earth);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;">🌿</span><span style="position:absolute;bottom:2px;left:2px;font-size:8px;background:rgba(0,0,0,0.5);color:white;padding:1px 4px;border-radius:4px;">Jun 5</span></div>
+                        <div class="photo-thumb" style="background:var(--terracotta);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;">🥀</span><span style="position:absolute;bottom:2px;left:2px;font-size:8px;background:rgba(0,0,0,0.5);color:white;padding:1px 4px;border-radius:4px;">Jun 10</span></div>
+                        <button style="flex-shrink:0;width:48px;height:48px;border-radius:8px;border:2px dashed var(--n-300);display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;" onclick="toggleForm('photo')"><span style="color:var(--n-300);font-size:20px;">+</span></button>
                     </div>
                 </div>
 
                 <!-- 6. HERMES CHAT (Collapsed) -->
-                <div id="hermes-collapsed" class="chat-bar px-4 py-2.5 flex items-center justify-between" onclick="toggleHermes()">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg">🤖</span>
-                        <span class="text-sm text-gray-600">Ask Hermes about HABY-2026-001</span>
+                <div id="hermes-collapsed" class="chat-bar" style="padding:10px 16px;display:flex;align-items:center;justify-content:space-between;" onclick="toggleHermes()">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:18px;">🤖</span>
+                        <span style="font-size:13px;color:var(--n-700);">Ask Hermes about HABY-2026-001</span>
                     </div>
-                    <span class="text-gray-400 text-sm">▲</span>
+                    <span style="color:var(--n-300);font-size:12px;">▲</span>
                 </div>
 
                 <!-- 6b. HERMES CHAT (Expanded) -->
-                <div id="hermes-expanded" class="hidden bg-white border-t border-gray-100">
-                    <div class="h-48 overflow-y-auto px-4 py-3 space-y-2">
-                        <div class="flex items-start space-x-2">
-                            <span class="text-sm">🤖</span>
-                            <div class="bg-gray-50 rounded-xl rounded-tl-none px-3 py-2 max-w-[85%]">
-                                <div class="text-xs text-gray-700">Based on your data: watering increased during heat wave, likely overwatering rather than fertilizer deficiency.</div>
-                                <div class="text-[10px] text-gray-400 mt-1">12 watering events · 3 fertilizer apps · 8 days of conditions</div>
-                                <button class="mt-1 text-xs text-emerald-600 font-medium" onclick="showToast('Insight logged to activity history')">Log this insight →</button>
+                <div id="hermes-expanded" class="hidden" style="background:var(--warm-cream);border-top:1px solid var(--n-200);">
+                    <div style="height:192px;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+                        <div style="display:flex;align-items:flex-start;gap:8px;">
+                            <span style="font-size:13px;">🤖</span>
+                            <div style="background:var(--n-100);border:1px solid var(--n-200);border-radius:12px;border-top-left-radius:4px;padding:8px 12px;max-width:85%;">
+                                <div style="font-size:12px;color:var(--n-700);">Based on your data: watering increased during heat wave, likely overwatering rather than fertilizer deficiency.</div>
+                                <div style="font-size:10px;color:var(--n-300);margin-top:4px;">12 watering events · 3 fertilizer apps · 8 days of conditions</div>
+                                <button style="margin-top:4px;font-size:11px;color:var(--terracotta);font-weight:500;background:none;border:none;cursor:pointer;" onclick="showToast('Insight logged to activity history')">Log this insight →</button>
                             </div>
                         </div>
-                        <div class="flex justify-end">
-                            <div class="bg-emerald-600 text-white rounded-xl rounded-tr-none px-3 py-2 max-w-[85%]">
-                                <div class="text-xs">What's causing the yellowing on lower leaves?</div>
+                        <div style="display:flex;justify-content:flex-end;">
+                            <div style="background:var(--terracotta);color:white;border-radius:12px;border-top-right-radius:4px;padding:8px 12px;max-width:85%;">
+                                <div style="font-size:12px;">What's causing the yellowing on lower leaves?</div>
                             </div>
                         </div>
                     </div>
-                    <div class="px-4 pb-2 flex space-x-1.5 overflow-x-auto">
-                        <button class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full whitespace-nowrap">Compare with other Habaneros</button>
-                        <button class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full whitespace-nowrap">Predict harvest date</button>
-                        <button class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full whitespace-nowrap">Care schedule on track?</button>
+                    <div style="padding:8px 16px 4px;display:flex;gap:6px;overflow-x:auto;">
+                        <button style="font-size:11px;background:rgba(176,78,46,0.08);color:var(--terracotta);padding:4px 10px;border-radius:12px;white-space:nowrap;border:1px solid rgba(176,78,46,0.2);cursor:pointer;">Compare with other Habaneros</button>
+                        <button style="font-size:11px;background:rgba(176,78,46,0.08);color:var(--terracotta);padding:4px 10px;border-radius:12px;white-space:nowrap;border:1px solid rgba(176,78,46,0.2);cursor:pointer;">Predict harvest date</button>
+                        <button style="font-size:11px;background:rgba(176,78,46,0.08);color:var(--terracotta);padding:4px 10px;border-radius:12px;white-space:nowrap;border:1px solid rgba(176,78,46,0.2);cursor:pointer;">Care schedule on track?</button>
                     </div>
-                    <div class="px-4 pb-4 flex space-x-2">
-                        <input type="text" class="flex-1 border rounded-xl px-3 py-2 text-sm" placeholder="Ask about this plant...">
-                        <button class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold" onclick="showToast('Query sent to Hermes')">Send</button>
+                    <div style="padding:4px 16px 16px;display:flex;gap:8px;">
+                        <input type="text" class="form-input" style="flex:1;" placeholder="Ask about this plant...">
+                        <button style="background:var(--burnt-sienna);color:white;padding:8px 16px;border-radius:12px;font-size:13px;font-weight:600;border:none;cursor:pointer;" onclick="showToast('Query sent to Hermes')">Send</button>
                     </div>
                 </div>
 
                 <!-- 7. BOTTOM NAVIGATION -->
-                <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-2 flex justify-around">
-                    <button class="flex flex-col items-center py-1 px-4" onclick="goHome()">
-                        <span class="text-xl">📱</span>
-                        <span class="text-[10px] text-gray-500 mt-0.5">Scan Another</span>
+                <div style="position:sticky;bottom:0;background:var(--n-100);border-top:1px solid var(--n-200);padding:8px 16px;display:flex;justify-content:space-around;">
+                    <button onclick="goHome()" style="display:flex;flex-direction:column;align-items:center;padding:4px 16px;background:none;border:none;cursor:pointer;">
+                        <span style="font-size:20px;">📱</span>
+                        <span style="font-size:10px;color:var(--n-500);margin-top:2px;">Scan Another</span>
                     </button>
-                    <div class="flex-1"></div>
-                    <button class="flex flex-col items-center py-1 px-4" onclick="showToast('Plant Info: seed packet data, planting dates, location history')">
-                        <span class="text-xl">ℹ️</span>
-                        <span class="text-[10px] text-gray-500 mt-0.5">Plant Info</span>
+                    <div style="flex:1;"></div>
+                    <button onclick="showToast('Plant Info: seed packet data, planting dates, location history')" style="display:flex;flex-direction:column;align-items:center;padding:4px 16px;background:none;border:none;cursor:pointer;">
+                        <span style="font-size:20px;">ℹ️</span>
+                        <span style="font-size:10px;color:var(--n-500);margin-top:2px;">Plant Info</span>
                     </button>
                 </div>
             </div>
@@ -573,7 +615,6 @@
     </div>
 
     <script>
-        // Screen navigation
         function showDetail() {
             document.getElementById('screen-home').classList.add('back-hidden');
             document.getElementById('screen-detail').classList.remove('hidden-screen');
@@ -585,7 +626,6 @@
             document.getElementById('scanner-overlay').style.display = 'none';
         }
 
-        // Scanner simulation
         function activateScanner() {
             document.getElementById('scanner-overlay').style.display = 'flex';
             setTimeout(() => {
@@ -594,7 +634,6 @@
             }, 2000);
         }
 
-        // Form toggle
         function toggleForm(type) {
             const forms = ['water', 'feed', 'condition', 'photo', 'note'];
             forms.forEach(f => {
@@ -614,7 +653,6 @@
             toggleForm(type);
         }
 
-        // Hermes toggle
         function toggleHermes() {
             const collapsed = document.getElementById('hermes-collapsed');
             const expanded = document.getElementById('hermes-expanded');
@@ -627,7 +665,6 @@
             }
         }
 
-        // Toast notification
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;

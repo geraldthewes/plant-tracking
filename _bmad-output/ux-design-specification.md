@@ -1,12 +1,12 @@
 ---
-stepsCompleted: [1, 2]
+stepsCompleted: [1, 2, 3]
 inputDocuments: ['_bmad-output/briefs/plant-tracker-brief.md', '_bmad-output/prd.md']
 ---
 
 # UX Design Specification plant-tracking
 
 **Author:** Gerald
-**Date:** 2026-05-15
+**Date:** 2026-05-18
 
 ## Discovery Summary
 
@@ -97,6 +97,138 @@ Unlike commercial apps that feel transactional or monetization-focused, our syst
 The home screen should make users feel: *"I can easily care for my plants better today because I have the right information at my fingertips."*
 
 This aligns with the PRD's emphasis on "better implementation of core plant tracking concepts" that "prioritizes user value through a better implementation of core plant tracking concepts."
+
+## Visual Design: Color Palette & Mood
+
+### Mood Statement
+
+The interface evokes **a warm, sunlit garden shed** — a lived-in sanctuary where tools feel trusted and every object has its place. The mood is simultaneously **grounded, nurturing, and quietly joyful**.
+
+This is not a cold productivity tool. It's a companion that feels like a friend who gardens alongside you — one who understands soil, pots, sunlight, and the small daily rituals of care. The interface should make users feel connected to their plants, calm and capable, and subtly motivated to log activities and celebrate growth.
+
+### Design Principles Driving Color Choices
+
+The palette follows established UI/UX principles:
+
+- **Aesthetic-Usability Effect**: A coherent, beautiful interface creates positive first impressions and makes users more tolerant of minor friction. The warm, sunlit mood leverages this effect.
+- **Color Psychology**: Brown tones communicate earthiness and groundedness. Terracotta conveys warmth and energy. Cream provides approachability and calm. All choices align with gardening's physical world.
+- **Limited Palette (4-10 core hues)**: Five core colors plus six neutrals keeps the system manageable and consistent.
+- **60-30-10 Rule**: ~60% Warm Cream (backgrounds), ~30% Saddle Brown (navigation, text, secondary elements), ~10% Terracotta/Burnt Sienna (accents, CTAs, active states).
+- **WCAG 2.1 AA Compliance**: All text/background combinations meet minimum 4.5:1 contrast ratios. All semantic colors pass AA on the primary background.
+
+### Core Color Palette
+
+| Role | Color Name | Hex | Rationale |
+|---|---|---|---|
+| **Primary** | Terracotta | `#B04E2E` | Sun-baked clay — the emotional heart of the palette. References real terracotta pots, the most iconic object in home gardening. Darkened from original `#C65D3B` to pass WCAG AA with white text (5.28:1). Used for headers, active states, brand accents, primary navigation highlights. |
+| **Secondary** | Saddle Brown | `#6B4226` | Rich earth — wooden planters, soil, leather gardening tools. Darkened from original `#8B5A2B` to achieve AAA for body text on Warm Cream (7.68:1). The anchor of the text hierarchy. Used for navigation, secondary buttons, body copy, labels. |
+| **Background** | Warm Cream | `#F8F1E3` | Sun-bleached linen — soft, warm, non-fatiguing canvas. Keeps the interface feeling light, clean, and approachable rather than heavy. Excellent for long reading sessions (plant details, activity logs) and reduces eye strain. Unchanged from original. |
+| **Accent** | Golden Earth | `#7A5C14` | Harvest sunlight — optimistic, abundant, celebration-worthy. Replaces the original Peru `#CD853F` which was too light for accessible text (L=0.30). 28° hue-separated from Terracotta for differentiation. Used for icons, milestone highlights, subtle decorative details. |
+| **CTA** | Burnt Sienna | `#A04010` | Energetic warmth — the most saturated core color (82% saturation) for primary action buttons. Replaces original Save Button `#E07A3D` which shared identical luminance with Peru. Passes AA with white text (6.49:1). Higher saturation naturally draws the eye to important actions. |
+
+### Semantic Colors
+
+All semantic colors pass WCAG AA (4.5:1+) on Warm Cream background. Each maintains the warm, natural mood rather than introducing jarring primary colors.
+
+| Role | Color Name | Hex | Contrast on Warm Cream | Rationale |
+|---|---|---|---|---|
+| **Success** | Growth Green | `#4A6B2E` | 5.44:1 | Muted olive — feels like new leaves, not artificial neon green. Celebrates completed care tasks and healthy plants. |
+| **Warning** | Dry Amber | `#8A6400` | 4.79:1 | Deep amber — stays within the warm family but signals attention needed (dry soil, overdue tasks). |
+| **Error** | Overdue Red | `#A0342E` | 6.18:1 | Desaturated terracotta-red — warm, not alarming. Signals overdue care or lost plants while maintaining brand coherence. |
+| **Info** | Tip Teal | `#4A6B7A` | 5.08:1 | Muted slate-teal — the only cool tone in the palette. Provides a clear visual break for informational content and care tips without breaking the warm mood. |
+
+### Neutral Scale
+
+A six-step warm-neutral scale eliminates cool grays, which would clash with the terracotta warmth. All neutrals share a brown bias (hue ~25-40°).
+
+| Token | Name | Hex | Luminance | Usage |
+|---|---|---|---|---|
+| **N-900** | Deep Earth | `#2C1810` | 0.012 | Page headings, display text |
+| **N-700** | Soil | `#4A3728` | 0.043 | Body text, labels, primary content |
+| **N-500** | Loam | `#7A6552` | 0.141 | Secondary text, captions, helper text (4.90:1 on Warm Cream) |
+| **N-300** | Dust | `#A89888` | 0.326 | Tertiary text, placeholders, disabled states |
+| **N-200** | Sand | `#D4C8B8` | 0.588 | Borders, dividers, card outlines |
+| **N-100** | Parchment | `#EDE5D8` | 0.790 | Subtle backgrounds, hover states, card surfaces |
+
+### WCAG AA Contrast Verification
+
+All text/background combinations verified against WCAG 2.1 AA (4.5:1 minimum for normal text, 3:1 for large text/UI components):
+
+| Foreground | Background | Ratio | Status |
+|---|---|---|---|
+| N-900 Heading | Warm Cream | 15.00:1 | AA + AAA ✅ |
+| N-700 Body | Warm Cream | 10.00:1 | AA + AAA ✅ |
+| Saddle Brown | Warm Cream | 7.68:1 | AA + AAA ✅ |
+| N-500 Secondary | Warm Cream | 4.90:1 | AA ✅ |
+| White | Terracotta | 5.28:1 | AA ✅ |
+| White | Saddle Brown | 8.63:1 | AA + AAA ✅ |
+| White | Golden Earth | 6.23:1 | AA ✅ |
+| White | Burnt Sienna (CTA) | 6.49:1 | AA ✅ |
+| Growth Green | Warm Cream | 5.44:1 | AA ✅ |
+| Dry Amber | Warm Cream | 4.79:1 | AA ✅ |
+| Overdue Red | Warm Cream | 6.18:1 | AA ✅ |
+| Tip Teal | Warm Cream | 5.08:1 | AA ✅ |
+
+### Color Application to UI Elements
+
+**Headers**: Terracotta `#B04E2E` background, white text. Or N-900 text on Warm Cream.
+
+**Primary Buttons (Save, Confirm)**: Burnt Sienna `#A04010` background, white text. Hover: darken 10%. Disabled: reduce opacity to 50% with N-300 text overlay.
+
+**Secondary Buttons**: Saddle Brown `#6B4226` background, white text. Or outlined: N-500 border, N-700 text on Warm Cream background.
+
+**Navigation**: Saddle Brown `#6B4226` for inactive items. Terracotta `#B04E2E` for active item.
+
+**Cards**: N-100 Parchment `#EDE5D8` background, N-200 Sand `#D4C8B8` border, N-700 Soil `#4A3728` text.
+
+**Status Badges** (lifecycle stages):
+| Stage | Background | Text | Icon |
+|---|---|---|---|
+| Seed / Germinating | Growth Green `#4A6B2E` | White `#FFFFFF` | 🌱 |
+| Seedling | `#6B8F4E` (lighter growth) | White `#FFFFFF` | 🪴 |
+| Vegetative | `#3D5A24` (darker growth) | White `#FFFFFF` | 🌿 |
+| Flowering | Terracotta `#B04E2E` | White `#FFFFFF` | 🌸 |
+| Fruiting | Burnt Sienna `#A04010` | White `#FFFFFF` | 🌶️ |
+| Harvested | Golden Earth `#7A5C14` | White `#FFFFFF` | ✅ |
+| Lost | Overdue Red `#A0342E` | White `#FFFFFF` | ❌ |
+
+**Care Needed Alerts**:
+| Level | Border/Background | Text | Rationale |
+|---|---|---|---|
+| Overdue | Overdue Red `#A0342E` border, `#F5E8E6` tinted bg | N-700 | Urgent but warm, not alarming |
+| Warning | Dry Amber `#8A6400` border, `#F5F0E3` tinted bg | N-700 | Attention without panic |
+| Milestone | Tip Teal `#4A6B7A` border, `#E8EDED` tinted bg | N-700 | Informational, cool break |
+| All Clear | Growth Green `#4A6B2E` border, `#E6EDE3` tinted bg | Growth Green | Positive, natural |
+
+**Hermes Chat**:
+- User messages: Right-aligned, Terracotta `#B04E2E` background, white text
+- Hermes responses: Left-aligned, Warm Cream `#F8F1E3` card with N-200 Sand `#D4C8B8` border, N-700 Soil `#4A3728` text
+
+**Activity Log Entries**: N-700 text on Warm Cream. Activity icons in their respective semantic colors. Timestamps in N-500.
+
+**Form Fields**: N-200 Sand `#D4C8B8` border on Warm Cream. Focus state: Terracotta `#B04E2E` border (3px). Error state: Overdue Red `#A0342E` border. Placeholder text in N-300 Dust `#A89888`.
+
+### Why Not Green?
+
+Many plant apps default to green. This palette intentionally avoids green as a primary color, using it only for the semantic "success" state. The reasons:
+
+1. **Differentiation**: The warm terracotta palette visually distinguishes this app from every other plant/garden app on the market.
+2. **Authenticity**: Real gardeners live in a world of terracotta pots, brown soil, wooden crates, and golden sunlight — not just green leaves.
+3. **Timelessness**: Earth tones don't follow trends. The palette won't look dated in 2-3 years.
+4. **Print Harmony**: These colors reproduce well on QR labels and printed care cards.
+
+### Outdoor Readability Considerations
+
+The palette was selected with garden conditions in mind:
+
+- **High luminance contrast**: N-900 on Warm Cream achieves 15:1 — readable in direct sunlight where screen contrast is washed out.
+- **Warm bias**: Warm backgrounds maintain perceived brightness better than cool whites under direct sun.
+- **No pastel text**: All text colors have low luminance values (L < 0.15) ensuring they remain legible even on washed-out displays.
+- **Semantic colors are saturated enough**: All pass 4.5:1 even when screen contrast is reduced by glare.
+
+### Dark Mode (Future Consideration)
+
+Not scoped for initial implementation. Garden usage is predominantly outdoors where dark mode offers minimal benefit and may reduce readability in bright conditions. When dark mode is eventually added, the neutral scale will invert and core colors will shift to reduced-saturation variants to prevent eye strain. The warm bias will be preserved — dark mode should feel like a dimly lit garden shed, not a clinical dark UI.
 
 ## Home Screen Specification
 
@@ -196,14 +328,14 @@ The Plant Detail screen is the primary data-entry surface. It appears immediatel
 - **Back Button**: "←" — returns to previous screen (home, plant care list, or activity log)
 - **Plant ID**: e.g., "HABY-2026-001" — monospace, bold, primary identifier
 - **Variety Name**: e.g., "Yellow Habanero" — secondary text below ID
-- **Status Badge**: Color-coded pill showing current lifecycle stage
-  - 🌱 Seed / Germinating (green)
-  - 🪴 Seedling (light green)
-  - 🌿 Vegetative (dark green)
-  - 🌸 Flowering (pink)
-  - 🌶️ Fruiting (orange)
-  - ✅ Harvested (blue)
-  - ❌ Lost (red)
+- **Status Badge**: Color-coded pill showing current lifecycle stage (see Color Palette section for exact hex values)
+  - 🌱 Seed / Germinating — Growth Green
+  - 🪴 Seedling — lighter Growth Green
+  - 🌿 Vegetative — darker Growth Green
+  - 🌸 Flowering — Terracotta
+  - 🌶️ Fruiting — Burnt Sienna
+  - ✅ Harvested — Golden Earth
+  - ❌ Lost — Overdue Red
 - **More Menu**: "⋮" icon — opens dropdown with: Edit Plant Info, View Full History, Print Label, Duplicate Plant, Delete
 
 #### 2. **Quick Action Bar** (Immediately below header — primary data entry)
@@ -238,7 +370,7 @@ A collapsible section showing what this specific plant needs attention for. This
 **Interaction**:
 - Tap an alert → opens the corresponding Quick Action form pre-filled (e.g., tap "water overdue" → opens Water form)
 - "Mark as Done" dismisses an alert without logging data (for false positives)
-- If no alerts, show a green check: "✅ All good — no pending care items"
+- If no alerts, show Growth Green check: "✅ All good — no pending care items" (Growth Green `#4A6B2E` border, tinted background `#E6EDE3`)
 
 **Data source**: Calculated from plant's care history frequency, seed packet specs (days to maturity, spacing, etc.), and recent environmental data. Simple rule-based logic, no ML needed initially.
 
@@ -388,12 +520,12 @@ When a Quick Action button is tapped, an inline form slides down beneath the Qui
   - Date: Auto-filled, editable
 
 All forms share:
-- "Save" button (bottom, full width, green)
-- "✕" dismiss button (top-right)
+- "Save" button (bottom, full width, Burnt Sienna `#A04010`, white text)
+- "✕" dismiss button (top-right, N-500)
 - Tap outside form to dismiss (with unsaved changes warning if typed)
 
 #### Hermes Chat Message Format
-- **User messages**: Right-aligned, green bubble
-- **Hermes responses**: Left-aligned, white card with subtle border
-  - Response includes: insight text, data reference (collapsed by default), "Log this insight" action
-  - Loading state: Animated plant growth spinner (seed → sprout → leaf)
+- **User messages**: Right-aligned, Terracotta `#B04E2E` background, white text, rounded corners
+- **Hermes responses**: Left-aligned, Warm Cream `#F8F1E3` card with N-200 Sand `#D4C8B8` border, N-700 Soil `#4A3728` text
+  - Response includes: insight text, data reference (collapsed by default), "Log this insight" action button (Burnt Sienna outline)
+  - Loading state: Animated plant growth spinner in Saddle Brown (seed → sprout → leaf)
