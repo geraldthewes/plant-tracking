@@ -4,27 +4,21 @@ Plant Tracking CLI - Main entry point for plant tracking commands
 """
 import argparse
 import sys
-from pathlib import Path
-from .plant_model import Plant, get_database_dir
+
+# Markdown model imports (for backup/export during transition)
+from .genus_model import get_genera_dir
 from .plant_log_model import get_logs_dir
+from .plant_model import Plant as MarkdownPlant, get_database_dir
 from .seed_packet_model import (
-    SeedPacket,
+    SeedPacket as MarkdownSeedPacket,
+    find_matching as markdown_find_matching,
     get_seed_packets_dir,
-    find_matching,
-    list_all,
-    SEED_PACKET_FIELDS as PACKET_OPTIONAL_FIELDS,
-)
-from .genus_model import (
-    Genus,
-    get_genera_dir,
-    find_matching as find_genus_matching,
-    find_by_variety_name,
-    list_all as list_all_genera,
+    list_all as markdown_list_all,
 )
 
 # Fuzzy matching for genus name searches
 try:
-    from thefuzz import process, fuzz
+    from thefuzz import fuzz, process
 
     FUZZY_MATCHING_AVAILABLE = True
 except ImportError:
@@ -32,7 +26,8 @@ except ImportError:
     process = None
     fuzz = None
 
-# Ensure database directories exist
+
+# Module-level directory variables for backward compatibility with tests
 DATABASE_DIR = get_database_dir()
 DATABASE_DIR.mkdir(exist_ok=True)
 PACKETS_DIR = get_seed_packets_dir()
@@ -43,12 +38,43 @@ LOGS_DIR = get_logs_dir()
 LOGS_DIR.mkdir(exist_ok=True)
 
 
+def _ensure_dirs():
+    """Ensure database directories exist (for Markdown backup during transition)."""
+    global DATABASE_DIR, PACKETS_DIR, GENERA_DIR, LOGS_DIR
+    DATABASE_DIR = get_database_dir()
+    DATABASE_DIR.mkdir(exist_ok=True)
+    PACKETS_DIR = get_seed_packets_dir()
+    PACKETS_DIR.mkdir(exist_ok=True)
+    GENERA_DIR = get_genera_dir()
+    GENERA_DIR.mkdir(exist_ok=True)
+    LOGS_DIR = get_logs_dir()
+    LOGS_DIR.mkdir(exist_ok=True)
+    return DATABASE_DIR, PACKETS_DIR, GENERA_DIR, LOGS_DIR
+
+
+def _get_db():
+    """Get database module, handling missing DATABASE_URL gracefully."""
+    try:
+        from . import database
+
+        database.init_db()
+        return database
+    except Exception:
+        return None
+
+
 def main():
+    # Ensure directories exist for Markdown backup
+    _ensure_dirs()
+
+    # Initialize PostgreSQL if available
+    db = _get_db()
+
     parser = argparse.ArgumentParser(description="Plant Tracking System")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # create-plant subcommand
-    plant_parser = subparsers.add_parser(
+    subparsers.add_parser(
         "create-plant", help="Create a new plant record"
     )
 
@@ -154,58 +180,74 @@ def main():
     args = parser.parse_args()
 
     if args.command == "create-plant":
-        create_plant(args)
+        create_plant(args, db, DATABASE_DIR, PACKETS_DIR, GENERA_DIR)
     elif args.command == "print-label":
         print_label(args)
     elif args.command == "create-seed-packet":
-        create_seed_packet(args)
+        create_seed_packet(args, db, PACKETS_DIR)
     elif args.command == "list-seed-packets":
-        list_seed_packets(args)
+        list_seed_packets(args, db)
     elif args.command == "show-seed-packet":
-        show_seed_packet(args)
+        show_seed_packet(args, db)
     elif args.command == "create-genus":
-        create_genus(args)
+        create_genus(args, db, GENERA_DIR)
     elif args.command == "list-genera":
-        list_genera(args)
+        list_genera(args, db)
     elif args.command == "show-genus":
-        show_genus(args)
+        show_genus(args, db)
     elif args.command == "log":
         if args.log_command == "humidity":
-            log_humidity(args)
+            log_humidity(args, db)
         elif args.log_command == "water":
-            log_water(args)
+            log_water(args, db)
         elif args.log_command == "fertilizer":
-            log_fertilizer(args)
+            log_fertilizer(args, db)
         elif args.log_command == "note":
-            log_note(args)
+            log_note(args, db)
         elif args.log_command == "list":
-            log_list(args)
+            log_list(args, db)
         else:
             log_parser.print_help()
     else:
         parser.print_help()
 
 
-def _prompt_field(field, description, plant_data):
+def _prompt_field(field, description, data):
     """Prompt user for a single field value with validation."""
     while True:
         value = input(f"{description}: ").strip()
         if value:
-            plant_data[field] = value
+            data[field] = value
             break
         else:
             print("This field is required")
 
 
-def _prompt_optional_field(field, description, plant_data):
+def _prompt_optional_field(field, description, data):
     """Prompt user for an optional field value."""
     value = input(f"{description} (optional): ").strip()
     if value:
-        plant_data[field] = value
+        data[field] = value
 
 
-def create_plant(args):
+def _write_markdown_backup(filepath, model_instance):
+    """Write Markdown backup file for a model instance."""
+    with open(filepath, "w") as f:
+        f.write(model_instance.to_markdown())
+
+
+def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=None):
     """Create a new plant record through interactive prompts with genus lookup."""
+    from .genus_model import find_by_variety_name as markdown_find_by_variety_name
+
+    # Backward compatibility: use module-level vars if not provided
+    if database_dir is None:
+        database_dir = getattr(args, "database_dir", None) or DATABASE_DIR
+    if packets_dir is None:
+        packets_dir = getattr(args, "packets_dir", None) or PACKETS_DIR
+    if genera_dir is None:
+        genera_dir = getattr(args, "genera_dir", None) or GENERA_DIR
+
     print("=== Create New Plant Record ===")
     print(
         "Fields needed for the label are required; record-keeping fields are optional."
@@ -219,35 +261,68 @@ def create_plant(args):
     _prompt_field("variety_name", "Variety name (e.g., Yellow Habanero)", plant_data)
 
     # Try exact match by variety name first
-    existing_genus = find_by_variety_name(plant_data["variety_name"])
+    if db:
+        from .models import Genus
+
+        existing_genus = Genus.find_by_variety_name(plant_data["variety_name"])
+    else:
+        existing_genus = markdown_find_by_variety_name(plant_data["variety_name"])
 
     if existing_genus:
+        genus_data = existing_genus.data if hasattr(existing_genus, "data") else None
+        genus_id = genus_data["id"] if genus_data else existing_genus.id
+        genus_variety = genus_data["variety_name"] if genus_data else existing_genus.variety_name
+        genus_latin = genus_data["latin_name"] if genus_data else existing_genus.latin_name
+
         print(
-            f"\n\u2713 Found genus: {existing_genus.data['id']} - {existing_genus.data['variety_name']}"
+            f"\n✓ Found genus: {genus_id} - {genus_variety}"
         )
-        print(f"  Latin name: {existing_genus.data['latin_name']}")
-        plant_data["latin_name"] = existing_genus.data["latin_name"]
-        plant_data["genus_id"] = existing_genus.data["id"]
+        print(f"  Latin name: {genus_latin}")
+        plant_data["latin_name"] = genus_latin
+        plant_data["genus_id"] = genus_id
         print("  Latin name auto-resolved from genus database.")
     else:
         # Try fuzzy search automatically
-        matched_genus_id = _fuzzy_search_genus(plant_data["variety_name"])
+        matched_genus_id = _fuzzy_search_genus(plant_data["variety_name"], db)
         if matched_genus_id:
-            # Find the matched genus to show details
-            all_genera = list_all_genera()
-            matched_genus = next(
-                (g for g in all_genera if g.data["id"] == matched_genus_id), None
-            )
-            if matched_genus:
-                print(
-                    f"\n\u2713 Fuzzy match found: {matched_genus.data['id']} - {matched_genus.data['variety_name']}"
+            if db:
+                from .models import Genus
+
+                matched_genus = db.engine.execute(
+                    db.engine.raw_connection().cursor().execute(
+                        "SELECT * FROM genera WHERE id = %s", (matched_genus_id,)
+                    )
                 )
-                print(f"  Latin name: {matched_genus.data['latin_name']}")
-                confirm = input("Use this genus? (Y/n): ").strip().lower()
-                if confirm != "n":
-                    plant_data["latin_name"] = matched_genus.data["latin_name"]
-                    plant_data["genus_id"] = matched_genus.data["id"]
-                    print("  Latin name auto-resolved from genus database.")
+                # Simpler approach
+                all_genera = Genus.list_all()
+                matched_genus = next(
+                    (g for g in all_genera if g.id == matched_genus_id), None
+                )
+                if matched_genus:
+                    print(
+                        f"\n✓ Fuzzy match found: {matched_genus.id} - {matched_genus.variety_name}"
+                    )
+                    print(f"  Latin name: {matched_genus.latin_name}")
+                    confirm = input("Use this genus? (Y/n): ").strip().lower()
+                    if confirm != "n":
+                        plant_data["latin_name"] = matched_genus.latin_name
+                        plant_data["genus_id"] = matched_genus.id
+                        print("  Latin name auto-resolved from genus database.")
+            else:
+                all_genera = markdown_list_all()
+                matched_genus = next(
+                    (g for g in all_genera if g.data["id"] == matched_genus_id), None
+                )
+                if matched_genus:
+                    print(
+                        f"\n✓ Fuzzy match found: {matched_genus.data['id']} - {matched_genus.data['variety_name']}"
+                    )
+                    print(f"  Latin name: {matched_genus.data['latin_name']}")
+                    confirm = input("Use this genus? (Y/n): ").strip().lower()
+                    if confirm != "n":
+                        plant_data["latin_name"] = matched_genus.data["latin_name"]
+                        plant_data["genus_id"] = matched_genus.data["id"]
+                        print("  Latin name auto-resolved from genus database.")
 
         # If still no match, ask for Latin name
         if "latin_name" not in plant_data:
@@ -262,42 +337,115 @@ def create_plant(args):
                 .lower()
             )
             if create_genus == "y":
-                plant_data["genus_id"] = _create_genus_inline(plant_data)
+                plant_data["genus_id"] = _create_genus_inline(
+                    plant_data, db, genera_dir
+                )
             else:
                 plant_data["genus_id"] = "unknown"
 
-    # Phase 2: Plant-specific required field (always asked)
+    # Phase 2: Seed packet handling
+    print()
+    print("--- Seed packet ---")
+    packet_matched = False
+
+    if db:
+        from .models import SeedPacket
+
+        spkt = SeedPacket.find_matching(
+            plant_data["variety_name"], plant_data["latin_name"]
+        )
+        if spkt:
+            print(
+                f"\n✓ Found seed packet: {spkt.id} - {spkt.variety_name}"
+            )
+            plant_data["seed_packet_id"] = spkt.id
+            packet_matched = True
+    else:
+        spkt = markdown_find_matching(
+            plant_data["variety_name"], plant_data["latin_name"]
+        )
+        if spkt:
+            print(
+                f"\n✓ Found seed packet: {spkt.data['id']} - {spkt.data['variety_name']}"
+            )
+            plant_data["seed_packet_id"] = spkt.data["id"]
+            packet_matched = True
+
+    if not packet_matched:
+        choice = _prompt_packet_choice(plant_data)
+        if choice == "create":
+            packet_id = _create_packet_inline(plant_data, db, packets_dir)
+            plant_data["seed_packet_id"] = packet_id
+        elif choice == "select":
+            selected = _select_existing_packet(db)
+            plant_data["seed_packet_id"] = selected if selected else "unknown"
+        else:
+            _prompt_record_fields(plant_data)
+            plant_data["seed_packet_id"] = "unknown"
+
+    # Phase 3: Plant-specific required field (always asked)
     print()
     print("--- Plant-specific field ---")
     _prompt_field("planting_date", "Planting date (YYYY-MM-DD)", plant_data)
 
     try:
-        plant = Plant(plant_data)
+        if db:
+            from .models import Plant
 
-        filename = f"{plant.data['id']}.md"
-        filepath = DATABASE_DIR / filename
+            plant = Plant.create_from_dict(plant_data)
+            with db.get_db() as session:
+                session.add(plant)
+                session.commit()
 
-        with open(filepath, "w") as f:
-            f.write(plant.to_markdown())
+            # Markdown backup
+            backup_data = {
+                "id": plant.id,
+                "variety_name": plant.variety_name,
+                "latin_name": plant.latin_name,
+                "planting_date": plant.planting_date,
+                "brand": plant.brand or "unknown",
+                "days_to_maturity": plant.days_to_maturity or "unknown",
+                "germination_time": plant.germination_time or "unknown",
+                "planting_depth": plant.planting_depth or "unknown",
+                "spacing": plant.spacing or "unknown",
+                "sun_requirements": plant.sun_requirements or "unknown",
+                "indoor_start_time": plant.indoor_start_time or "unknown",
+                "seed_packet_id": plant.seed_packet_id or "unknown",
+                "genus_id": plant.genus_id or "unknown",
+            }
+            markdown_plant = MarkdownPlant(backup_data)
+            filepath = database_dir / f"{plant.id}.md"
+            _write_markdown_backup(filepath, markdown_plant)
+        else:
+            # Fallback to Markdown-only mode
+            plant = MarkdownPlant(plant_data)
+            filepath = database_dir / f"{plant.data['id']}.md"
+            _write_markdown_backup(filepath, plant)
 
-        print(f"\n\u2713 Plant record created successfully!")
-        print(f"ID: {plant.data['id']}")
-        if plant_data.get("genus_id") and plant_data["genus_id"] != "unknown":
-            print(f"Genus: {plant_data['genus_id']}")
+        plant_id = plant.id if db else plant.data["id"]
+        genus_id = plant_data.get("genus_id", "unknown")
+        if not db:
+            plant_id = plant.data["id"]
+            genus_id = plant.data.get("genus_id", "unknown")
+
+        print("\n✓ Plant record created successfully!")
+        print(f"ID: {plant_id}")
+        if genus_id and genus_id != "unknown":
+            print(f"Genus: {genus_id}")
         print(f"Saved to: {filepath}")
-        print(f"\nNext steps:")
+        print("\nNext steps:")
         print(
-            f"  1. Generate/print label: plant-tracking print-label {plant.data['id']}"
+            f"  1. Generate/print label: plant-tracking print-label {plant_id}"
         )
         print(
-            f"  2. Generate image only: plant-tracking print-label {plant.data['id']} --no-print"
+            f"  2. Generate image only: plant-tracking print-label {plant_id} --no-print"
         )
         print(
-            f"  3. Use 50x70mm format: plant-tracking print-label {plant.data['id']} --format 50x70mm"
+            f"  3. Use 50x70mm format: plant-tracking print-label {plant_id} --format 50x70mm"
         )
 
     except Exception as e:
-        print(f"\n\u2717 Error creating plant record: {e}")
+        print(f"\n✗ Error creating plant record: {e}")
         sys.exit(1)
 
 
@@ -320,7 +468,7 @@ def _prompt_packet_choice(plant_data):
         return "skip"
 
 
-def _create_packet_inline(plant_data):
+def _create_packet_inline(plant_data, db, packets_dir):
     """Create a seed packet inline during plant creation.
 
     Returns the created packet ID.
@@ -344,20 +492,42 @@ def _create_packet_inline(plant_data):
     for field, description in optional_fields:
         _prompt_optional_field(field, description, packet_data)
 
-    packet = SeedPacket(packet_data)
-    filepath = PACKETS_DIR / f"{packet.data['id']}.md"
-    with open(filepath, "w") as f:
-        f.write(packet.to_markdown())
-    print(f"\n\u2713 Seed packet created: {packet.data['id']}")
-    return packet.data["id"]
+    if db:
+        from .models import SeedPacket
+
+        packet = SeedPacket.create_from_dict(packet_data)
+        with db.get_db() as session:
+            session.add(packet)
+            session.commit()
+
+        # Markdown backup
+        backup_data = packet_data.copy()
+        backup_data["id"] = packet.id
+        markdown_packet = MarkdownSeedPacket(backup_data)
+        filepath = packets_dir / f"{packet.id}.md"
+        _write_markdown_backup(filepath, markdown_packet)
+        print(f"\n✓ Seed packet created: {packet.id}")
+        return packet.id
+    else:
+        packet = MarkdownSeedPacket(packet_data)
+        filepath = packets_dir / f"{packet.data['id']}.md"
+        _write_markdown_backup(filepath, packet)
+        print(f"\n✓ Seed packet created: {packet.data['id']}")
+        return packet.data["id"]
 
 
-def _select_existing_packet():
+def _select_existing_packet(db):
     """Show existing packets and let user select by ID.
 
     Returns the selected packet ID or None.
     """
-    packets = list_all()
+    if db:
+        from .models import SeedPacket
+
+        packets = SeedPacket.list_all()
+    else:
+        packets = markdown_list_all()
+
     if not packets:
         print("No seed packets exist yet.")
         return None
@@ -365,9 +535,18 @@ def _select_existing_packet():
     print()
     print("Existing seed packets:")
     for p in packets:
-        brand = p.data.get("brand", "")
+        if db:
+            brand = p.brand or ""
+            pid = p.id
+            variety = p.variety_name
+            latin = p.latin_name
+        else:
+            brand = p.data.get("brand", "")
+            pid = p.data["id"]
+            variety = p.data["variety_name"]
+            latin = p.data["latin_name"]
         print(
-            f"  {p.data['id']:<12} {p.data['variety_name']:<25} {p.data['latin_name']:<25} {brand}"
+            f"  {pid:<12} {variety:<25} {latin:<25} {brand}"
         )
     print()
     packet_id = input("Enter packet ID to use (or empty to skip): ").strip()
@@ -420,7 +599,7 @@ def _prompt_genus_choice(plant_data):
         return "skip"
 
 
-def _create_genus_inline(plant_data):
+def _create_genus_inline(plant_data, db, genera_dir):
     """Create a genus inline during plant creation.
 
     Returns the created genus ID.
@@ -432,22 +611,49 @@ def _create_genus_inline(plant_data):
         "latin_name": plant_data["latin_name"],
     }
 
-    genus = Genus(genus_data)
-    genera_dir = get_genera_dir()
-    genera_dir.mkdir(parents=True, exist_ok=True)
-    filepath = genera_dir / f"{genus.data['id']}.md"
-    with open(filepath, "w") as f:
-        f.write(genus.to_markdown())
-    print(f"\n\u2713 Genus created: {genus.data['id']}")
-    return genus.data["id"]
+    if db:
+        from .models import Genus
+
+        genus = Genus.create_from_dict(genus_data)
+        with db.get_db() as session:
+            session.add(genus)
+            session.commit()
+
+        # Markdown backup
+        backup_data = genus_data.copy()
+        backup_data["id"] = genus.id
+        from .genus_model import Genus as MarkdownGenus
+
+        markdown_genus = MarkdownGenus(backup_data)
+        filepath = genera_dir / f"{genus.id}.md"
+        _write_markdown_backup(filepath, markdown_genus)
+        print(f"\n✓ Genus created: {genus.id}")
+        return genus.id
+    else:
+        from .genus_model import Genus
+
+        genus = Genus(genus_data)
+        genera_dir.mkdir(parents=True, exist_ok=True)
+        filepath = genera_dir / f"{genus.data['id']}.md"
+        _write_markdown_backup(filepath, genus)
+        print(f"\n✓ Genus created: {genus.data['id']}")
+        return genus.data["id"]
 
 
-def _select_existing_genus():
+def _select_existing_genus(db):
     """Show existing genera and let user select by ID.
 
     Returns the selected genus ID or None.
     """
-    genera = list_all_genera()
+    if db:
+        from .models import Genus
+
+        genera = Genus.list_all()
+    else:
+        from .genus_model import list_all
+
+        genera = list_all()
+
     if not genera:
         print("No genera exist yet.")
         return None
@@ -455,8 +661,16 @@ def _select_existing_genus():
     print()
     print("Existing genera:")
     for g in genera:
+        if db:
+            gid = g.id
+            variety = g.variety_name
+            latin = g.latin_name
+        else:
+            gid = g.data["id"]
+            variety = g.data["variety_name"]
+            latin = g.data["latin_name"]
         print(
-            f"  {g.data['id']:<12} {g.data['variety_name']:<25} {g.data['latin_name']:<25}"
+            f"  {gid:<12} {variety:<25} {latin:<25}"
         )
     print()
     genus_id = input("Enter genus ID to use (or empty to skip): ").strip()
@@ -465,7 +679,7 @@ def _select_existing_genus():
     return None
 
 
-def _fuzzy_search_genus(variety_name: str):
+def _fuzzy_search_genus(variety_name: str, db):
     """Search for genus using fuzzy matching on variety_name.
 
     Returns matched genus ID if good match found, otherwise None.
@@ -473,12 +687,21 @@ def _fuzzy_search_genus(variety_name: str):
     if not FUZZY_MATCHING_AVAILABLE:
         return None
 
-    genera = list_all_genera()
-    if not genera:
-        return None
+    if db:
+        from .models import Genus
 
-    genus_choices = {g.data["variety_name"]: g.data["id"] for g in genera}
-    variety_names = list(genus_choices.keys())
+        genera = Genus.list_all()
+        genus_choices = {g.variety_name: g.id for g in genera}
+        variety_names = list(genus_choices.keys())
+    else:
+        from .genus_model import list_all
+
+        genera = list_all()
+        genus_choices = {g.data["variety_name"]: g.data["id"] for g in genera}
+        variety_names = list(genus_choices.keys())
+
+    if not variety_names:
+        return None
 
     match_result = process.extractOne(
         variety_name, variety_names, scorer=fuzz.token_set_ratio
@@ -493,25 +716,31 @@ def _fuzzy_search_genus(variety_name: str):
 
 def print_label(args):
     """Print a label for a plant (consolidated create-label and print-label)"""
-    from .printer import print_label
+    from .printer import print_label as printer_print_label
 
     try:
-        success = print_label(args.plant_id, args.format, args.no_print)
+        success = printer_print_label(args.plant_id, args.format, args.no_print)
         if success:
             if args.no_print:
-                print(f"\u2713 Label image generated successfully")
+                print("✓ Label image generated successfully")
             else:
-                print(f"\u2713 Label print job submitted successfully")
+                print("✓ Label print job submitted successfully")
         else:
-            print(f"\u2717 Failed to submit label print job")
+            print("✗ Failed to submit label print job")
             sys.exit(1)
     except Exception as e:
-        print(f"\u2717 Error printing label: {e}")
+        print(f"✗ Error printing label: {e}")
         sys.exit(1)
 
 
-def create_seed_packet(args):
+def create_seed_packet(args, db=None, packets_dir=None):
     """Create a new seed packet through interactive prompts."""
+    global PACKETS_DIR
+    if packets_dir is None:
+        packets_dir = PACKETS_DIR
+    if db is None:
+        db = _get_db()
+
     print("=== Create New Seed Packet ===")
     print()
 
@@ -521,19 +750,40 @@ def create_seed_packet(args):
     _prompt_field("variety_name", "Variety name (e.g., Yellow Habanero)", packet_data)
     _prompt_field("latin_name", "Latin name (e.g., Capsicum chinense)", packet_data)
 
-    existing = find_matching(packet_data["variety_name"], packet_data["latin_name"])
-    if existing:
-        print(f"\n\u26a0 A matching seed packet already exists:")
-        print(f"  ID: {existing.data['id']}")
-        print(
-            f"  Variety: {existing.data['variety_name']} ({existing.data['latin_name']})"
+    if db:
+        from .models import SeedPacket
+
+        existing = SeedPacket.find_matching(
+            packet_data["variety_name"], packet_data["latin_name"]
         )
-        if existing.data.get("brand"):
-            print(f"  Brand: {existing.data['brand']}")
-        resp = input("\nCreate anyway? (y/N): ").strip().lower()
-        if resp != "y":
-            print("Cancelled.")
-            return
+        if existing:
+            print("\n⚠ A matching seed packet already exists:")
+            print(f"  ID: {existing.id}")
+            print(
+                f"  Variety: {existing.variety_name} ({existing.latin_name})"
+            )
+            if existing.brand:
+                print(f"  Brand: {existing.brand}")
+            resp = input("\nCreate anyway? (y/N): ").strip().lower()
+            if resp != "y":
+                print("Cancelled.")
+                return
+    else:
+        existing = markdown_find_matching(
+            packet_data["variety_name"], packet_data["latin_name"]
+        )
+        if existing:
+            print("\n⚠ A matching seed packet already exists:")
+            print(f"  ID: {existing.data['id']}")
+            print(
+                f"  Variety: {existing.data['variety_name']} ({existing.data['latin_name']})"
+            )
+            if existing.data.get("brand"):
+                print(f"  Brand: {existing.data['brand']}")
+            resp = input("\nCreate anyway? (y/N): ").strip().lower()
+            if resp != "y":
+                print("Cancelled.")
+                return
 
     print()
     print("--- Optional fields ---")
@@ -550,73 +800,151 @@ def create_seed_packet(args):
         _prompt_optional_field(field, description, packet_data)
 
     try:
-        packet = SeedPacket(packet_data)
-        filepath = PACKETS_DIR / f"{packet.data['id']}.md"
+        if db:
+            from .models import SeedPacket
 
-        with open(filepath, "w") as f:
-            f.write(packet.to_markdown())
+            packet = SeedPacket.create_from_dict(packet_data)
+            with db.get_db() as session:
+                session.add(packet)
+                session.commit()
 
-        print(f"\n\u2713 Seed packet created successfully!")
-        print(f"ID: {packet.data['id']}")
-        print(f"Saved to: {filepath}")
+            # Markdown backup
+            backup_data = packet_data.copy()
+            backup_data["id"] = packet.id
+            markdown_packet = MarkdownSeedPacket(backup_data)
+            filepath = packets_dir / f"{packet.id}.md"
+            _write_markdown_backup(filepath, markdown_packet)
+
+            print("\n✓ Seed packet created successfully!")
+            print(f"ID: {packet.id}")
+            print(f"Saved to: {filepath}")
+        else:
+            packet = MarkdownSeedPacket(packet_data)
+            filepath = packets_dir / f"{packet.data['id']}.md"
+            _write_markdown_backup(filepath, packet)
+
+            print("\n✓ Seed packet created successfully!")
+            print(f"ID: {packet.data['id']}")
+            print(f"Saved to: {filepath}")
     except Exception as e:
-        print(f"\n\u2717 Error creating seed packet: {e}")
+        print(f"\n✗ Error creating seed packet: {e}")
         sys.exit(1)
 
 
-def list_seed_packets(args):
+def list_seed_packets(args, db=None):
     """List all seed packets in a table format."""
-    packets = list_all()
+    if db is None:
+        db = _get_db()
+
+    if db:
+        from .models import SeedPacket
+
+        packets = SeedPacket.list_all()
+    else:
+        packets = markdown_list_all()
+
     if not packets:
         print("No seed packets found.")
         return
 
     header = f"{'ID':<12} {'Variety':<25} {'Latin Name':<25} {'Brand':<20}"
-    separator = f"{'-'*12}  {'-'*25}  {'-'*25}  {'-'*20}"
+    separator = f"{'-' * 12}  {'-' * 25}  {'-' * 25}  {'-' * 20}"
     print(header)
     print(separator)
     for p in packets:
-        brand = p.data.get("brand", "")
+        if db:
+            brand = p.brand or ""
+            pid = p.id
+            variety = p.variety_name
+            latin = p.latin_name
+        else:
+            brand = p.data.get("brand", "")
+            pid = p.data["id"]
+            variety = p.data["variety_name"]
+            latin = p.data["latin_name"]
         print(
-            f"{p.data['id']:<12} {p.data['variety_name']:<25} {p.data['latin_name']:<25} {brand:<20}"
+            f"{pid:<12} {variety:<25} {latin:<25} {brand:<20}"
         )
 
 
-def show_seed_packet(args):
+def show_seed_packet(args, db=None):
     """Show full details of a seed packet."""
-    from .seed_packet_model import load_from_file
+    if db is None:
+        db = _get_db()
 
-    filepath = PACKETS_DIR / f"{args.packet_id}.md"
-    if not filepath.exists():
-        print(f"\u2717 Seed packet not found: {args.packet_id}")
-        sys.exit(1)
-        return
+    if db:
+        from .models import SeedPacket
 
-    packet = load_from_file(filepath)
-    print(f"=== Seed Packet: {packet.data['id']} ===")
-    print()
-    fields_to_show = [
-        ("variety_name", "Variety"),
-        ("latin_name", "Latin Name"),
-        ("brand", "Brand"),
-        ("days_to_maturity", "Days to Maturity"),
-        ("germination_time", "Germination Time"),
-        ("planting_depth", "Planting Depth"),
-        ("spacing", "Spacing"),
-        ("sun_requirements", "Sun Requirements"),
-        ("indoor_start_time", "Indoor Start Time"),
-    ]
-    for field, label in fields_to_show:
-        val = packet.data.get(field)
-        if val:
-            print(f"  {label:<22} {val}")
-    print()
-    print(f"  Created: {packet.data.get('created_at', 'N/A')}")
-    print(f"  Updated: {packet.data.get('updated_at', 'N/A')}")
+        with db.get_db() as session:
+            packet = session.query(SeedPacket).filter_by(id=args.packet_id).first()
+
+        if not packet:
+            print(f"✗ Seed packet not found: {args.packet_id}")
+            sys.exit(1)
+            return
+
+        print(f"=== Seed Packet: {packet.id} ===")
+        print()
+        fields_to_show = [
+            ("variety_name", "Variety"),
+            ("latin_name", "Latin Name"),
+            ("brand", "Brand"),
+            ("days_to_maturity", "Days to Maturity"),
+            ("germination_time", "Germination Time"),
+            ("planting_depth", "Planting Depth"),
+            ("spacing", "Spacing"),
+            ("sun_requirements", "Sun Requirements"),
+            ("indoor_start_time", "Indoor Start Time"),
+        ]
+        for field, label in fields_to_show:
+            val = getattr(packet, field, None)
+            if val:
+                print(f"  {label:<22} {val}")
+        print()
+        if packet.created_at:
+            print(f"  Created: {packet.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+        if packet.updated_at:
+            print(f"  Updated: {packet.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+    else:
+        from .seed_packet_model import load_from_file
+
+        filepath = get_seed_packets_dir() / f"{args.packet_id}.md"
+        if not filepath.exists():
+            print(f"✗ Seed packet not found: {args.packet_id}")
+            sys.exit(1)
+            return
+
+        packet = load_from_file(filepath)
+        print(f"=== Seed Packet: {packet.data['id']} ===")
+        print()
+        fields_to_show = [
+            ("variety_name", "Variety"),
+            ("latin_name", "Latin Name"),
+            ("brand", "Brand"),
+            ("days_to_maturity", "Days to Maturity"),
+            ("germination_time", "Germination Time"),
+            ("planting_depth", "Planting Depth"),
+            ("spacing", "Spacing"),
+            ("sun_requirements", "Sun Requirements"),
+            ("indoor_start_time", "Indoor Start Time"),
+        ]
+        for field, label in fields_to_show:
+            val = packet.data.get(field)
+            if val:
+                print(f"  {label:<22} {val}")
+        print()
+        print(f"  Created: {packet.data.get('created_at', 'N/A')}")
+        print(f"  Updated: {packet.data.get('updated_at', 'N/A')}")
 
 
-def create_genus(args):
+def create_genus(args, db=None, genera_dir=None):
     """Create a new genus through interactive prompts."""
+    global GENERA_DIR
+    if genera_dir is None:
+        genera_dir = GENERA_DIR
+    if db is None:
+        db = _get_db()
+
     print("=== Create New Genus ===")
     print()
 
@@ -626,79 +954,169 @@ def create_genus(args):
     _prompt_field("variety_name", "Variety name (e.g., Yellow Habanero)", genus_data)
     _prompt_field("latin_name", "Latin name (e.g., Capsicum chinense)", genus_data)
 
-    existing = find_genus_matching(genus_data["variety_name"], genus_data["latin_name"])
-    if existing:
-        print(f"\n\u26a0 A matching genus already exists:")
-        print(f"  ID: {existing.data['id']}")
-        print(
-            f"  Variety: {existing.data['variety_name']} ({existing.data['latin_name']})"
+    if db:
+        from .models import Genus
+
+        existing = Genus.find_matching(
+            genus_data["variety_name"], genus_data["latin_name"]
         )
-        resp = input("\nCreate anyway? (y/N): ").strip().lower()
-        if resp != "y":
-            print("Cancelled.")
-            return
+        if existing:
+            print("\n⚠ A matching genus already exists:")
+            print(f"  ID: {existing.id}")
+            print(
+                f"  Variety: {existing.variety_name} ({existing.latin_name})"
+            )
+            resp = input("\nCreate anyway? (y/N): ").strip().lower()
+            if resp != "y":
+                print("Cancelled.")
+                return
+    else:
+        from .genus_model import find_matching
+
+        existing = find_matching(
+            genus_data["variety_name"], genus_data["latin_name"]
+        )
+        if existing:
+            print("\n⚠ A matching genus already exists:")
+            print(f"  ID: {existing.data['id']}")
+            print(
+                f"  Variety: {existing.data['variety_name']} ({existing.data['latin_name']})"
+            )
+            resp = input("\nCreate anyway? (y/N): ").strip().lower()
+            if resp != "y":
+                print("Cancelled.")
+                return
 
     print()
     print("--- No optional fields for genus ---")
 
     try:
-        genus = Genus(genus_data)
-        genera_dir = get_genera_dir()
-        genera_dir.mkdir(parents=True, exist_ok=True)
-        filepath = genera_dir / f"{genus.data['id']}.md"
+        if db:
+            from .models import Genus
 
-        with open(filepath, "w") as f:
-            f.write(genus.to_markdown())
+            genus = Genus.create_from_dict(genus_data)
+            with db.get_db() as session:
+                session.add(genus)
+                session.commit()
 
-        print(f"\n\u2713 Genus created successfully!")
-        print(f"ID: {genus.data['id']}")
-        print(f"Saved to: {filepath}")
+            # Markdown backup
+            backup_data = genus_data.copy()
+            backup_data["id"] = genus.id
+            from .genus_model import Genus as MarkdownGenus
+
+            markdown_genus = MarkdownGenus(backup_data)
+            filepath = genera_dir / f"{genus.id}.md"
+            _write_markdown_backup(filepath, markdown_genus)
+
+            print("\n✓ Genus created successfully!")
+            print(f"ID: {genus.id}")
+            print(f"Saved to: {filepath}")
+        else:
+            from .genus_model import Genus
+
+            genus = Genus(genus_data)
+            genera_dir.mkdir(parents=True, exist_ok=True)
+            filepath = genera_dir / f"{genus.data['id']}.md"
+            _write_markdown_backup(filepath, genus)
+
+            print("\n✓ Genus created successfully!")
+            print(f"ID: {genus.data['id']}")
+            print(f"Saved to: {filepath}")
     except Exception as e:
-        print(f"\n\u2717 Error creating genus: {e}")
+        print(f"\n✗ Error creating genus: {e}")
         sys.exit(1)
 
 
-def list_genera(args):
+def list_genera(args, db=None):
     """List all genera in a table format."""
-    genera = list_all_genera()
+    if db is None:
+        db = _get_db()
+
+    if db:
+        from .models import Genus
+
+        genera = Genus.list_all()
+    else:
+        from .genus_model import list_all
+
+        genera = list_all()
+
     if not genera:
         print("No genera found.")
         return
 
     header = f"{'ID':<12} {'Variety':<25} {'Latin Name':<25}"
-    separator = f"{'-'*12}  {'-'*25}  {'-'*25}"
+    separator = f"{'-' * 12}  {'-' * 25}  {'-' * 25}"
     print(header)
     print(separator)
     for g in genera:
+        if db:
+            gid = g.id
+            variety = g.variety_name
+            latin = g.latin_name
+        else:
+            gid = g.data["id"]
+            variety = g.data["variety_name"]
+            latin = g.data["latin_name"]
         print(
-            f"{g.data['id']:<12} {g.data['variety_name']:<25} {g.data['latin_name']:<25}"
+            f"{gid:<12} {variety:<25} {latin:<25}"
         )
 
 
-def show_genus(args):
+def show_genus(args, db=None):
     """Show full details of a genus."""
-    from .genus_model import load_from_file
+    if db is None:
+        db = _get_db()
 
-    filepath = get_genera_dir() / f"{args.genus_id}.md"
-    if not filepath.exists():
-        print(f"\u2717 Genus not found: {args.genus_id}")
-        sys.exit(1)
-        return
+    if db:
+        from .models import Genus
 
-    genus = load_from_file(filepath)
-    print(f"=== Genus: {genus.data['id']} ===")
-    print()
-    fields_to_show = [
-        ("variety_name", "Variety"),
-        ("latin_name", "Latin Name"),
-    ]
-    for field, label in fields_to_show:
-        val = genus.data.get(field)
-        if val:
-            print(f"  {label:<22} {val}")
-    print()
-    print(f"  Created: {genus.data.get('created_at', 'N/A')}")
-    print(f"  Updated: {genus.data.get('updated_at', 'N/A')}")
+        with db.get_db() as session:
+            genus = session.query(Genus).filter_by(id=args.genus_id).first()
+
+        if not genus:
+            print(f"✗ Genus not found: {args.genus_id}")
+            sys.exit(1)
+            return
+
+        print(f"=== Genus: {genus.id} ===")
+        print()
+        fields_to_show = [
+            ("variety_name", "Variety"),
+            ("latin_name", "Latin Name"),
+        ]
+        for field, label in fields_to_show:
+            val = getattr(genus, field, None)
+            if val:
+                print(f"  {label:<22} {val}")
+        print()
+        if genus.created_at:
+            print(f"  Created: {genus.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+        if genus.updated_at:
+            print(f"  Updated: {genus.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+    else:
+        from .genus_model import load_from_file
+
+        filepath = get_genera_dir() / f"{args.genus_id}.md"
+        if not filepath.exists():
+            print(f"✗ Genus not found: {args.genus_id}")
+            sys.exit(1)
+            return
+
+        genus = load_from_file(filepath)
+        print(f"=== Genus: {genus.data['id']} ===")
+        print()
+        fields_to_show = [
+            ("variety_name", "Variety"),
+            ("latin_name", "Latin Name"),
+        ]
+        for field, label in fields_to_show:
+            val = genus.data.get(field)
+            if val:
+                print(f"  {label:<22} {val}")
+        print()
+        print(f"  Created: {genus.data.get('created_at', 'N/A')}")
+        print(f"  Updated: {genus.data.get('updated_at', 'N/A')}")
 
 
 if __name__ == "__main__":
@@ -708,14 +1126,26 @@ if __name__ == "__main__":
 # ─── Log command handlers ────────────────────────────────────────────
 
 
-def log_humidity(args):
+def log_humidity(args, db=None):
     """Log a humidity reading for a plant."""
-    from .plant_log_model import PlantLogEntry, append_log_entry
-    from .plant_model import get_database_dir
+    if db is None:
+        db = _get_db()
 
-    plant_file = get_database_dir() / f"{args.plant_id}.md"
-    if not plant_file.exists():
-        print(f"\u2717 Error: Plant ID '{args.plant_id}' not found")
+    # Validate plant exists
+    if db:
+        from .models import Plant
+
+        with db.get_db() as session:
+            plant = session.query(Plant).filter_by(id=args.plant_id).first()
+    else:
+        plant_file = get_database_dir() / f"{args.plant_id}.md"
+        if not plant_file.exists():
+            print(f"✗ Error: Plant ID '{args.plant_id}' not found")
+            return
+        plant = True
+
+    if not plant:
+        print(f"✗ Error: Plant ID '{args.plant_id}' not found")
         return
 
     entry_data = {
@@ -728,33 +1158,57 @@ def log_humidity(args):
         entry_data["date"] = args.date
 
     try:
-        entry = PlantLogEntry(entry_data)
-        append_log_entry(entry)
-        print(f"\u2713 Humidity logged for plant {args.plant_id}")
+        if db:
+            from .models import PlantLogEntry
+
+            log_entry = PlantLogEntry.create_from_dict(entry_data)
+            with db.get_db() as session:
+                session.add(log_entry)
+                session.commit()
+        else:
+            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+
+            entry = MarkdownLogEntry(entry_data)
+            append_log_entry(entry)
+        print(f"✓ Humidity logged for plant {args.plant_id}")
     except ValueError as e:
-        print(f"\u2717 Error: {e}")
+        print(f"✗ Error: {e}")
 
 
-def log_water(args):
+def log_water(args, db=None):
     """Log a watering event."""
-    from .plant_log_model import PlantLogEntry, append_log_entry, normalize_water_amount
-    from .plant_model import get_database_dir
+    if db is None:
+        db = _get_db()
 
-    plant_file = get_database_dir() / f"{args.plant_id}.md"
-    if not plant_file.exists():
-        print(f"\u2717 Error: Plant ID '{args.plant_id}' not found")
+    # Validate plant exists
+    if db:
+        from .models import Plant
+
+        with db.get_db() as session:
+            plant = session.query(Plant).filter_by(id=args.plant_id).first()
+    else:
+        plant_file = get_database_dir() / f"{args.plant_id}.md"
+        if not plant_file.exists():
+            print(f"✗ Error: Plant ID '{args.plant_id}' not found")
+            return
+        plant = True
+
+    if not plant:
+        print(f"✗ Error: Plant ID '{args.plant_id}' not found")
         return
+
+    from .plant_log_model import normalize_water_amount
 
     try:
         water_data = normalize_water_amount(args.amount)
     except ValueError as e:
-        print(f"\u2717 Error: Invalid water amount: {e}")
+        print(f"✗ Error: Invalid water amount: {e}")
         return
 
     entry_data = {
         "plant_id": args.plant_id,
         "event_type": "water",
-        "amount_ml": water_data["value_ml"],
+        "amount_ml": int(water_data["value_ml"]),
         "amount_display": f"{water_data['display_value']} {water_data['display_unit']}",
     }
 
@@ -762,49 +1216,102 @@ def log_water(args):
         entry_data["date"] = args.date
 
     try:
-        entry = PlantLogEntry(entry_data)
-        append_log_entry(entry)
-        print(f"\u2713 Watering logged for plant {args.plant_id}")
+        if db:
+            from .models import PlantLogEntry
+
+            log_entry = PlantLogEntry.create_from_dict(entry_data)
+            with db.get_db() as session:
+                session.add(log_entry)
+                session.commit()
+        else:
+            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+
+            entry = MarkdownLogEntry(entry_data)
+            append_log_entry(entry)
+        print(f"✓ Watering logged for plant {args.plant_id}")
     except ValueError as e:
-        print(f"\u2717 Error: {e}")
+        print(f"✗ Error: {e}")
 
 
-def log_fertilizer(args):
+def log_fertilizer(args, db=None):
     """Log a fertilization event."""
-    from .plant_log_model import PlantLogEntry, append_log_entry
-    from .plant_model import get_database_dir
+    if db is None:
+        db = _get_db()
 
-    plant_file = get_database_dir() / f"{args.plant_id}.md"
-    if not plant_file.exists():
-        print(f"\u2717 Error: Plant ID '{args.plant_id}' not found")
+    # Validate plant exists
+    if db:
+        from .models import Plant
+
+        with db.get_db() as session:
+            plant = session.query(Plant).filter_by(id=args.plant_id).first()
+    else:
+        plant_file = get_database_dir() / f"{args.plant_id}.md"
+        if not plant_file.exists():
+            print(f"✗ Error: Plant ID '{args.plant_id}' not found")
+            return
+        plant = True
+
+    if not plant:
+        print(f"✗ Error: Plant ID '{args.plant_id}' not found")
         return
 
     entry_data = {
         "plant_id": args.plant_id,
         "event_type": "fertilizer",
-        "type": args.type,
-        "strength": args.strength,
+        "fertilizer_type": args.type,
+        "fertilizer_strength": args.strength,
     }
 
     if args.date:
         entry_data["date"] = args.date
 
     try:
-        entry = PlantLogEntry(entry_data)
-        append_log_entry(entry)
-        print(f"\u2713 Fertilizer logged for plant {args.plant_id}")
+        if db:
+            from .models import PlantLogEntry
+
+            log_entry = PlantLogEntry.create_from_dict(entry_data)
+            with db.get_db() as session:
+                session.add(log_entry)
+                session.commit()
+        else:
+            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+
+            # For markdown, use original field names
+            md_entry_data = {
+                "plant_id": args.plant_id,
+                "event_type": "fertilizer",
+                "type": args.type,
+                "strength": args.strength,
+            }
+            if args.date:
+                md_entry_data["date"] = args.date
+            entry = MarkdownLogEntry(md_entry_data)
+            append_log_entry(entry)
+        print(f"✓ Fertilizer logged for plant {args.plant_id}")
     except ValueError as e:
-        print(f"\u2717 Error: {e}")
+        print(f"✗ Error: {e}")
 
 
-def log_note(args):
+def log_note(args, db=None):
     """Log a note for a plant."""
-    from .plant_log_model import PlantLogEntry, append_log_entry
-    from .plant_model import get_database_dir
+    if db is None:
+        db = _get_db()
 
-    plant_file = get_database_dir() / f"{args.plant_id}.md"
-    if not plant_file.exists():
-        print(f"\u2717 Error: Plant ID '{args.plant_id}' not found")
+    # Validate plant exists
+    if db:
+        from .models import Plant
+
+        with db.get_db() as session:
+            plant = session.query(Plant).filter_by(id=args.plant_id).first()
+    else:
+        plant_file = get_database_dir() / f"{args.plant_id}.md"
+        if not plant_file.exists():
+            print(f"✗ Error: Plant ID '{args.plant_id}' not found")
+            return
+        plant = True
+
+    if not plant:
+        print(f"✗ Error: Plant ID '{args.plant_id}' not found")
         return
 
     entry_data = {"plant_id": args.plant_id, "event_type": "note", "text": args.text}
@@ -813,35 +1320,83 @@ def log_note(args):
         entry_data["date"] = args.date
 
     try:
-        entry = PlantLogEntry(entry_data)
-        append_log_entry(entry)
-        print(f"\u2713 Note logged for plant {args.plant_id}")
+        if db:
+            from .models import PlantLogEntry
+
+            log_entry = PlantLogEntry.create_from_dict(entry_data)
+            with db.get_db() as session:
+                session.add(log_entry)
+                session.commit()
+        else:
+            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+
+            entry = MarkdownLogEntry(entry_data)
+            append_log_entry(entry)
+        print(f"✓ Note logged for plant {args.plant_id}")
     except ValueError as e:
-        print(f"\u2717 Error: {e}")
+        print(f"✗ Error: {e}")
 
 
-def log_list(args):
+def log_list(args, db=None):
     """List all log entries for a plant."""
-    from .plant_log_model import load_log_entries
-    from .plant_model import get_database_dir
+    if db is None:
+        db = _get_db()
 
-    plant_file = get_database_dir() / f"{args.plant_id}.md"
-    if not plant_file.exists():
-        print(f"\u2717 Error: Plant ID '{args.plant_id}' not found")
+    # Validate plant exists
+    if db:
+        from .models import Plant
+
+        with db.get_db() as session:
+            plant = session.query(Plant).filter_by(id=args.plant_id).first()
+    else:
+        plant_file = get_database_dir() / f"{args.plant_id}.md"
+        if not plant_file.exists():
+            print(f"✗ Error: Plant ID '{args.plant_id}' not found")
+            return
+        plant = True
+
+    if not plant:
+        print(f"✗ Error: Plant ID '{args.plant_id}' not found")
         return
 
     event_type = None if args.type == "all" else args.type
 
-    entries = load_log_entries(plant_id=args.plant_id, event_type=event_type)
+    if db:
+        from .models import PlantLogEntry
 
-    if not entries:
+        entries = PlantLogEntry.load_entries(
+            plant_id=args.plant_id, event_type=event_type
+        )
+        # Convert ORM objects to dict for display
+        entries_dict = []
+        for entry in entries:
+            d = {
+                "timestamp": entry.timestamp,
+                "event_type": entry.event_type,
+            }
+            if entry.event_type == "humidity":
+                d["level"] = entry.level
+            elif entry.event_type == "water":
+                d["amount_display"] = f"{entry.amount_ml} ml"
+            elif entry.event_type == "fertilizer":
+                d["type"] = entry.fertilizer_type
+                d["strength"] = entry.fertilizer_strength
+            elif entry.event_type == "note":
+                d["text"] = entry.text
+            entries_dict.append(d)
+    else:
+        from .plant_log_model import load_log_entries
+
+        entries_dict = load_log_entries(plant_id=args.plant_id, event_type=event_type)
+
+    if not entries_dict:
         print(f"No log entries found for plant {args.plant_id}")
         return
 
     print(f"\nLog entries for plant {args.plant_id}:")
     print("-" * 80)
 
-    for entry in entries:
+    for entry in entries_dict:
         timestamp = entry.get("timestamp", "Unknown")
         display_date = timestamp.split("T")[0] if "T" in timestamp else timestamp
 
@@ -864,4 +1419,4 @@ def log_list(args):
             print(f"{display_date}{date_str} | Note: {display_text}")
 
     print("-" * 80)
-    print(f"Total entries: {len(entries)}")
+    print(f"Total entries: {len(entries_dict)}")

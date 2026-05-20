@@ -43,3 +43,16 @@ node_modules/
 .#*
 #*#
 *~
+
+# Migration artifacts
+database_backup_*/
+markdown_export_*/
+
+# BMad temp files
+knowledge/plans/#*#
+_bmad-output/planning-artifacts/research/#*#
+
+# UI design artifacts
+knowledge/ui-design/*.puml
+knowledge/ui-design/*.svg
+knowledge/ui-design/*.jpg

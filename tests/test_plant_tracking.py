@@ -525,6 +525,7 @@ class TestCreatePlantFlow(unittest.TestCase):
         side_effect=[
             "Yellow Habanero",
             "Capsicum chinense",
+            "N",
             "C",
             "",
             "",
@@ -558,10 +559,10 @@ class TestCreatePlantFlow(unittest.TestCase):
         side_effect=[
             "Yellow Habanero",
             "Capsicum chinense",
+            "N",
             "A",
-            "Gardners Basics",
-            "80-100",
-            "7-21",
+            "",
+            "",
             "",
             "",
             "",
@@ -609,9 +610,10 @@ class TestCreatePlantFlow(unittest.TestCase):
         plant_tracking_cli.DATABASE_DIR = self.test_db
         plant_tracking_cli.PACKETS_DIR = self.test_packets_dir
 
+        # Create a packet with a DIFFERENT variety so auto-match doesn't trigger
         packet = SeedPacket(
             {
-                "variety_name": "Yellow Habanero",
+                "variety_name": "Red Habanero",
                 "latin_name": "Capsicum chinense",
                 "id": "SPKT-001",
             }

@@ -170,10 +170,10 @@ from . import database  # noqa: F401
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Module imports without errors: `python -c "from commands import database"`
-- [ ] Database connection creates engine: `assert database.engine is not None`
-- [ ] Session factory is created: `assert database.SessionLocal is not None`
-- [ ] Context manager works: `with database.get_db() as session: assert session is not None`
+- [x] Module imports without errors: `python -c "from commands import database"`
+- [x] Database connection creates engine: `assert database.engine is not None`
+- [x] Session factory is created: `assert database.SessionLocal is not None`
+- [x] Context manager works: `with database.get_db() as session: assert session is not None`
 
 #### Manual Verification:
 - [ ] Verify DATABASE_URL environment variable is respected
@@ -721,10 +721,10 @@ __all__ = [
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] All model classes import without errors: `python -c "from commands.models import Plant, SeedPacket, Genus, PlantLogEntry"`
-- [ ] Base functionality works: `assert hasattr(Plant, '__tablename__')`
-- [ ] Relationships are defined: `assert hasattr(Plant, 'seed_packet')`
-- [ ] Constraints are present: `assert len(PlantLogEntry.__table_args__) > 0`
+- [x] All model classes import without errors: `python -c "from commands.models import Plant, SeedPacket, Genus, PlantLogEntry"`
+- [x] Base functionality works: `assert hasattr(Plant, '__tablename__')`
+- [x] Relationships are defined: `assert hasattr(Plant, 'seed_packet')`
+- [x] Constraints are present: `assert len(PlantLogEntry.__table_args__) > 0`
 
 #### Manual Verification:
 - [ ] Verify ID generation methods produce correct formats
@@ -932,9 +932,9 @@ def downgrade() -> None:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Alembic command works: `alembic --version`
-- [ ] Environment loads without errors: `python -c "from alembic import context"`
-- [ ] Can generate initial migration: `alembic revision --autogenerate -m "Initial migration"`
+- [x] Alembic command works: `alembic --version`
+- [x] Environment loads without errors: `python -c "from alembic import context"`
+- [x] Can generate initial migration: `alembic revision --autogenerate -m "Initial migration"`
 
 #### Manual Verification:
 - [ ] Verify alembic.ini is properly formatted
@@ -1296,9 +1296,9 @@ if __name__ == "__main__":
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Script imports without errors: `python -c "import scripts.migrate_to_postgres"`
-- [ ] Main function parses arguments correctly
-- [ ] Migration functions exist and are callable
+- [x] Script imports without errors: `python -c "import scripts.migrate_to_postgres"`
+- [x] Main function parses arguments correctly
+- [x] Migration functions exist and are callable
 
 #### Manual Verification:
 - [ ] Run with --dry-run flag shows expected behavior
@@ -1647,9 +1647,9 @@ Replace markdown-based log listing with PostgreSQL backend:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] CLI imports without errors: `python -c "import commands.plant_tracking_cli"`
-- [ ] Database initialization works: `commands.plant_tracking_cli.DATABASE_DIR` exists
-- [ ] All command functions reference PostgreSQL backend methods
+- [x] CLI imports without errors: `python -c "import commands.plant_tracking_cli"`
+- [x] Database initialization works: `commands.plant_tracking_cli.DATABASE_DIR` exists
+- [x] All command functions reference PostgreSQL backend methods
 
 #### Manual Verification:
 - [ ] create-plant command creates records in PostgreSQL
@@ -1806,8 +1806,8 @@ def export_command():
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] export_to_markdown function exists and is callable
-- [ ] Function can be imported: `python -c "from commands.database import export_to_markdown"`
+- [x] export_to_markdown function exists and is callable
+- [x] Function can be imported: `python -c "from commands.database import export_to_markdown"`
 
 #### Manual Verification:
 - [ ] Running export creates markdown files with correct data
@@ -2015,10 +2015,10 @@ def test_create_plant_command_postgres(monkeypatch):
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] All existing tests still pass (backward compatibility)
-- [ ] New PostgreSQL-specific tests pass
-- [ ] Test suite runs without errors: `python -m pytest tests/ -v`
-- [ ] Specific model tests pass: `python -m pytest tests/test_*_model.py -v`
+- [x] All existing tests still pass (backward compatibility)
+- [x] New PostgreSQL-specific tests pass
+- [x] Test suite runs without errors: `python -m pytest tests/ -v`
+- [x] Specific model tests pass: `python -m pytest tests/test_*_model.py -v`
 
 #### Manual Verification:
 - [ ] Manual testing of all CLI commands confirms they work with PostgreSQL
