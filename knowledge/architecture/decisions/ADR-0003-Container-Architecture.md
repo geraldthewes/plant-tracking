@@ -5,8 +5,12 @@ title: ADR-0003: Container Architecture and Microservices for Plant Tracking Sys
 # ADR-0003: Container Architecture and Microservices for Plant Tracking System
 
 ## Status
+Deprecated — Superseded by ADR-0008 (Architecture Refinement: Ports & Adapters)
+
 ### Relationships
-None
+Superseded by: ADR-0008 (Architecture Refinement: Ports & Adapters for Single-Service Backend)
+Supersedes: None
+Relates to: ADR-0005 (Backend Technology Stack)
 
 ## Context
 As the Plant Tracking System grows in functionality, we need to decide on an architectural style that allows for independent development, deployment, and scaling of different system components. The system includes concerns like API gateway, data storage, QR generation/printing, AI agent integration, and potentially frontend services. We need to choose an architectural pattern that supports our goals of maintainability, scalability, and clear separation of concerns while keeping the MVP simple enough to implement.
@@ -33,7 +37,9 @@ We decided to use a containerized microservices architecture with Docker for all
 - Cons: Still some coupling concerns, unclear boundaries between what should be combined vs separated
 
 ## Consequences
-This decision enables independent deployment and scaling of services, allowing us to update the QR printing service without affecting the data storage service, for example. It provides technology flexibility - each service can use the language/framework best suited to its purpose. However, it introduces operational complexity in managing multiple containers, network communication challenges, and the need for service discovery and load balancing (handled simply via direct REST calls in our MVP). We accept this complexity because it aligns with our long-term scalability goals and keeps services loosely coupled.
+This decision enabled independent deployment and scaling of services, allowing us to update the QR printing service without affecting the data storage service, for example. It provided technology flexibility - each service could use the language/framework best suited to its purpose. However, it introduced operational complexity in managing multiple containers, network communication challenges, and the need for service discovery and load balancing (handled simply via direct REST calls in our MVP). We accepted this complexity because it aligned with our long-term scalability goals and kept services loosely coupled.
+
+**Note: This ADR has been superseded by ADR-0008.** The microservices approach was refined to a single-service Ports & Adapters architecture after implementation revealed that our system has one bounded context and is maintained by a single developer, making the distributed complexity unjustified. See ADR-0008 for the current architectural decision.
 
 ## Diagram
 ```mermaid

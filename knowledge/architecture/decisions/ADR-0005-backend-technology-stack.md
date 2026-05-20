@@ -3,11 +3,11 @@
 
 ## Status
 
-Accepted - We need to select the backend technology stack for the Plant Tracking System that supports RESTful API for frontend communication, QR code generation, Bluetooth communication with Phomemo M120 printer, data storage and retrieval (initially markdown, later PostgreSQL), integration with Hermes agent via Telegram Bot API, and Docker containerization for consistent deployment. The backend must be maintainable by a single developer and leverage familiar technologies. This decision impacts the system's performance, scalability, and maintainability while establishing the foundation for all backend services.
+Accepted — Backend technology stack for Plant Tracking System. Architecture refined per ADR-0008 from microservices to Ports & Adapters single-service.
 
 ### Relationships
 
-None
+Relates to: ADR-0003 (Container Architecture — deprecated), ADR-0006 (Data Persistence Strategy), ADR-0008 (Architecture Refinement: Ports & Adapters)
 
 ## Context
 
@@ -17,14 +17,16 @@ We need to select the backend technology stack for the Plant Tracking System tha
 
 We chose to use:
 - **Language**: Python 3.9+
-- **Framework**: FastAPI for high-performance, async-capable REST APIs
-- **Containerization**: Docker for all backend services
-- **Communication**: REST/HTTPS with JSON payloads for all inter-service communication
+- **Architecture**: Ports & Adapters (Hexagonal) — single Python service with layered separation (ADR-0008)
+- **Entrypoints**: CLI (argparse/click) + FastAPI for REST/HTTPS web API
+- **Service Layer**: Use-case functions shared by CLI and FastAPI entrypoints
+- **Domain Model**: Pure Python classes with no infrastructure imports
+- **Adapters**: SQLAlchemy ORM for PostgreSQL, Alembic for migrations
+- **Containerization**: Docker for consistent deployment
 - **QR Generation**: Python library (qrcode) for generating QR codes
 - **Bluetooth**: Python library (pybluez) for communicating with Phomemo M120 printer
 - **Telegram Integration**: Python library (python-telegram-bot) for interacting with Telegram Bot API
-- **Data Storage (MVP)**: Local markdown files with structured format
-- **Data Storage (Future)**: Migration path to PostgreSQL with SQLAlchemy ORM
+- **Data Storage**: PostgreSQL with SQLAlchemy ORM (migrated from markdown per ADR-0006)
 - **API Documentation**: OpenAPI/Swagger via FastAPI automatic docs
 
 ### Alternatives Considered
@@ -32,13 +34,13 @@ We chose to use:
 - **Node.js/Express**: JavaScript backend with Express framework - Rejected because it would split the developer's expertise and limit access to Python-specific libraries for Bluetooth and QR generation
 - **Go/Gin**: Go language with Gin framework - Rejected due to learning curve and fewer mature libraries for Telegram integration compared to Python
 - **Django**: Python Django framework - Rejected because it's heavier than needed for our microservices approach and includes ORM we don't need initially
-- **Monolithic Python**: Single Python application instead of microservices - Rejected because it doesn't support independent scaling and deployment of services
+- **Monolithic Python**: Single Python application — Selected (refined per ADR-0008). Originally rejected for not supporting independent scaling, but re-evaluated as the correct choice for a single-developer project with one bounded context.
 
 ### Trade-offs
 
-- **Selected Approach (Python/FastAPI/Microservices)**:
-  - *Pros*: Leverages existing Python expertise, high performance with async capabilities, automatic API documentation, rich ecosystem for required integrations
-  - *Cons*: Requires managing multiple containers, potential overhead from containerization
+- **Selected Approach (Python/FastAPI/Ports & Adapters)**:
+  - *Pros*: Leverages existing Python expertise, high performance with async capabilities, automatic API documentation, rich ecosystem for required integrations, shared service layer between CLI and web API
+  - *Cons*: All entrypoints share same process; cannot scale individual use cases independently
 - **Node.js/Express Alternative**:
   - *Pros*: Unified JavaScript/TypeScript stack, npm ecosystem
   - *Cons*: Split expertise needed (still need Python for Bluetooth/QR), fewer mature libraries for specific hardware integrations
@@ -58,10 +60,12 @@ We chose to use:
 
 - Leverages developer familiarity with Python ecosystem
 - FastAPI provides high performance and automatic API documentation
+- Single codebase reduces maintenance burden
 - Docker ensures consistent environments and easy deployment
 - Asynchronous capabilities support concurrent operations
 - Rich Python libraries for QR, Bluetooth, and Telegram integration
-- Clear migration path from markdown to PostgreSQL
+- Shared service layer between CLI and FastAPI eliminates code duplication
+- Domain model testable without database via repository pattern
 
 ### Negative
 

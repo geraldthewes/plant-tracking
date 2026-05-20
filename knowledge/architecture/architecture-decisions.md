@@ -29,50 +29,52 @@
 - Device Camera Access: Native module interface (mobile) / Browser Media API (web) — consistent cross-platform camera utilization
 - Telegram Integration: HTTPS/Telegram Bot API with Bot token — enables natural language interaction via familiar messaging interface
 
-## Sprint 4: Backend / Orchestration Container
+## Sprint 4: Backend / Orchestration Container (Superseded)
 
-- **API Gateway**: Node.js/Express — lightweight, fast routing for microservices orchestration
-- **Plant Data Service**: Python/FastAPI — excellent for data validation and CRUD operations with automatic OpenAPI docs
-- **QR and Print Service**: Python — mature libraries for QR code generation and Bluetooth communication
-- **Hermes Agent**: Python — seamless integration with python-telegram-bot library for Telegram API
-- **Communication Protocol**: REST over HTTPS — standardized, cacheable, and easy to debug for internal service communications
-- **Printer Interface**: Bluetooth Serial Port Profile (SPP) — reliable connectivity to Phomemo M120 via Python libraries
-- **Data Storage**: Local markdown files — human-readable, atomic operations with file locking for data integrity
-- **Containerization**: Docker — consistent deployment across environments, independent scaling of services
-- **Authentication**: Environment variables and Docker secrets — secure injection of API keys/secrets, encrypted at rest
-- **Error Handling**: Circuit breaker pattern — graceful degradation for Hermes agent unavailability with fallback to cached results
-- **Rate Limiting**: Token bucket algorithm — protects external services (Telegram) from abuse while allowing bursts
+> **Note:** This sprint's microservices approach has been superseded by Sprint 10's Ports & Adapters architecture (ADR-0008).
+
+- **API Gateway**: Node.js/Express — originally selected for microservices orchestration (deprecated)
+- **Plant Data Service**: Python/FastAPI — data validation and CRUD operations (retained as FastAPI entrypoint)
+- **QR and Print Service**: Python — QR code generation and Bluetooth communication (deferred)
+- **Hermes Agent**: Python — python-telegram-bot library for Telegram API (deferred)
+- **Communication Protocol**: REST over HTTPS — standardized, cacheable interactions
+- **Printer Interface**: Bluetooth Serial Port Profile (SPP) — Phomemo M120 connectivity (deferred)
+- **Data Storage**: Local markdown files — original MVP approach (migrated to PostgreSQL)
+- **Containerization**: Docker — consistent deployment across environments
+- **Authentication**: Environment variables and Docker secrets — secure secret injection
+- **Error Handling**: Circuit breaker pattern — graceful degradation for external service failures
+- **Rate Limiting**: Token bucket algorithm — protects external services from abuse
 
 ## Sprint 5: Database + Knowledge Base
 
-- **API Gateway**: Python/FastAPI (Docker) — handles authentication, routing, and request/response transformation
+- **FastAPI Entrypoint**: Python/FastAPI (Docker) — HTTP routing, request validation, response formatting
 - **Database**: PostgreSQL 15 (Docker) — primary data store for structured plant data with ACID transactions
-- **Knowledge Base**: Pinecone managed service — vector database for semantic search and natural language queries
+- **Knowledge Base**: Pinecone managed service — vector database for semantic search and natural language queries (deferred)
 - **Communication**:
-  - API Gateway ↔ Database: PostgreSQL wire protocol (libpq/TCP)
-  - API Gateway ↔ Knowledge Base: REST over HTTPS
-  - Client ↔ API Gateway: HTTPS/REST with JWT authentication
+  - FastAPI Entrypoint ↔ Database: PostgreSQL wire protocol (libpq/TCP via SQLAlchemy)
+  - Service ↔ Knowledge Base: REST over HTTPS (deferred)
+  - Client ↔ FastAPI: HTTPS/REST with JWT authentication (deferred)
 - **Data Integrity**: Connection pooling, backup strategies, and migration safeguards
 - **Containerization**: Docker — ensures consistency and enables independent scaling
 - **Authentication**:
-  - API Gateway to Database: Username/password via libpq
-  - API Gateway to Knowledge Base: Pinecone API key via Bearer token
-  - Client to API Gateway: JWT validation (HS256, 1-hour expiry)
+  - Service to Database: Username/password via libpq
+  - Service to Knowledge Base: Pinecone API key via Bearer token (deferred)
+  - Client to FastAPI: JWT validation (HS256, 1-hour expiry) (deferred)
 
 ## Sprint 5: Database + Knowledge Base
-- **API Gateway**: Python/FastAPI (Docker) — handles authentication, routing, and request/response transformation
+- **FastAPI Entrypoint**: Python/FastAPI (Docker) — HTTP routing, request validation, response formatting
 - **Database**: PostgreSQL 15 (Docker) — primary data store for structured plant data with ACID transactions
-- **Knowledge Base**: Pinecone managed service — vector database for semantic search and natural language queries
+- **Knowledge Base**: Pinecone managed service — vector database for semantic search and natural language queries (deferred)
 - **Communication**: 
-  - API Gateway ↔ Database: PostgreSQL wire protocol (libpq/TCP)
-  - API Gateway ↔ Knowledge Base: REST over HTTPS
-  - Client ↔ API Gateway: HTTPS/REST with JWT authentication
+  - FastAPI Entrypoint ↔ Database: PostgreSQL wire protocol (libpq/TCP via SQLAlchemy)
+  - Service ↔ Knowledge Base: REST over HTTPS (deferred)
+  - Client ↔ FastAPI: HTTPS/REST with JWT authentication (deferred)
 - **Data Integrity**: Connection pooling, backup strategies, and migration safeguards
 - **Containerization**: Docker — ensures consistency and enables independent scaling
 - **Authentication**: 
-  - API Gateway to Database: Username/password via libpq
-  - API Gateway to Knowledge Base: Pinecone API key via Bearer token
-  - Client to API Gateway: JWT validation (HS256, 1-hour expiry)
+  - Service to Database: Username/password via libpq
+  - Service to Knowledge Base: Pinecone API key via Bearer token (deferred)
+  - Client to FastAPI: JWT validation (HS256, 1-hour expiry) (deferred)
 
 ## Sprint 7: ADRs + Cross-Cutting Concerns
 - Technology Stack: Hybrid (Next.js/React frontend, Python/FastAPI backend) — Leverages existing expertise and enables rapid web prototyping
@@ -110,3 +112,16 @@
 - Integration Approach: HTTPS/REST with JSON payloads, Bot token authentication, and graceful degradation mechanisms
 - Communication Protocol: Structured data exchange via JSON extracts from markdown records
 - Fallback Mechanism: Manual analysis capability when Hermes agent is unavailable
+
+## Sprint 10: Architecture Refinement — Ports & Adapters
+
+- Architecture Style: Ports & Adapters (Hexagonal) single-service — Replaces microservices approach from Sprint 4
+- ADR-0008: Architecture Refinement document — Documents decision to consolidate from microservices to layered single service
+- ADR-0003: Deprecated — Superseded by ADR-0008
+- ADR-0005: Updated — Reflects single-service architecture with shared service layer
+- Entrypoints: CLI (argparse/click) + FastAPI HTTP routes — Both call same service functions
+- Service Layer: Use-case functions shared between CLI and web — Zero business logic duplication
+- Domain Model: Pure Python with no infrastructure imports — Fully unit-testable without database
+- Repository Pattern: Protocol interfaces in domain, SQLAlchemy implementations in adapters — Swappable persistence
+- Unit of Work: Transaction boundaries managed by SQLAlchemy Session — Atomic commit/rollback per use case
+- Rationale: Single bounded context, single developer, no team boundary justifies distributed complexity

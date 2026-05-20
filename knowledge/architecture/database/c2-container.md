@@ -1,16 +1,18 @@
 ---
-title: C2 Container Diagram for Plant Tracking System
+title: C2 Container Diagram for Plant Tracking System Database Layer
 ---
 
-# Plant Tracking System - C2 Container Diagram
+# Plant Tracking System — Database Layer C2 Container Diagram
+
+> **Updated per ADR-0008**: Reflects single-service Ports & Adapters architecture.
 
 ## Scope
 
-This diagram shows the container-level architecture for the Plant Tracking System's backend services, focusing on the Database + Knowledge Base sprint. It includes the User (actor), API Gateway, Database (PostgreSQL), and Knowledge Base Vector Store (Pinecone) containers, along with the external Telegram service used by the Hermes agent. The diagram illustrates how these components interact to support plant data storage, retrieval, and AI-powered insights.
+This diagram shows the database layer of the Plant Tracking System. It includes the User (actor), the Plant Tracking Service (single Python process with FastAPI and CLI entrypoints), PostgreSQL database, and the deferred Pinecone vector store for the Hermes agent. The diagram illustrates how the service interacts with the database for structured plant data storage and retrieval.
 
 ## Architecture Overview
 
-The system follows a containerized microservices architecture where the API Gateway acts as the single entry point for all client requests. The API Gateway handles authentication, rate limiting, and request/response transformation. It communicates with the PostgreSQL database for structured plant data storage and retrieval using the libpq protocol, and with the Pinecone vector store for semantic search and natural language querying via REST/HTTPS. The Hermes agent (accessed via Telegram) interacts with the API Gateway to provide natural language querying and analysis capabilities. All internal services are containerized using Docker for consistency and independent scaling.
+The system follows a Ports & Adapters (Hexagonal Architecture) pattern within a single Python service. The FastAPI entrypoint handles all HTTP requests from web clients. The service layer orchestrates use cases, calling domain model operations and persisting data through SQLAlchemy repository adapters to PostgreSQL. The database is accessed via the libpq protocol with connection pooling managed by SQLAlchemy. All services are containerized using Docker for consistency. The Pinecone vector store for semantic search is deferred to a future sprint.
 
 ## Component Details
 
@@ -22,13 +24,13 @@ The system follows a containerized microservices architecture where the API Gate
 - **Output/Downstream Effects**: Receives plant records, insights, and system responses
 - **Failure/Graceful Degradation**: If the system is unavailable, the user cannot access plant data or receive insights; manual tracking may be used as fallback
 
-### API Gateway
+### Plant Tracking Service (FastAPI Entrypoint)
 - **Technology**: Python/FastAPI running in Docker
-- **Description**: Central orchestration service handling all external requests
-- **Primary Responsibility**: Routes requests to appropriate services, manages authentication, and transforms data
-- **Input Data/Triggers**: HTTP requests from users/webhooks, Telegram bot messages
-- **Output/Downstream Effects**: Database queries, vector store operations, responses to clients
-- **Failure/Graceful Degradation**: Implements circuit breaker pattern; if downstream services fail, returns appropriate error responses with retry-after headers
+- **Description**: Single Python service with FastAPI HTTP entrypoint and CLI entrypoint, both sharing the same service layer
+- **Primary Responsibility**: Handles HTTP requests, validates input, calls service layer functions, returns JSON responses
+- **Input Data/Triggers**: HTTP requests from web frontend (JSON payloads)
+- **Output/Downstream Effects**: Service layer calls → SQLAlchemy queries → PostgreSQL reads/writes
+- **Failure/Graceful Degradation**: Connection pooling with timeout and retry; returns HTTP 503 with Retry-After header when database is unavailable
 
 ### Database
 - **Technology**: PostgreSQL 15
@@ -257,23 +259,23 @@ The system follows a containerized microservices architecture where the API Gate
 flowchart LR
     %% Define containers and external systems
     user(["User\n(Actor)"])
-    api_gateway["API Gateway\n(Python/FastAPI, Docker)"]
+    svc["Plant Tracking Service\n(Python/FastAPI, Docker)"]
     db[("PostgreSQL\n(Primary DB)")]
-    kb[["Pinecone\n(Vector Store)"]]
-    telegram[["Telegram\n(External)"]]
+    kb[["Pinecone\n(Vector Store, Deferred)"]]
+    telegram[["Telegram\n(External, Deferred)"]]
 
     %% Relationships with labels
-    user -->|"Uses via HTTPS"| api_gateway
-    api_gateway -->|"Executes SQL queries via libpq/TCP"| db
-    db -->|"Returns query results via libpq/TCP"| api_gateway
-    api_gateway -->|"Vector operations via REST/HTTPS"| kb
-    kb -->|"Returns vector data via REST/HTTPS"| api_gateway
-    api_gateway -->|"Sends/receives messages via Telegram Bot API"| telegram
-    telegram -->|"Sends user messages via Telegram Bot API"| api_gateway
+    user -->|"HTTPS/REST"| svc
+    svc -->|"SQLAlchemy / libpq/TCP"| db
+    db -->|"Returns query results via libpq/TCP"| svc
+    svc -.->|"Vector operations via REST/HTTPS (Deferred)"| kb
+    kb -.->|"Returns vector data via REST/HTTPS (Deferred)"| svc
+    svc -.->|"Telegram Bot API (Deferred)"| telegram
+    telegram -.->|"Sends user messages (Deferred)"| svc
 
     %% System boundary
     subgraph sys["Plant Tracking System"]
-        api_gateway
+        svc
         db
     end
 ```
