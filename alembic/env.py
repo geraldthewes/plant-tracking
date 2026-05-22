@@ -12,10 +12,25 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Add project root to path
+# Add project root and service package src to path
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(
+    0,
+    os.path.realpath(
+        os.path.join(
+            os.path.dirname(__file__), "..", "packages", "plant_service", "src"
+        )
+    ),
+)
 
-from commands.models.base import Base
+# Import all models to register them with metadata
+from plant_service.adapters.repository.models.base import Base
+from plant_service.adapters.repository.models import (  # noqa: F401
+    Plant,
+    Genus,
+    SeedPacket,
+    PlantLogEntry,
+)
 
 target_metadata = Base.metadata
 

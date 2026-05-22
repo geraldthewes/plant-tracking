@@ -27,6 +27,24 @@ except ImportError:
     fuzz = None
 
 
+# Service package imports
+try:
+    from plant_service.bootstrap import create_unit_of_work
+    from plant_service.domain.exceptions import (
+        PlantTrackingServiceException,
+        ValidationException,
+        PlantNotFoundException,
+        SeedPacketNotFoundException,
+        GenusNotFoundException,
+        PlantLogNotFoundException,
+        DatabaseUnavailableError,
+        ExportError,
+    )
+    SERVICE_AVAILABLE = True
+except ImportError:
+    SERVICE_AVAILABLE = False
+
+
 # Module-level directory variables for backward compatibility with tests
 DATABASE_DIR = get_database_dir()
 DATABASE_DIR.mkdir(exist_ok=True)
@@ -111,7 +129,9 @@ def main():
     subparsers.add_parser("list-genera", help="List all genera")
 
     # show-genus subcommand
-    show_genus_parser = subparsers.add_parser("show-genus", help="Show genus details")
+    show_genus_parser = subparsers.add_parser(
+        "show-genus", help="Show genus details"
+    )
     show_genus_parser.add_argument("genus_id", help="Genus ID")
 
     # log subcommand
@@ -261,19 +281,40 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
     _prompt_field("variety_name", "Variety name (e.g., Yellow Habanero)", plant_data)
 
     # Try exact match by variety name first
-    if db:
+    genus_id = None
+    genus_latin = None
+    genus_variety = None
+
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                # Get all genera and find matching variety name
+                for genus in uow.genera.list_genera():
+                    if genus.variety_name == plant_data["variety_name"]:
+                        genus_id = genus.id
+                        genus_latin = genus.latin_name
+                        genus_variety = genus.variety_name
+                        break
+        except Exception:
+            pass
+    elif db:
+        # Fallback to original models if service not available
         from .models import Genus
 
         existing_genus = Genus.find_by_variety_name(plant_data["variety_name"])
+        if existing_genus:
+            genus_id = existing_genus.id
+            genus_latin = existing_genus.latin_name
+            genus_variety = existing_genus.variety_name
     else:
+        # Markdown fallback
         existing_genus = markdown_find_by_variety_name(plant_data["variety_name"])
+        if existing_genus:
+            genus_id = existing_genus.data["id"]
+            genus_latin = existing_genus.data["latin_name"]
+            genus_variety = existing_genus.data["variety_name"]
 
-    if existing_genus:
-        genus_data = existing_genus.data if hasattr(existing_genus, "data") else None
-        genus_id = genus_data["id"] if genus_data else existing_genus.id
-        genus_variety = genus_data["variety_name"] if genus_data else existing_genus.variety_name
-        genus_latin = genus_data["latin_name"] if genus_data else existing_genus.latin_name
-
+    if genus_id:
         print(
             f"\n✓ Found genus: {genus_id} - {genus_variety}"
         )
@@ -285,15 +326,28 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
         # Try fuzzy search automatically
         matched_genus_id = _fuzzy_search_genus(plant_data["variety_name"], db)
         if matched_genus_id:
-            if db:
+            if db and SERVICE_AVAILABLE:
+                try:
+                    with create_unit_of_work() as uow:
+                        # Find the genus by ID
+                        for genus in uow.genera.list_genera():
+                            if genus.id == matched_genus_id:
+                                print(
+                                    f"\n✓ Fuzzy match found: {genus.id} - {genus.variety_name}"
+                                )
+                                print(f"  Latin name: {genus.latin_name}")
+                                confirm = input("Use this genus? (Y/n): ").strip().lower()
+                                if confirm != "n":
+                                    plant_data["latin_name"] = genus.latin_name
+                                    plant_data["genus_id"] = genus.id
+                                    print("  Latin name auto-resolved from genus database.")
+                                break
+                except Exception:
+                    pass
+            elif db:
+                # Fallback to original models
                 from .models import Genus
 
-                matched_genus = db.engine.execute(
-                    db.engine.raw_connection().cursor().execute(
-                        "SELECT * FROM genera WHERE id = %s", (matched_genus_id,)
-                    )
-                )
-                # Simpler approach
                 all_genera = Genus.list_all()
                 matched_genus = next(
                     (g for g in all_genera if g.id == matched_genus_id), None
@@ -309,6 +363,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                         plant_data["genus_id"] = matched_genus.id
                         print("  Latin name auto-resolved from genus database.")
             else:
+                # Markdown fallback
                 all_genera = markdown_list_all()
                 matched_genus = next(
                     (g for g in all_genera if g.data["id"] == matched_genus_id), None
@@ -337,9 +392,52 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                 .lower()
             )
             if create_genus == "y":
-                plant_data["genus_id"] = _create_genus_inline(
-                    plant_data, db, genera_dir
-                )
+                if db and SERVICE_AVAILABLE:
+                    try:
+                        genus_data = {
+                            "variety_name": plant_data["variety_name"],
+                            "latin_name": plant_data["latin_name"],
+                        }
+                        with create_unit_of_work() as uow:
+                            genus = uow.genera.create_genus(genus_data)
+                            plant_data["genus_id"] = genus.id
+                            print(f"\n✓ Genus created: {genus.id}")
+                    except Exception as e:
+                        print(f"Error creating genus: {e}")
+                        plant_data["genus_id"] = "unknown"
+                elif db:
+                    # Fallback to original models
+                    from .models import Genus
+
+                    genus_data = {
+                        "variety_name": plant_data["variety_name"],
+                        "latin_name": plant_data["latin_name"],
+                    }
+                    genus = Genus.create_from_dict(genus_data)
+                    with db.get_db() as session:
+                        session.add(genus)
+                        session.commit()
+                    plant_data["genus_id"] = genus.id
+                    # Markdown backup
+                    from .genus_model import Genus as MarkdownGenus
+                    backup_data = genus_data.copy()
+                    backup_data["id"] = genus.id
+                    markdown_genus = MarkdownGenus(backup_data)
+                    filepath = genera_dir / f"{genus.id}.md"
+                    _write_markdown_backup(filepath, markdown_genus)
+                else:
+                    # Markdown fallback
+                    from .genus_model import Genus
+
+                    genus_data = {
+                        "variety_name": plant_data["variety_name"],
+                        "latin_name": plant_data["latin_name"],
+                    }
+                    genus = Genus(genus_data)
+                    genera_dir.mkdir(parents=True, exist_ok=True)
+                    filepath = genera_dir / f"{genus.data['id']}.md"
+                    _write_markdown_backup(filepath, genus)
+                    plant_data["genus_id"] = genus.data["id"]
             else:
                 plant_data["genus_id"] = "unknown"
 
@@ -348,7 +446,25 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
     print("--- Seed packet ---")
     packet_matched = False
 
-    if db:
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                # Find matching seed packet
+                for packet in uow.seed_packets.list_seed_packets():
+                    if (
+                        packet.variety_name == plant_data["variety_name"]
+                        and packet.latin_name == plant_data["latin_name"]
+                    ):
+                        print(
+                            f"\n✓ Found seed packet: {packet.id} - {packet.variety_name}"
+                        )
+                        plant_data["seed_packet_id"] = packet.id
+                        packet_matched = True
+                        break
+        except Exception:
+            pass
+    elif db:
+        # Fallback to original models
         from .models import SeedPacket
 
         spkt = SeedPacket.find_matching(
@@ -361,6 +477,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
             plant_data["seed_packet_id"] = spkt.id
             packet_matched = True
     else:
+        # Markdown fallback
         spkt = markdown_find_matching(
             plant_data["variety_name"], plant_data["latin_name"]
         )
@@ -374,11 +491,36 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
     if not packet_matched:
         choice = _prompt_packet_choice(plant_data)
         if choice == "create":
-            packet_id = _create_packet_inline(plant_data, db, packets_dir)
-            plant_data["seed_packet_id"] = packet_id
+            if db and SERVICE_AVAILABLE:
+                try:
+                    packet_id = _create_packet_inline(plant_data, db, packets_dir)
+                    plant_data["seed_packet_id"] = packet_id
+                except Exception as e:
+                    print(f"Error creating seed packet: {e}")
+                    plant_data["seed_packet_id"] = "unknown"
+            elif db:
+                # Fallback to original models
+                packet_id = _create_packet_inline(plant_data, db, packets_dir)
+                plant_data["seed_packet_id"] = packet_id
+            else:
+                # Markdown fallback
+                _prompt_record_fields(plant_data)
+                plant_data["seed_packet_id"] = "unknown"
         elif choice == "select":
-            selected = _select_existing_packet(db)
-            plant_data["seed_packet_id"] = selected if selected else "unknown"
+            if db and SERVICE_AVAILABLE:
+                try:
+                    selected = _select_existing_packet(db)
+                    plant_data["seed_packet_id"] = selected if selected else "unknown"
+                except Exception:
+                    plant_data["seed_packet_id"] = "unknown"
+            elif db:
+                # Fallback to original models
+                selected = _select_existing_packet(db)
+                plant_data["seed_packet_id"] = selected if selected else "unknown"
+            else:
+                # Markdown fallback
+                selected = _select_existing_packet(db)
+                plant_data["seed_packet_id"] = selected if selected else "unknown"
         else:
             _prompt_record_fields(plant_data)
             plant_data["seed_packet_id"] = "unknown"
@@ -389,13 +531,31 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
     _prompt_field("planting_date", "Planting date (YYYY-MM-DD)", plant_data)
 
     try:
-        if db:
+        plant_id = None
+        if db and SERVICE_AVAILABLE:
+            try:
+                with create_unit_of_work() as uow:
+                    plant = uow.plants.create_plant(plant_data)
+                    plant_id = plant.id
+            except ValidationException as e:
+                print(f"\n✗ Validation error: {e}")
+                sys.exit(1)
+            except PlantTrackingServiceException as e:
+                print(f"\n✗ Service error: {e}")
+                sys.exit(1)
+            except Exception as e:
+                print(f"\n✗ Error creating plant record: {e}")
+                sys.exit(1)
+        elif db:
+            # Fallback to original models
             from .models import Plant
 
             plant = Plant.create_from_dict(plant_data)
             with db.get_db() as session:
                 session.add(plant)
                 session.commit()
+
+            plant_id = plant.id
 
             # Markdown backup
             backup_data = {
@@ -421,8 +581,8 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
             plant = MarkdownPlant(plant_data)
             filepath = database_dir / f"{plant.data['id']}.md"
             _write_markdown_backup(filepath, plant)
+            plant_id = plant.data["id"]
 
-        plant_id = plant.id if db else plant.data["id"]
         genus_id = plant_data.get("genus_id", "unknown")
         if not db:
             plant_id = plant.data["id"]
@@ -492,28 +652,45 @@ def _create_packet_inline(plant_data, db, packets_dir):
     for field, description in optional_fields:
         _prompt_optional_field(field, description, packet_data)
 
-    if db:
-        from .models import SeedPacket
+    try:
+        if db and SERVICE_AVAILABLE:
+            with create_unit_of_work() as uow:
+                packet = uow.seed_packets.create_seed_packet(packet_data)
+                # Markdown backup
+                backup_data = packet_data.copy()
+                backup_data["id"] = packet.id
+                markdown_packet = MarkdownSeedPacket(backup_data)
+                filepath = packets_dir / f"{packet.id}.md"
+                _write_markdown_backup(filepath, markdown_packet)
+                print(f"\n✓ Seed packet created: {packet.id}")
+                return packet.id
+        elif db:
+            # Fallback to original models
+            from .models import SeedPacket
 
-        packet = SeedPacket.create_from_dict(packet_data)
-        with db.get_db() as session:
-            session.add(packet)
-            session.commit()
+            packet = SeedPacket.create_from_dict(packet_data)
+            with db.get_db() as session:
+                session.add(packet)
+                session.commit()
 
-        # Markdown backup
-        backup_data = packet_data.copy()
-        backup_data["id"] = packet.id
-        markdown_packet = MarkdownSeedPacket(backup_data)
-        filepath = packets_dir / f"{packet.id}.md"
-        _write_markdown_backup(filepath, markdown_packet)
-        print(f"\n✓ Seed packet created: {packet.id}")
-        return packet.id
-    else:
-        packet = MarkdownSeedPacket(packet_data)
-        filepath = packets_dir / f"{packet.data['id']}.md"
-        _write_markdown_backup(filepath, packet)
-        print(f"\n✓ Seed packet created: {packet.data['id']}")
-        return packet.data["id"]
+            # Markdown backup
+            backup_data = packet_data.copy()
+            backup_data["id"] = packet.id
+            markdown_packet = MarkdownSeedPacket(backup_data)
+            filepath = packets_dir / f"{packet.id}.md"
+            _write_markdown_backup(filepath, markdown_packet)
+            print(f"\n✓ Seed packet created: {packet.id}")
+            return packet.id
+        else:
+            # Markdown fallback
+            packet = MarkdownSeedPacket(packet_data)
+            filepath = packets_dir / f"{packet.data['id']}.md"
+            _write_markdown_backup(filepath, packet)
+            print(f"\n✓ Seed packet created: {packet.data['id']}")
+            return packet.data["id"]
+    except Exception as e:
+        print(f"Error creating seed packet: {e}")
+        raise
 
 
 def _select_existing_packet(db):
@@ -521,38 +698,51 @@ def _select_existing_packet(db):
 
     Returns the selected packet ID or None.
     """
-    if db:
-        from .models import SeedPacket
+    try:
+        if db and SERVICE_AVAILABLE:
+            with create_unit_of_work() as uow:
+                packets = list(uow.seed_packets.list_seed_packets())
+        elif db:
+            # Fallback to original models
+            from .models import SeedPacket
 
-        packets = SeedPacket.list_all()
-    else:
-        packets = markdown_list_all()
-
-    if not packets:
-        print("No seed packets exist yet.")
-        return None
-
-    print()
-    print("Existing seed packets:")
-    for p in packets:
-        if db:
-            brand = p.brand or ""
-            pid = p.id
-            variety = p.variety_name
-            latin = p.latin_name
+            packets = SeedPacket.list_all()
         else:
-            brand = p.data.get("brand", "")
-            pid = p.data["id"]
-            variety = p.data["variety_name"]
-            latin = p.data["latin_name"]
-        print(
-            f"  {pid:<12} {variety:<25} {latin:<25} {brand}"
-        )
-    print()
-    packet_id = input("Enter packet ID to use (or empty to skip): ").strip()
-    if packet_id:
-        return packet_id
-    return None
+            # Markdown fallback
+            packets = markdown_list_all()
+
+        if not packets:
+            print("No seed packets exist yet.")
+            return None
+
+        print()
+        print("Existing seed packets:")
+        for p in packets:
+            if db and SERVICE_AVAILABLE:
+                brand = p.brand or ""
+                pid = p.id
+                variety = p.variety_name
+                latin = p.latin_name
+            elif db:
+                # Fallback to original models
+                brand = p.brand or ""
+                pid = p.id
+                variety = p.variety_name
+                latin = p.latin_name
+            else:
+                # Markdown fallback
+                brand = p.data.get("brand", "")
+                pid = p.data["id"]
+                variety = p.data["variety_name"]
+                latin = p.data["latin_name"]
+            print(f"  {pid:<12} {variety:<25} {latin:<25} {brand}")
+        print()
+        packet_id = input("Enter packet ID to use (or empty to skip): ").strip()
+        if packet_id:
+            return packet_id
+        return None
+    except Exception:
+        return None
 
 
 def _prompt_record_fields(plant_data):
@@ -611,33 +801,48 @@ def _create_genus_inline(plant_data, db, genera_dir):
         "latin_name": plant_data["latin_name"],
     }
 
-    if db:
-        from .models import Genus
+    try:
+        if db and SERVICE_AVAILABLE:
+            with create_unit_of_work() as uow:
+                genus = uow.genera.create_genus(genus_data)
+                # Markdown backup
+                backup_data = genus_data.copy()
+                backup_data["id"] = genus.id
+                markdown_genus = MarkdownGenus(backup_data)
+                filepath = genera_dir / f"{genus.id}.md"
+                _write_markdown_backup(filepath, markdown_genus)
+                print(f"\n✓ Genus created: {genus.id}")
+                return genus.id
+        elif db:
+            # Fallback to original models
+            from .models import Genus
 
-        genus = Genus.create_from_dict(genus_data)
-        with db.get_db() as session:
-            session.add(genus)
-            session.commit()
+            genus = Genus.create_from_dict(genus_data)
+            with db.get_db() as session:
+                session.add(genus)
+                session.commit()
 
-        # Markdown backup
-        backup_data = genus_data.copy()
-        backup_data["id"] = genus.id
-        from .genus_model import Genus as MarkdownGenus
+            # Markdown backup
+            backup_data = genus_data.copy()
+            backup_data["id"] = genus.id
+            markdown_genus = MarkdownGenus(backup_data)
+            filepath = genera_dir / f"{genus.id}.md"
+            _write_markdown_backup(filepath, markdown_genus)
+            print(f"\n✓ Genus created: {genus.id}")
+            return genus.id
+        else:
+            # Markdown fallback
+            from .genus_model import Genus
 
-        markdown_genus = MarkdownGenus(backup_data)
-        filepath = genera_dir / f"{genus.id}.md"
-        _write_markdown_backup(filepath, markdown_genus)
-        print(f"\n✓ Genus created: {genus.id}")
-        return genus.id
-    else:
-        from .genus_model import Genus
-
-        genus = Genus(genus_data)
-        genera_dir.mkdir(parents=True, exist_ok=True)
-        filepath = genera_dir / f"{genus.data['id']}.md"
-        _write_markdown_backup(filepath, genus)
-        print(f"\n✓ Genus created: {genus.data['id']}")
-        return genus.data["id"]
+            genus = Genus(genus_data)
+            genera_dir.mkdir(parents=True, exist_ok=True)
+            filepath = genera_dir / f"{genus.data['id']}.md"
+            _write_markdown_backup(filepath, genus)
+            print(f"\n✓ Genus created: {genus.data['id']}")
+            return genus.data["id"]
+    except Exception as e:
+        print(f"Error creating genus: {e}")
+        raise
 
 
 def _select_existing_genus(db):
@@ -645,38 +850,50 @@ def _select_existing_genus(db):
 
     Returns the selected genus ID or None.
     """
-    if db:
-        from .models import Genus
+    try:
+        if db and SERVICE_AVAILABLE:
+            with create_unit_of_work() as uow:
+                genera = list(uow.genera.list_genera())
+        elif db:
+            # Fallback to original models
+            from .models import Genus
 
-        genera = Genus.list_all()
-    else:
-        from .genus_model import list_all
-
-        genera = list_all()
-
-    if not genera:
-        print("No genera exist yet.")
-        return None
-
-    print()
-    print("Existing genera:")
-    for g in genera:
-        if db:
-            gid = g.id
-            variety = g.variety_name
-            latin = g.latin_name
+            genera = Genus.list_all()
         else:
-            gid = g.data["id"]
-            variety = g.data["variety_name"]
-            latin = g.data["latin_name"]
-        print(
-            f"  {gid:<12} {variety:<25} {latin:<25}"
-        )
-    print()
-    genus_id = input("Enter genus ID to use (or empty to skip): ").strip()
-    if genus_id:
-        return genus_id
-    return None
+            # Markdown fallback
+            from .genus_model import list_all
+
+            genera = list_all()
+
+        if not genera:
+            print("No genera exist yet.")
+            return None
+
+        print()
+        print("Existing genera:")
+        for g in genera:
+            if db and SERVICE_AVAILABLE:
+                gid = g.id
+                variety = g.variety_name
+                latin = g.latin_name
+            elif db:
+                # Fallback to original models
+                gid = g.id
+                variety = g.variety_name
+                latin = g.latin_name
+            else:
+                # Markdown fallback
+                gid = g.data["id"]
+                variety = g.data["variety_name"]
+                latin = g.data["latin_name"]
+            print(f"  {gid:<12} {variety:<25} {latin:<25}")
+        print()
+        genus_id = input("Enter genus ID to use (or empty to skip): ").strip()
+        if genus_id:
+            return genus_id
+        return None
+    except Exception:
+        return None
 
 
 def _fuzzy_search_genus(variety_name: str, db):
@@ -687,31 +904,41 @@ def _fuzzy_search_genus(variety_name: str, db):
     if not FUZZY_MATCHING_AVAILABLE:
         return None
 
-    if db:
-        from .models import Genus
+    try:
+        if db and SERVICE_AVAILABLE:
+            with create_unit_of_work() as uow:
+                genera = list(uow.genera.list_genera())
+                genus_choices = {g.variety_name: g.id for g in genera}
+                variety_names = list(genus_choices.keys())
+        elif db:
+            # Fallback to original models
+            from .models import Genus
 
-        genera = Genus.list_all()
-        genus_choices = {g.variety_name: g.id for g in genera}
-        variety_names = list(genus_choices.keys())
-    else:
-        from .genus_model import list_all
+            genera = Genus.list_all()
+            genus_choices = {g.variety_name: g.id for g in genera}
+            variety_names = list(genus_choices.keys())
+        else:
+            # Markdown fallback
+            from .genus_model import list_all
 
-        genera = list_all()
-        genus_choices = {g.data["variety_name"]: g.data["id"] for g in genera}
-        variety_names = list(genus_choices.keys())
+            genera = list_all()
+            genus_choices = {g.data["variety_name"]: g.data["id"] for g in genera}
+            variety_names = list(genus_choices.keys())
 
-    if not variety_names:
+        if not variety_names:
+            return None
+
+        match_result = process.extractOne(
+            variety_name, variety_names, scorer=fuzz.token_set_ratio
+        )
+
+        if match_result and match_result[1] >= 80:
+            matched_variety, score = match_result
+            return genus_choices[matched_variety]
+
         return None
-
-    match_result = process.extractOne(
-        variety_name, variety_names, scorer=fuzz.token_set_ratio
-    )
-
-    if match_result and match_result[1] >= 80:
-        matched_variety, score = match_result
-        return genus_choices[matched_variety]
-
-    return None
+    except Exception:
+        return None
 
 
 def print_label(args):
@@ -750,7 +977,31 @@ def create_seed_packet(args, db=None, packets_dir=None):
     _prompt_field("variety_name", "Variety name (e.g., Yellow Habanero)", packet_data)
     _prompt_field("latin_name", "Latin name (e.g., Capsicum chinense)", packet_data)
 
-    if db:
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                # Check for existing matching seed packet
+                for existing in uow.seed_packets.list_seed_packets():
+                    if (
+                        existing.variety_name == packet_data["variety_name"]
+                        and existing.latin_name == packet_data["latin_name"]
+                    ):
+                        print("\n⚠ A matching seed packet already exists:")
+                        print(f"  ID: {existing.id}")
+                        print(
+                            f"  Variety: {existing.variety_name} ({existing.latin_name})"
+                        )
+                        if existing.brand:
+                            print(f"  Brand: {existing.brand}")
+                        resp = input("\nCreate anyway? (y/N): ").strip().lower()
+                        if resp != "y":
+                            print("Cancelled.")
+                            return
+                        break
+        except Exception:
+            pass
+    elif db:
+        # Fallback to original models
         from .models import SeedPacket
 
         existing = SeedPacket.find_matching(
@@ -759,9 +1010,7 @@ def create_seed_packet(args, db=None, packets_dir=None):
         if existing:
             print("\n⚠ A matching seed packet already exists:")
             print(f"  ID: {existing.id}")
-            print(
-                f"  Variety: {existing.variety_name} ({existing.latin_name})"
-            )
+            print(f"  Variety: {existing.variety_name} ({existing.latin_name})")
             if existing.brand:
                 print(f"  Brand: {existing.brand}")
             resp = input("\nCreate anyway? (y/N): ").strip().lower()
@@ -769,6 +1018,7 @@ def create_seed_packet(args, db=None, packets_dir=None):
                 print("Cancelled.")
                 return
     else:
+        # Markdown fallback
         existing = markdown_find_matching(
             packet_data["variety_name"], packet_data["latin_name"]
         )
@@ -800,7 +1050,21 @@ def create_seed_packet(args, db=None, packets_dir=None):
         _prompt_optional_field(field, description, packet_data)
 
     try:
-        if db:
+        if db and SERVICE_AVAILABLE:
+            with create_unit_of_work() as uow:
+                packet = uow.seed_packets.create_seed_packet(packet_data)
+                # Markdown backup
+                backup_data = packet_data.copy()
+                backup_data["id"] = packet.id
+                markdown_packet = MarkdownSeedPacket(backup_data)
+                filepath = packets_dir / f"{packet.id}.md"
+                _write_markdown_backup(filepath, markdown_packet)
+
+                print("\n✓ Seed packet created successfully!")
+                print(f"ID: {packet.id}")
+                print(f"Saved to: {filepath}")
+        elif db:
+            # Fallback to original models
             from .models import SeedPacket
 
             packet = SeedPacket.create_from_dict(packet_data)
@@ -819,6 +1083,7 @@ def create_seed_packet(args, db=None, packets_dir=None):
             print(f"ID: {packet.id}")
             print(f"Saved to: {filepath}")
         else:
+            # Markdown fallback
             packet = MarkdownSeedPacket(packet_data)
             filepath = packets_dir / f"{packet.data['id']}.md"
             _write_markdown_backup(filepath, packet)
@@ -836,11 +1101,25 @@ def list_seed_packets(args, db=None):
     if db is None:
         db = _get_db()
 
-    if db:
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                packets = list(uow.seed_packets.list_seed_packets())
+        except Exception:
+            # Fallback to original models if service fails
+            if db:
+                from .models import SeedPacket
+
+                packets = SeedPacket.list_all()
+            else:
+                packets = markdown_list_all()
+    elif db:
+        # Fallback to original models
         from .models import SeedPacket
 
         packets = SeedPacket.list_all()
     else:
+        # Markdown fallback
         packets = markdown_list_all()
 
     if not packets:
@@ -852,12 +1131,19 @@ def list_seed_packets(args, db=None):
     print(header)
     print(separator)
     for p in packets:
-        if db:
+        if db and SERVICE_AVAILABLE:
+            brand = p.brand or ""
+            pid = p.id
+            variety = p.variety_name
+            latin = p.latin_name
+        elif db:
+            # Fallback to original models
             brand = p.brand or ""
             pid = p.id
             variety = p.variety_name
             latin = p.latin_name
         else:
+            # Markdown fallback
             brand = p.data.get("brand", "")
             pid = p.data["id"]
             variety = p.data["variety_name"]
@@ -872,7 +1158,42 @@ def show_seed_packet(args, db=None):
     if db is None:
         db = _get_db()
 
-    if db:
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                packet = uow.seed_packets.get_seed_packet(args.packet_id)
+                if not packet:
+                    print(f"✗ Seed packet not found: {args.packet_id}")
+                    sys.exit(1)
+                    return
+
+                print(f"=== Seed Packet: {packet.id} ===")
+                print()
+                fields_to_show = [
+                    ("variety_name", "Variety"),
+                    ("latin_name", "Latin Name"),
+                    ("brand", "Brand"),
+                    ("days_to_maturity", "Days to Maturity"),
+                    ("germination_time", "Germination Time"),
+                    ("planting_depth", "Planting Depth"),
+                    ("spacing", "Spacing"),
+                    ("sun_requirements", "Sun Requirements"),
+                    ("indoor_start_time", "Indoor Start Time"),
+                ]
+                for field, label in fields_to_show:
+                    val = getattr(packet, field, None)
+                    if val:
+                        print(f"  {label:<22} {val}")
+                print()
+                if packet.created_at:
+                    print(f"  Created: {packet.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                if packet.updated_at:
+                    print(f"  Updated: {packet.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+        except Exception as e:
+            print(f"✗ Error showing seed packet: {e}")
+            sys.exit(1)
+    elif db:
+        # Fallback to original models
         from .models import SeedPacket
 
         with db.get_db() as session:
@@ -906,6 +1227,7 @@ def show_seed_packet(args, db=None):
         if packet.updated_at:
             print(f"  Updated: {packet.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
     else:
+        # Markdown fallback
         from .seed_packet_model import load_from_file
 
         filepath = get_seed_packets_dir() / f"{args.packet_id}.md"
@@ -954,7 +1276,29 @@ def create_genus(args, db=None, genera_dir=None):
     _prompt_field("variety_name", "Variety name (e.g., Yellow Habanero)", genus_data)
     _prompt_field("latin_name", "Latin name (e.g., Capsicum chinense)", genus_data)
 
-    if db:
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                # Check for existing matching genus
+                for existing in uow.genera.list_genera():
+                    if (
+                        existing.variety_name == genus_data["variety_name"]
+                        and existing.latin_name == genus_data["latin_name"]
+                    ):
+                        print("\n⚠ A matching genus already exists:")
+                        print(f"  ID: {existing.id}")
+                        print(
+                            f"  Variety: {existing.variety_name} ({existing.latin_name})"
+                        )
+                        resp = input("\nCreate anyway? (y/N): ").strip().lower()
+                        if resp != "y":
+                            print("Cancelled.")
+                            return
+                        break
+        except Exception:
+            pass
+    elif db:
+        # Fallback to original models
         from .models import Genus
 
         existing = Genus.find_matching(
@@ -963,14 +1307,13 @@ def create_genus(args, db=None, genera_dir=None):
         if existing:
             print("\n⚠ A matching genus already exists:")
             print(f"  ID: {existing.id}")
-            print(
-                f"  Variety: {existing.variety_name} ({existing.latin_name})"
-            )
+            print(f"  Variety: {existing.variety_name} ({existing.latin_name})")
             resp = input("\nCreate anyway? (y/N): ").strip().lower()
             if resp != "y":
                 print("Cancelled.")
                 return
     else:
+        # Markdown fallback
         from .genus_model import find_matching
 
         existing = find_matching(
@@ -991,7 +1334,21 @@ def create_genus(args, db=None, genera_dir=None):
     print("--- No optional fields for genus ---")
 
     try:
-        if db:
+        if db and SERVICE_AVAILABLE:
+            with create_unit_of_work() as uow:
+                genus = uow.genera.create_genus(genus_data)
+                # Markdown backup
+                backup_data = genus_data.copy()
+                backup_data["id"] = genus.id
+                markdown_genus = MarkdownGenus(backup_data)
+                filepath = genera_dir / f"{genus.id}.md"
+                _write_markdown_backup(filepath, markdown_genus)
+
+                print("\n✓ Genus created successfully!")
+                print(f"ID: {genus.id}")
+                print(f"Saved to: {filepath}")
+        elif db:
+            # Fallback to original models
             from .models import Genus
 
             genus = Genus.create_from_dict(genus_data)
@@ -1002,8 +1359,6 @@ def create_genus(args, db=None, genera_dir=None):
             # Markdown backup
             backup_data = genus_data.copy()
             backup_data["id"] = genus.id
-            from .genus_model import Genus as MarkdownGenus
-
             markdown_genus = MarkdownGenus(backup_data)
             filepath = genera_dir / f"{genus.id}.md"
             _write_markdown_backup(filepath, markdown_genus)
@@ -1012,6 +1367,7 @@ def create_genus(args, db=None, genera_dir=None):
             print(f"ID: {genus.id}")
             print(f"Saved to: {filepath}")
         else:
+            # Markdown fallback
             from .genus_model import Genus
 
             genus = Genus(genus_data)
@@ -1032,11 +1388,27 @@ def list_genera(args, db=None):
     if db is None:
         db = _get_db()
 
-    if db:
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                genera = list(uow.genera.list_genera())
+        except Exception:
+            # Fallback to original models if service fails
+            if db:
+                from .models import Genus
+
+                genera = Genus.list_all()
+            else:
+                from .genus_model import list_all
+
+                genera = list_all()
+    elif db:
+        # Fallback to original models
         from .models import Genus
 
         genera = Genus.list_all()
     else:
+        # Markdown fallback
         from .genus_model import list_all
 
         genera = list_all()
@@ -1050,11 +1422,17 @@ def list_genera(args, db=None):
     print(header)
     print(separator)
     for g in genera:
-        if db:
+        if db and SERVICE_AVAILABLE:
+            gid = g.id
+            variety = g.variety_name
+            latin = g.latin_name
+        elif db:
+            # Fallback to original models
             gid = g.id
             variety = g.variety_name
             latin = g.latin_name
         else:
+            # Markdown fallback
             gid = g.data["id"]
             variety = g.data["variety_name"]
             latin = g.data["latin_name"]
@@ -1068,7 +1446,35 @@ def show_genus(args, db=None):
     if db is None:
         db = _get_db()
 
-    if db:
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                genus = uow.genera.get_genus(args.genus_id)
+                if not genus:
+                    print(f"✗ Genus not found: {args.genus_id}")
+                    sys.exit(1)
+                    return
+
+                print(f"=== Genus: {genus.id} ===")
+                print()
+                fields_to_show = [
+                    ("variety_name", "Variety"),
+                    ("latin_name", "Latin Name"),
+                ]
+                for field, label in fields_to_show:
+                    val = getattr(genus, field, None)
+                    if val:
+                        print(f"  {label:<22} {val}")
+                print()
+                if genus.created_at:
+                    print(f"  Created: {genus.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                if genus.updated_at:
+                    print(f"  Updated: {genus.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+        except Exception as e:
+            print(f"✗ Error showing genus: {e}")
+            sys.exit(1)
+    elif db:
+        # Fallback to original models
         from .models import Genus
 
         with db.get_db() as session:
@@ -1095,6 +1501,7 @@ def show_genus(args, db=None):
         if genus.updated_at:
             print(f"  Updated: {genus.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
     else:
+        # Markdown fallback
         from .genus_model import load_from_file
 
         filepath = get_genera_dir() / f"{args.genus_id}.md"
@@ -1119,12 +1526,7 @@ def show_genus(args, db=None):
         print(f"  Updated: {genus.data.get('updated_at', 'N/A')}")
 
 
-if __name__ == "__main__":
-    main()
-
-
-# ─── Log command handlers ────────────────────────────────────────────
-
+# ─── Log command handlers ────────────────────────────────────────
 
 def log_humidity(args, db=None):
     """Log a humidity reading for a plant."""
@@ -1132,19 +1534,30 @@ def log_humidity(args, db=None):
         db = _get_db()
 
     # Validate plant exists
-    if db:
+    plant_exists = False
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                plant = uow.plants.get_plant(args.plant_id)
+                if plant:
+                    plant_exists = True
+        except Exception:
+            pass
+    elif db:
+        # Fallback to original models
         from .models import Plant
 
         with db.get_db() as session:
             plant = session.query(Plant).filter_by(id=args.plant_id).first()
+            if plant:
+                plant_exists = True
     else:
+        # Markdown fallback
         plant_file = get_database_dir() / f"{args.plant_id}.md"
-        if not plant_file.exists():
-            print(f"✗ Error: Plant ID '{args.plant_id}' not found")
-            return
-        plant = True
+        if plant_file.exists():
+            plant_exists = True
 
-    if not plant:
+    if not plant_exists:
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
         return
 
@@ -1158,20 +1571,29 @@ def log_humidity(args, db=None):
         entry_data["date"] = args.date
 
     try:
-        if db:
+        if db and SERVICE_AVAILABLE:
+            with create_unit_of_work() as uow:
+                log_entry = uow.logs.create_log_entry(entry_data)
+                print(f"✓ Humidity logged for plant {args.plant_id}")
+        elif db:
+            # Fallback to original models
             from .models import PlantLogEntry
 
             log_entry = PlantLogEntry.create_from_dict(entry_data)
             with db.get_db() as session:
                 session.add(log_entry)
                 session.commit()
+            print(f"✓ Humidity logged for plant {args.plant_id}")
         else:
+            # Markdown fallback
             from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
 
             entry = MarkdownLogEntry(entry_data)
             append_log_entry(entry)
-        print(f"✓ Humidity logged for plant {args.plant_id}")
-    except ValueError as e:
+            print(f"✓ Humidity logged for plant {args.plant_id}")
+    except ValidationException as e:
+        print(f"✗ Error: {e}")
+    except Exception as e:
         print(f"✗ Error: {e}")
 
 
@@ -1181,19 +1603,28 @@ def log_water(args, db=None):
         db = _get_db()
 
     # Validate plant exists
-    if db:
+    plant_exists = False
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                plant = uow.plants.get_plant(args.plant_id)
+                if plant:
+                    plant_exists = True
+        except Exception:
+            pass
+    elif db:
+        # Fallback to original models
         from .models import Plant
 
         with db.get_db() as session:
             plant = session.query(Plant).filter_by(id=args.plant_id).first()
+            if plant:
+                plant_exists = True
     else:
+        # Markdown fallback
         plant_file = get_database_dir() / f"{args.plant_id}.md"
-        if not plant_file.exists():
-            print(f"✗ Error: Plant ID '{args.plant_id}' not found")
-            return
-        plant = True
 
-    if not plant:
+    if not plant_exists:
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
         return
 
@@ -1216,20 +1647,29 @@ def log_water(args, db=None):
         entry_data["date"] = args.date
 
     try:
-        if db:
+        if db and SERVICE_AVAILABLE:
+            with create_unit_of_work() as uow:
+                log_entry = uow.logs.create_log_entry(entry_data)
+                print(f"✓ Watering logged for plant {args.plant_id}")
+        elif db:
+            # Fallback to original models
             from .models import PlantLogEntry
 
             log_entry = PlantLogEntry.create_from_dict(entry_data)
             with db.get_db() as session:
                 session.add(log_entry)
                 session.commit()
+            print(f"✓ Watering logged for plant {args.plant_id}")
         else:
+            # Markdown fallback
             from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
 
             entry = MarkdownLogEntry(entry_data)
             append_log_entry(entry)
-        print(f"✓ Watering logged for plant {args.plant_id}")
-    except ValueError as e:
+            print(f"✓ Watering logged for plant {args.plant_id}")
+    except ValidationException as e:
+        print(f"✗ Error: {e}")
+    except Exception as e:
         print(f"✗ Error: {e}")
 
 
@@ -1239,19 +1679,30 @@ def log_fertilizer(args, db=None):
         db = _get_db()
 
     # Validate plant exists
-    if db:
+    plant_exists = False
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                plant = uow.plants.get_plant(args.plant_id)
+                if plant:
+                    plant_exists = True
+        except Exception:
+            pass
+    elif db:
+        # Fallback to original models
         from .models import Plant
 
         with db.get_db() as session:
             plant = session.query(Plant).filter_by(id=args.plant_id).first()
+            if plant:
+                plant_exists = True
     else:
+        # Markdown fallback
         plant_file = get_database_dir() / f"{args.plant_id}.md"
-        if not plant_file.exists():
-            print(f"✗ Error: Plant ID '{args.plant_id}' not found")
-            return
-        plant = True
+        if plant_file.exists():
+            plant_exists = True
 
-    if not plant:
+    if not plant_exists:
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
         return
 
@@ -1266,14 +1717,21 @@ def log_fertilizer(args, db=None):
         entry_data["date"] = args.date
 
     try:
-        if db:
+        if db and SERVICE_AVAILABLE:
+            with create_unit_of_work() as uow:
+                log_entry = uow.logs.create_log_entry(entry_data)
+                print(f"✓ Fertilizer logged for plant {args.plant_id}")
+        elif db:
+            # Fallback to original models
             from .models import PlantLogEntry
 
             log_entry = PlantLogEntry.create_from_dict(entry_data)
             with db.get_db() as session:
                 session.add(log_entry)
                 session.commit()
+            print(f"✓ Fertilizer logged for plant {args.plant_id}")
         else:
+            # Markdown fallback
             from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
 
             # For markdown, use original field names
@@ -1287,8 +1745,10 @@ def log_fertilizer(args, db=None):
                 md_entry_data["date"] = args.date
             entry = MarkdownLogEntry(md_entry_data)
             append_log_entry(entry)
-        print(f"✓ Fertilizer logged for plant {args.plant_id}")
-    except ValueError as e:
+            print(f"✓ Fertilizer logged for plant {args.plant_id}")
+    except ValidationException as e:
+        print(f"✗ Error: {e}")
+    except Exception as e:
         print(f"✗ Error: {e}")
 
 
@@ -1298,19 +1758,30 @@ def log_note(args, db=None):
         db = _get_db()
 
     # Validate plant exists
-    if db:
+    plant_exists = False
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                plant = uow.plants.get_plant(args.plant_id)
+                if plant:
+                    plant_exists = True
+        except Exception:
+            pass
+    elif db:
+        # Fallback to original models
         from .models import Plant
 
         with db.get_db() as session:
             plant = session.query(Plant).filter_by(id=args.plant_id).first()
+            if plant:
+                plant_exists = True
     else:
+        # Markdown fallback
         plant_file = get_database_dir() / f"{args.plant_id}.md"
-        if not plant_file.exists():
-            print(f"✗ Error: Plant ID '{args.plant_id}' not found")
-            return
-        plant = True
+        if plant_file.exists():
+            plant_exists = True
 
-    if not plant:
+    if not plant_exists:
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
         return
 
@@ -1320,20 +1791,29 @@ def log_note(args, db=None):
         entry_data["date"] = args.date
 
     try:
-        if db:
+        if db and SERVICE_AVAILABLE:
+            with create_unit_of_work() as uow:
+                log_entry = uow.logs.create_log_entry(entry_data)
+                print(f"✓ Note logged for plant {args.plant_id}")
+        elif db:
+            # Fallback to original models
             from .models import PlantLogEntry
 
             log_entry = PlantLogEntry.create_from_dict(entry_data)
             with db.get_db() as session:
                 session.add(log_entry)
                 session.commit()
+            print(f"✓ Note logged for plant {args.plant_id}")
         else:
+            # Markdown fallback
             from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
 
             entry = MarkdownLogEntry(entry_data)
             append_log_entry(entry)
-        print(f"✓ Note logged for plant {args.plant_id}")
-    except ValueError as e:
+            print(f"✓ Note logged for plant {args.plant_id}")
+    except ValidationException as e:
+        print(f"✗ Error: {e}")
+    except Exception as e:
         print(f"✗ Error: {e}")
 
 
@@ -1343,25 +1823,90 @@ def log_list(args, db=None):
         db = _get_db()
 
     # Validate plant exists
-    if db:
+    plant_exists = False
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                plant = uow.plants.get_plant(args.plant_id)
+                if plant:
+                    plant_exists = True
+        except Exception:
+            pass
+    elif db:
+        # Fallback to original models
         from .models import Plant
 
         with db.get_db() as session:
             plant = session.query(Plant).filter_by(id=args.plant_id).first()
+            if plant:
+                plant_exists = True
     else:
+        # Markdown fallback
         plant_file = get_database_dir() / f"{args.plant_id}.md"
-        if not plant_file.exists():
-            print(f"✗ Error: Plant ID '{args.plant_id}' not found")
-            return
-        plant = True
+        if plant_file.exists():
+            plant_exists = True
 
-    if not plant:
+    if not plant_exists:
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
         return
 
     event_type = None if args.type == "all" else args.type
 
-    if db:
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                entries = list(uow.logs.list_entries(
+                    plant_id=args.plant_id, event_type=event_type
+                ))
+                # Convert domain objects to dict for display
+                entries_dict = []
+                for entry in entries:
+                    d = {
+                        "timestamp": entry.timestamp,
+                        "event_type": entry.event_type,
+                    }
+                    if entry.event_type == "humidity":
+                        d["level"] = entry.level
+                    elif entry.event_type == "water":
+                        d["amount_display"] = f"{entry.amount_ml} ml"
+                    elif entry.event_type == "fertilizer":
+                        d["type"] = entry.fertilizer_type
+                        d["strength"] = entry.fertilizer_strength
+                    elif entry.event_type == "note":
+                        d["text"] = entry.text
+                    entries_dict.append(d)
+        except Exception:
+            # Fallback to original models if service fails
+            if db:
+                from .models import PlantLogEntry
+
+                entries = PlantLogEntry.load_entries(
+                    plant_id=args.plant_id, event_type=event_type
+                )
+                # Convert ORM objects to dict for display
+                entries_dict = []
+                for entry in entries:
+                    d = {
+                        "timestamp": entry.timestamp,
+                        "event_type": entry.event_type,
+                    }
+                    if entry.event_type == "humidity":
+                        d["level"] = entry.level
+                    elif entry.event_type == "water":
+                        d["amount_display"] = f"{entry.amount_ml} ml"
+                    elif entry.event_type == "fertilizer":
+                        d["type"] = entry.fertilizer_type
+                        d["strength"] = entry.fertilizer_strength
+                    elif entry.event_type == "note":
+                        d["text"] = entry.text
+                    entries_dict.append(d)
+            else:
+                # Markdown fallback
+                from .plant_log_model import load_log_entries
+
+                entries_dict = load_log_entries(plant_id=args.plant_id, event_type=event_type)
+    elif db:
+        # Fallback to original models
         from .models import PlantLogEntry
 
         entries = PlantLogEntry.load_entries(
@@ -1385,6 +1930,7 @@ def log_list(args, db=None):
                 d["text"] = entry.text
             entries_dict.append(d)
     else:
+        # Markdown fallback
         from .plant_log_model import load_log_entries
 
         entries_dict = load_log_entries(plant_id=args.plant_id, event_type=event_type)
@@ -1420,3 +1966,7 @@ def log_list(args, db=None):
 
     print("-" * 80)
     print(f"Total entries: {len(entries_dict)}")
+
+
+if __name__ == "__main__":
+    main()
