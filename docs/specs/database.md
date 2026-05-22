@@ -2,16 +2,29 @@
 
 ## Overview
 
-This document specifies the database format and storage mechanism for the Plant Tracking System. The system uses local markdown files as the primary data store for the MVP, with a planned migration path to Postgres for Phase 3.
+The Plant Tracking System uses **PostgreSQL as the primary data store**, managed through the `plant_service` package which follows Ports & Adapters (Hexagonal) architecture. Markdown files are written as backups for human-readable access.
 
-The system tracks two entity types:
+The system tracks four entity types:
 - **Plants**: Individual growing records with planting dates and IDs
 - **Seed Packets**: Reusable variety information records (brand, days to maturity, etc.)
 - **Genera**: Unique (variety name, Latin name) pairs that eliminate redundant data entry
+- **Plant Log Entries**: Care activity logs (humidity, water, fertilizer, notes)
 
-Plants reference seed packets via `seed_packet_id`, and genus records via `genus_id`, eliminating denormalized data across plant records.
+Plants reference seed packets via `seed_packet_id` and genus records via `genus_id`, eliminating denormalized data across plant records.
 
-## Storage Location
+### Architecture
+
+```
+CLI / FastAPI → plant_service (service layer) → SQLAlchemy repositories → PostgreSQL
+                                      ↓
+                              Markdown backup files
+```
+
+## PostgreSQL Schema
+
+Managed by Alembic migrations. All tables defined in `packages/plant_service/src/plant_service/adapters/repository/models/`.
+
+### Storage Location (Markdown Backups)
 
 - **Plants directory**: `database/` (relative to project root)
 - **Plant file naming**: `{plant_id}.md` (e.g., `HABY-2026-001.md`)
@@ -19,8 +32,6 @@ Plants reference seed packets via `seed_packet_id`, and genus records via `genus
 - **Seed packet file naming**: `SPKT-NNN.md` (e.g., `SPKT-001.md`)
 - **Genera directory**: `database/genera/`
 - **Genus file naming**: `GENUS-NNN.md` (e.g., `GENUS-001.md`)
-- **Atomic Operations**: All write operations use temporary files + rename to prevent corruption
-- **Concurrency Control**: File locking (fcntl) prevents concurrent writes to the same record
 
 ## Plant File Format
 
@@ -187,24 +198,85 @@ updated_at: '2026-05-03T00:00:00Z'
 
 ## Data Integrity Measures
 
-1. **Atomic Writes**: All file updates write to a temporary file first, then rename to the target file
-2. **File Locking**: Uses `fcntl` advisory locks to prevent concurrent writes to the same record
-3. **Read-after-write Consistency**: Immediate data visibility after write operations
-4. **Background Flushing**: Periodic `fsync` calls every 5 seconds to flush buffers to disk
-5. **Corruption Detection**: File checksum verification on read operations
+PostgreSQL provides:
+1. **ACID Transactions**: Unit of Work pattern ensures atomic operations across tables
+2. **Foreign Key Constraints**: `plants.seed_packet_id` → `seed_packets.id`, `plants.genus_id` → `genera.id`
+3. **Check Constraints**: Event type validation, humidity range (1-10), required fields per event type
+4. **Referential Integrity**: Database-enforced FK relationships
+5. **Unique Constraints**: `(variety_name, latin_name)` unique on `seed_packets` and `genera`
 
-## Migration Path to Postgres
+Markdown backups provide:
+- Human-readable file records for portability
+- Fallback access when PostgreSQL is unavailable
 
-The markdown storage design includes a clear migration path to Postgres:
+## Database Tables
 
-1. **Schema Mapping**: Direct mapping of frontmatter fields to database columns
-2. **Seed Packets Table**: `seed_packets` table with columns matching the seed packet schema
-3. **Genera Table**: `genera` table with columns matching the genus schema
-4. **Plants Table**: Gains `seed_packet_id` and `genus_id` foreign key columns
-4. **Content Storage**: Observational notes stored in a separate `observations` table or as JSONB
-5. **ID Generation**: Database sequences replace file-based sequencing
-6. **Backward Compatibility**: Dual-write capability during migration period
-7. **Export/Import**: CSV/JSON export/import utilities for data migration
+### `plants`
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | VARCHAR(20) | PK, application-generated (VARIETY-YYYY-SEQ) |
+| `variety_name` | VARCHAR(100) | NOT NULL |
+| `latin_name` | VARCHAR(100) | NOT NULL |
+| `brand` | VARCHAR(100) | nullable |
+| `days_to_maturity` | VARCHAR(20) | nullable |
+| `germination_time` | VARCHAR(20) | nullable |
+| `planting_depth` | VARCHAR(20) | nullable |
+| `spacing` | VARCHAR(20) | nullable |
+| `sun_requirements` | VARCHAR(50) | nullable |
+| `indoor_start_time` | VARCHAR(50) | nullable |
+| `planting_date` | VARCHAR(10) | NOT NULL (YYYY-MM-DD) |
+| `seed_packet_id` | VARCHAR(10) | FK → `seed_packets.id`, nullable |
+| `genus_id` | VARCHAR(10) | FK → `genera.id`, nullable |
+| `created_at` | TIMESTAMP | server_default now() |
+| `updated_at` | TIMESTAMP | server_default now(), onupdate now() |
+
+### `seed_packets`
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | VARCHAR(10) | PK, application-generated (SPKT-NNN) |
+| `variety_name` | VARCHAR(100) | NOT NULL |
+| `latin_name` | VARCHAR(100) | NOT NULL |
+| `brand` | VARCHAR(100) | nullable |
+| `days_to_maturity` | VARCHAR(20) | nullable |
+| `germination_time` | VARCHAR(20) | nullable |
+| `planting_depth` | VARCHAR(20) | nullable |
+| `spacing` | VARCHAR(20) | nullable |
+| `sun_requirements` | VARCHAR(50) | nullable |
+| `indoor_start_time` | VARCHAR(50) | nullable |
+| `created_at` | TIMESTAMP | server_default now() |
+| `updated_at` | TIMESTAMP | server_default now(), onupdate now() |
+
+### `genera`
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | VARCHAR(10) | PK, application-generated (GENUS-NNN) |
+| `variety_name` | VARCHAR(100) | NOT NULL |
+| `latin_name` | VARCHAR(100) | NOT NULL |
+| `created_at` | TIMESTAMP | server_default now() |
+| `updated_at` | TIMESTAMP | server_default now(), onupdate now() |
+
+### `plant_log_entries`
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | INTEGER | PK, autoincrement |
+| `plant_id` | VARCHAR(20) | FK → `plants.id`, NOT NULL |
+| `event_type` | VARCHAR(20) | NOT NULL, CHECK IN ('humidity', 'water', 'fertilizer', 'note') |
+| `timestamp` | VARCHAR(20) | NOT NULL (ISO 8601) |
+| `level` | INTEGER | nullable, CHECK (1-10 for humidity) |
+| `amount_ml` | INTEGER | nullable (required for water) |
+| `fertilizer_type` | VARCHAR(50) | nullable |
+| `fertilizer_strength` | VARCHAR(20) | nullable |
+| `text` | VARCHAR(500) | nullable (required for note) |
+| `created_at` | TIMESTAMP | server_default now() |
+| `updated_at` | TIMESTAMP | server_default now(), onupdate now() |
+
+**Check constraints**:
+- Event type fields: `(event_type, level/amount_ml/fertilizer_type/fertilizer_strength/text)` must match event type
+- Humidity level: `1-10` range
 
 ## Validation Rules
 
@@ -298,19 +370,8 @@ updated_at: '2026-05-03T00:00:00Z'
 3. **Import Functionality**: CLI commands to import data from CSV/JSON
 4. **Version Control**: Repository tracks schema changes but not data files (by .gitignore)
 
-## Performance Characteristics
+## Backup and Recovery
 
-- **Read Latency**: <10ms for typical records
-- **Write Latency**: <20ms (including atomic operations and locking)
-- **Scalability**: Suitable for hundreds to low thousands of records
-- **Concurrent Readers**: Unlimited (read-only file access)
-- **Concurrent Writers**: Limited by file locking (serialized per record)
-
-## Limitations (MVP)
-
-1. No built-in search/indexing (linear scan required for listings)
-2. No transactional guarantees across multiple records
-3. Limited query capabilities (filtered listings via Plant Data Service)
-4. Manual backup required (no automated snapshots)
-
-These limitations are addressed in the planned Postgres migration for Phase 3.
+1. **PostgreSQL Backup**: Standard `pg_dump` for full database backup
+2. **Markdown Export**: Export service streams data to Markdown files
+3. **Version Control**: Repository tracks schema changes; data files excluded via `.gitignore`

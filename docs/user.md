@@ -2,20 +2,47 @@
 
 ## Installation
 
-Install the plant tracking CLI and its dependencies:
+Install the CLI and service package:
 
 ```bash
 pip install .
+uv pip install -e packages/plant_service
 ```
 
 Required Python packages (installed automatically):
 - `qrcode[pil]` - QR code generation
 - `Pillow` - Image processing
 - `PyYAML` - YAML frontmatter parsing
+- `sqlalchemy>=2.0` - Database ORM
+- `psycopg2-binary>=2.9` - PostgreSQL adapter
+- `thefuzz[speedup]>=0.22` - Fuzzy genus matching
 
 ## Setup
 
-The first time you run any command, a `database/` directory is created automatically in the project root. This is where all plant records are stored as individual markdown files.
+### PostgreSQL Database (Primary Storage)
+
+Set the `DATABASE_URL` environment variable pointing to your PostgreSQL database:
+
+```bash
+export DATABASE_URL="postgresql://user:password@localhost:5432/plant_tracking"
+```
+
+Run the database migration to create tables:
+
+```bash
+alembic upgrade head
+```
+
+### Markdown Backup (Fallback)
+
+A `database/` directory is created automatically in the project root. All plant records are stored in PostgreSQL, with Markdown files written as backups for human-readable access and portability.
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `PLANT_DATABASE_DIR` | No | Markdown backup directory (default: `database/`) |
 
 ## Seed Packets
 
@@ -206,33 +233,28 @@ Example: `YEHA-2026-001`
 
 The system scans existing records in `database/` to ensure unique sequence numbers per variety per year.
 
-## File Storage
+## Storage Architecture
 
-Plant records are stored as markdown files with YAML frontmatter:
+### Primary Storage: PostgreSQL
 
-**Location**: `database/<plant_id>.md`
+All data is stored in PostgreSQL tables managed by the `plant_service` package:
 
-**Frontmatter fields**:
-- `id`, `variety_name`, `latin_name`, `brand`
-- `days_to_maturity`, `germination_time`, `planting_depth`
-- `spacing`, `sun_requirements`, `indoor_start_time`
-- `planting_date`, `created_at`, `updated_at`, `seed_packet_id`, `genus_id`
+| Table | Description |
+|-------|-------------|
+| `plants` | Individual growing records |
+| `seed_packets` | Reusable variety information |
+| `genera` | Unique (variety name, Latin name) pairs |
+| `plant_log_entries` | Care activity logs (humidity, water, fertilizer, notes) |
 
-The `created_at` and `updated_at` fields use ISO 8601 format. The `seed_packet_id` field references a seed packet record (or `"unknown"` if no packet is linked). The `genus_id` field references a genus record (or `"unknown"` if no genus is linked).
+### Markdown Backup
 
-### Seed Packet Storage
+Markdown files are automatically written as backups alongside PostgreSQL for human-readable access:
 
-Seed packet records are stored in a separate subdirectory:
+- **Plants**: `database/<plant_id>.md`
+- **Seed packets**: `database/seed_packets/SPKT-NNN.md`
+- **Genera**: `database/genera/GENUS-NNN.md`
 
-**Location**: `database/seed_packets/SPKT-NNN.md`
-
-### Genus Storage
-
-Genus records are stored in a separate subdirectory:
-
-**Location**: `database/genera/GENUS-NNN.md`
-
-**Example plant file with seed packet reference**:
+**Example plant backup file**:
 ```yaml
 ---
 variety_name: Yellow Habanero
@@ -247,7 +269,7 @@ updated_at: '2026-04-25T14:30:02Z'
 
 ## Database Directory Customization
 
-By default, records are stored in `database/` relative to the project root. Override with the `PLANT_DATABASE_DIR` environment variable:
+Override the Markdown backup directory with the `PLANT_DATABASE_DIR` environment variable:
 
 ```bash
 PLANT_DATABASE_DIR=/path/to/db python -m commands.plant_tracking_cli create-plant
