@@ -16,9 +16,11 @@ build/
 .coverage
 htmlcov/
 *.so
+.env
 venv/
 .venv/
 env/
+.env
 .env/
 pyvenv.cfg
 MANIFEST

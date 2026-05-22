@@ -21,10 +21,11 @@ Required Python packages (installed automatically):
 
 ### PostgreSQL Database (Primary Storage)
 
-Set the `DATABASE_URL` environment variable pointing to your PostgreSQL database:
+Copy the environment template and edit with your credentials:
 
 ```bash
-export DATABASE_URL="postgresql://user:password@localhost:5432/plant_tracking"
+cp .env.template .env
+# Edit .env with your PostgreSQL connection details
 ```
 
 Run the database migration to create tables:
@@ -37,12 +38,12 @@ alembic upgrade head
 
 A `database/` directory is created automatically in the project root. All plant records are stored in PostgreSQL, with Markdown files written as backups for human-readable access and portability.
 
-### Environment Variables
+### Configuration (`.env` file)
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `PLANT_DATABASE_DIR` | No | Markdown backup directory (default: `database/`) |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DATABASE_URL` | Yes | — | PostgreSQL connection string |
+| `PLANT_DATABASE_DIR` | No | `database` | Markdown backup directory |
 
 ## Seed Packets
 
@@ -269,13 +270,7 @@ updated_at: '2026-04-25T14:30:02Z'
 
 ## Database Directory Customization
 
-Override the Markdown backup directory with the `PLANT_DATABASE_DIR` environment variable:
-
-```bash
-PLANT_DATABASE_DIR=/path/to/db python -m commands.plant_tracking_cli create-plant
-```
-
-This is useful for testing or organizing records across projects.
+Set `PLANT_DATABASE_DIR` in your `.env` file to change the Markdown backup location. This is useful for testing or organizing records across projects.
 
 ## Error Handling
 
