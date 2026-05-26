@@ -5,8 +5,8 @@
 Install the CLI and service package:
 
 ```bash
-pip install .
 uv pip install -e packages/plant_service
+uv pip install -e .
 ```
 
 Required Python packages (installed automatically):
@@ -141,6 +141,37 @@ The interactive prompt flow:
 3. **Plant-specific fields**: Enter planting date (required for label)
 
 After saving, the output shows the generated plant ID, genus ID (if any), file path, and next steps for generating or printing a label.
+
+### `list-plants`
+
+Display all plant records in a table.
+
+```bash
+python -m commands.plant_tracking_cli list-plants
+```
+
+Output:
+```
+ID           Variety                     Latin Name                  Planting Date
+------------ -------------------------  -------------------------  ---------------
+YEHA-2026-001 Yellow Habanero            Capsicum chinense          2024-10-15
+YEHA-2026-002 Yellow Habanero            Capsicum chinense          2025-05-01
+AV-2026-001  Avocado                    Persea americana           2020-08-01
+```
+
+If no plants exist, the command prints "No plants found."
+
+### `show-plant <id>`
+
+Show full details of a specific plant.
+
+```bash
+python -m commands.plant_tracking_cli show-plant YEHA-2026-001
+```
+
+Output includes all plant fields (variety, Latin name, brand, days to maturity, germination time, planting depth, spacing, sun requirements, indoor start time, planting date, seed packet ID, genus ID) plus creation and update timestamps.
+
+If the plant ID doesn't exist, the command prints an error and exits with code 1.
 
 ### `create-genus`
 

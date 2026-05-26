@@ -2,6 +2,7 @@
 
 # Install the package in editable mode in the uv environment
 install:
+	uv pip install -e packages/plant_service
 	uv pip install -e .
 
 # Install with test dependencies
