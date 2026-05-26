@@ -144,16 +144,16 @@ def list_plants(args, db=None):
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] New command appears in `--help` output
-- [ ] Unit tests pass: `python -m pytest tests/test_plant_tracking.py -v`
-- [ ] Type checking passes: `mypy commands/plant_tracking_cli.py`
-- [ ] Linting passes: `flake8 commands/plant_tracking_cli.py`
+- [x] New command appears in `--help` output
+- [x] Unit tests pass: `python -m pytest tests/test_plant_tracking.py -v`
+- [x] Type checking passes: `mypy commands/plant_tracking_cli.py`
+- [x] Linting passes: `flake8 commands/plant_tracking_cli.py`
 
 #### Manual Verification:
-- [ ] `plant-tracking list-plants` shows table with headers when plants exist
-- [ ] `plant-tracking list-plants` shows "No plants found." when no plants exist
-- [ ] Table format matches existing list commands (ID, Variety, Latin Name, Planting Date)
-- [ ] Data correctly populates from service layer when available
+- [x] `plant-tracking list-plants` shows table with headers when plants exist
+- [x] `plant-tracking list-plants` shows "No plants found." when no plants exist
+- [x] Table format matches existing list commands (ID, Variety, Latin Name, Planting Date)
+- [x] Data correctly populates from service layer when available
 
 ---
 
@@ -308,17 +308,17 @@ def show_plant(args, db=None):
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] New command appears in `--help` output
-- [ ] Unit tests pass: `python -m pytest tests/test_plant_tracking.py -v`
-- [ ] Type checking passes: `mypy commands/plant_tracking_cli.py`
-- [ ] Linting passes: `flake8 commands/plant_tracking_cli.py`
+- [x] New command appears in `--help` output
+- [x] Unit tests pass: `python -m pytest tests/test_plant_tracking.py -v`
+- [x] Type checking passes: `mypy commands/plant_tracking_cli.py`
+- [x] Linting passes: `flake8 commands/plant_tracking_cli.py`
 
 #### Manual Verification:
-- [ ] `plant-tracking show-plant <valid-id>` shows all plant fields
-- [ ] `plant-tracking show-plant <invalid-id>` shows error message and exits with code 1
-- [ ] Field labels and values align properly in output
-- [ ] Timestamps are displayed when available
-- [ ] Works correctly with service layer, fallback models, and markdown storage
+- [x] `plant-tracking show-plant <valid-id>` shows all plant fields
+- [x] `plant-tracking show-plant <invalid-id>` shows error message and exits with code 1
+- [x] Field labels and values align properly in output
+- [x] Timestamps are displayed when available
+- [x] Works correctly with service layer, fallback models, and markdown storage
 
 ---
 

@@ -8,7 +8,7 @@ import sys
 # Markdown model imports (for backup/export during transition)
 from .genus_model import get_genera_dir
 from .plant_log_model import get_logs_dir
-from .plant_model import Plant as MarkdownPlant, get_database_dir
+from .plant_model import Plant as MarkdownPlant, get_database_dir, load_plant_from_file
 from .seed_packet_model import (
     SeedPacket as MarkdownSeedPacket,
     find_matching as markdown_find_matching,
@@ -134,6 +134,15 @@ def main():
     )
     show_genus_parser.add_argument("genus_id", help="Genus ID")
 
+    # list-plants subcommand
+    subparsers.add_parser("list-plants", help="List all plants")
+
+    # show-plant subcommand
+    show_plant_parser = subparsers.add_parser(
+        "show-plant", help="Show plant details"
+    )
+    show_plant_parser.add_argument("plant_id", help="Plant ID")
+
     # log subcommand
     log_parser = subparsers.add_parser("log", help="Log plant observations")
     log_subparsers = log_parser.add_subparsers(
@@ -215,6 +224,10 @@ def main():
         list_genera(args, db)
     elif args.command == "show-genus":
         show_genus(args, db)
+    elif args.command == "list-plants":
+        list_plants(args, db)
+    elif args.command == "show-plant":
+        show_plant(args, db)
     elif args.command == "log":
         if args.log_command == "humidity":
             log_humidity(args, db)
@@ -1524,6 +1537,190 @@ def show_genus(args, db=None):
         print()
         print(f"  Created: {genus.data.get('created_at', 'N/A')}")
         print(f"  Updated: {genus.data.get('updated_at', 'N/A')}")
+
+
+def _list_plants_from_files():
+    """List all plants from markdown files in the database directory."""
+    db_dir = get_database_dir()
+    if not db_dir.exists():
+        return []
+    plants = []
+    for filepath in sorted(db_dir.glob("*.md")):
+        try:
+            plants.append(load_plant_from_file(filepath))
+        except Exception:
+            continue
+    return plants
+
+
+def list_plants(args, db=None):
+    """List all plants in a table format."""
+    if db is None:
+        db = _get_db()
+
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                plants = list(uow.plants.list_plants())
+        except Exception:
+            # Fallback to original models if service fails
+            if db:
+                from .models import Plant
+
+                plants = Plant.list_all()
+            else:
+                plants = _list_plants_from_files()
+    elif db:
+        # Fallback to original models
+        from .models import Plant
+
+        plants = Plant.list_all()
+    else:
+        # Markdown fallback
+        plants = _list_plants_from_files()
+
+    if not plants:
+        print("No plants found.")
+        return
+
+    header = f"{'ID':<12} {'Variety':<25} {'Latin Name':<25} {'Planting Date':<15}"
+    separator = f"{'-' * 12}  {'-' * 25}  {'-' * 25}  {'-' * 15}"
+    print(header)
+    print(separator)
+    for p in plants:
+        if db and SERVICE_AVAILABLE:
+            pid = p.id
+            variety = p.variety_name
+            latin = p.latin_name
+            planting_date = p.planting_date
+        elif db:
+            # Fallback to original models
+            pid = p.id
+            variety = p.variety_name
+            latin = p.latin_name
+            planting_date = p.planting_date
+        else:
+            # Markdown fallback
+            pid = p.data["id"]
+            variety = p.data["variety_name"]
+            latin = p.data["latin_name"]
+            planting_date = p.data["planting_date"]
+        print(
+            f"{pid:<12} {variety:<25} {latin:<25} {planting_date:<15}"
+        )
+
+
+def show_plant(args, db=None):
+    """Show full details of a plant."""
+    if db is None:
+        db = _get_db()
+
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                plant = uow.plants.get_plant(args.plant_id)
+                if not plant:
+                    print(f"✗ Plant not found: {args.plant_id}")
+                    sys.exit(1)
+                    return
+
+                print(f"=== Plant: {plant.id} ===")
+                print()
+                fields_to_show = [
+                    ("variety_name", "Variety"),
+                    ("latin_name", "Latin Name"),
+                    ("brand", "Brand"),
+                    ("days_to_maturity", "Days to Maturity"),
+                    ("germination_time", "Germination Time"),
+                    ("planting_depth", "Planting Depth"),
+                    ("spacing", "Spacing"),
+                    ("sun_requirements", "Sun Requirements"),
+                    ("indoor_start_time", "Indoor Start Time"),
+                    ("planting_date", "Planting Date"),
+                    ("seed_packet_id", "Seed Packet ID"),
+                    ("genus_id", "Genus ID"),
+                ]
+                for field, label in fields_to_show:
+                    val = getattr(plant, field, None)
+                    if val:
+                        print(f"  {label:<22} {val}")
+                print()
+                if plant.created_at:
+                    print(f"  Created: {plant.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                if plant.updated_at:
+                    print(f"  Updated: {plant.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+        except Exception as e:
+            print(f"✗ Error showing plant: {e}")
+            sys.exit(1)
+    elif db:
+        # Fallback to original models
+        from .models import Plant
+
+        with db.get_db() as session:
+            plant = session.query(Plant).filter_by(id=args.plant_id).first()
+
+        if not plant:
+            print(f"✗ Plant not found: {args.plant_id}")
+            sys.exit(1)
+            return
+
+        print(f"=== Plant: {plant.id} ===")
+        print()
+        fields_to_show = [
+            ("variety_name", "Variety"),
+            ("latin_name", "Latin Name"),
+            ("brand", "Brand"),
+            ("days_to_maturity", "Days to Maturity"),
+            ("germination_time", "Germination Time"),
+            ("planting_depth", "Planting Depth"),
+            ("spacing", "Spacing"),
+            ("sun_requirements", "Sun Requirements"),
+            ("indoor_start_time", "Indoor Start Time"),
+            ("planting_date", "Planting Date"),
+            ("seed_packet_id", "Seed Packet ID"),
+            ("genus_id", "Genus ID"),
+        ]
+        for field, label in fields_to_show:
+            val = getattr(plant, field, None)
+            if val:
+                print(f"  {label:<22} {val}")
+        print()
+        if plant.created_at:
+            print(f"  Created: {plant.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+        if plant.updated_at:
+            print(f"  Updated: {plant.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+    else:
+        # Markdown fallback
+        filepath = get_database_dir() / f"{args.plant_id}.md"
+        if not filepath.exists():
+            print(f"✗ Plant not found: {args.plant_id}")
+            sys.exit(1)
+            return
+
+        plant = load_plant_from_file(filepath)
+        print(f"=== Plant: {plant.data['id']} ===")
+        print()
+        fields_to_show = [
+            ("variety_name", "Variety"),
+            ("latin_name", "Latin Name"),
+            ("brand", "Brand"),
+            ("days_to_maturity", "Days to Maturity"),
+            ("germination_time", "Germination Time"),
+            ("planting_depth", "Planting Depth"),
+            ("spacing", "Spacing"),
+            ("sun_requirements", "Sun Requirements"),
+            ("indoor_start_time", "Indoor Start Time"),
+            ("planting_date", "Planting Date"),
+            ("seed_packet_id", "Seed Packet ID"),
+            ("genus_id", "Genus ID"),
+        ]
+        for field, label in fields_to_show:
+            val = plant.data.get(field)
+            if val:
+                print(f"  {label:<22} {val}")
+        print()
+        print(f"  Created: {plant.data.get('created_at', 'N/A')}")
+        print(f"  Updated: {plant.data.get('updated_at', 'N/A')}")
 
 
 # ─── Log command handlers ────────────────────────────────────────
