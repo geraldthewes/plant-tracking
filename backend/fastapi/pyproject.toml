@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling>=1.20.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "plant-tracking-api"
+version = "0.1.0"
+description = "FastAPI backend for plant tracking home page"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.25.0",
+    "plant-service>=0.1.0",
+    "python-dateutil>=2.8.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-mock>=3.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "httpx2>=2.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+sources = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+ignore_missing_imports = true
+follow_untyped_imports = true
+disable_error_code = ["import-untyped"]

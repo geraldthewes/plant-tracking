@@ -36,6 +36,30 @@ security-scan:
 # Run all pre-commit checks
 check: lint format-check type-check security-scan test
 
+# FastAPI backend service
+api-install:
+	uv pip install -e backend/fastapi
+
+api-test:
+	uv run pytest backend/fastapi/tests/ -v
+
+api-lint:
+	ruff check backend/fastapi/src/
+
+api-format:
+	black backend/fastapi/src/
+
+api-format-check:
+	black --check backend/fastapi/src/
+
+api-type-check:
+	mypy backend/fastapi/src/
+
+api-run:
+	uv run uvicorn plant_tracking_api.main:app --reload
+
+api-check: api-lint api-format-check api-type-check api-test
+
 # Clean up
 clean:
 	rm -rf .mypy_cache .pytest_cache

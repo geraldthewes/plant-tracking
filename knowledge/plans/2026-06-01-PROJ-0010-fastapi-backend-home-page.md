@@ -170,18 +170,18 @@ async def root():
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Package installs successfully: `uv pip install -e backend/fastapi`
-- [ ] FastAPI server starts: `uvicorn plant_tracking_api.main:app --reload`
-- [ ] Health check endpoint responds: `curl http://localhost:8000/health` returns `{"status":"healthy"}`
-- [ ] Root endpoint responds: `curl http://localhost:8000/` returns `{"message":"Plant Tracking API"}`
-- [ ] All automated tests pass: `uv run pytest backend/fastapi/tests/`
-- [ ] Linting passes: `ruff check backend/fastapi/src/`
-- [ ] Type checking passes: `mypy backend/fastapi/src/`
+- [x] Package installs successfully: `uv pip install -e backend/fastapi`
+- [x] FastAPI server starts: `uvicorn plant_tracking_api.main:app --reload`
+- [x] Health check endpoint responds: `curl http://localhost:8000/health` returns `{"status":"healthy"}`
+- [x] Root endpoint responds: `curl http://localhost:8000/` returns `{"message":"Plant Tracking API"}`
+- [x] All automated tests pass: `uv run pytest backend/fastapi/tests/`
+- [x] Linting passes: `ruff check backend/fastapi/src/`
+- [x] Type checking passes: `mypy backend/fastapi/src/`
 
 #### Manual Verification:
-- [ ] Server starts without errors and binds to port 8000
-- [ ] Health check endpoint returns expected JSON response
-- [ ] API documentation is available at `/docs` endpoint
+- [x] Server starts without errors and binds to port 8000
+- [x] Health check endpoint returns expected JSON response
+- [x] API documentation is available at `/docs` endpoint
 
 ---
 
@@ -306,17 +306,17 @@ def test_health_check_endpoint():
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Package installs successfully with new dependencies
-- [ ] Care-needed endpoint responds: `curl http://localhost:8000/api/plants/care-needed` returns `{"count":0,"plants":[]}`
-- [ ] Health check endpoint still works
-- [ ] All automated tests pass including new plant tests
-- [ ] Linting passes
-- [ ] Type checking passes
+- [x] Package installs successfully with new dependencies
+- [x] Care-needed endpoint responds: `curl http://localhost:8000/api/plants/care-needed` returns `{"count":0,"plants":[]}`
+- [x] Health check endpoint still works
+- [x] All automated tests pass including new plant tests
+- [x] Linting passes
+- [x] Type checking passes
 
 #### Manual Verification:
-- [ ] Server starts with both health and plant routes available
-- [ ] Care-needed endpoint returns properly formatted JSON
-- [ ] OpenAPI docs show the new endpoint at `/docs`
+- [x] Server starts with both health and plant routes available
+- [x] Care-needed endpoint returns properly formatted JSON
+- [x] OpenAPI docs show the new endpoint at `/docs`
 
 ---
 
@@ -463,18 +463,18 @@ def test_health_check_endpoint(client):
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] New Justfile targets work: `just api-install`, `just api-test`, etc.
-- [ ] All tests pass with test client fixture
-- [ ] Configuration loads from environment variables
-- [ ] Service can be run with `just api-run`
-- [ ] All linting and type checking passes
-- [ ] Project-level `just check` still works (or add API checks to it)
+- [x] New Justfile targets work: `just api-install`, `just api-test`, etc.
+- [x] All tests pass with test client fixture
+- [x] Configuration loads from environment variables
+- [x] Service can be run with `just api-run`
+- [x] All linting and type checking passes
+- [x] Project-level `just check` still works (or add API checks to it) (Note: pre-existing lint errors in commands/ directory are unrelated to this work)
 
 #### Manual Verification:
-- [ ] Service starts correctly with `just api-run`
-- [ ] Environment variables affect service behavior (port, host, etc.)
-- [ ] API documentation accessible at `/docs`
-- [ ] Health check and care-needed endpoints work as expected
+- [x] Service starts correctly with `just api-run`
+- [x] Environment variables affect service behavior (port, host, etc.)
+- [x] API documentation accessible at `/docs`
+- [x] Health check and care-needed endpoints work as expected
 
 ## Testing Strategy
 
