@@ -62,28 +62,23 @@ Infrastructure (PostgreSQL database)
 ### Package Structure
 
 ```
-plant_tracking/
-  core/
-    domain/
-      plant.py           # Pure Python Plant class
-      seed_packet.py     # Pure Python SeedPacket class
-      genus.py           # Pure Python Genus class
-      plant_log.py       # Pure Python PlantLogEntry class
-      repository.py      # Protocol interfaces (AbstractPlantRepository, etc.)
-    services/
-      plant_service.py   # Use-case functions (create_plant, list_plants, etc.)
-      log_service.py     # Use-case functions (log_watering, etc.)
-      unit_of_work.py    # AbstractUnitOfWork + SqlAlchemyUnitOfWork
-    adapters/
-      repository.py      # SQLAlchemy repository implementations
-      models/            # SQLAlchemy ORM models (current state, to be refactored)
-      database.py        # Engine, session management
-  entrypoints/
-    cli.py               # CLI commands (argparse/click)
-    api.py               # FastAPI routes
-  tests/
-    unit/                # Domain + service layer tests (no DB)
-    integration/         # Repository + UoW tests (real DB)
+packages/plant_service/
+  src/plant_service/
+    domain/              # Pure Python domain models (Plant, SeedPacket, Genus, PlantLogEntry)
+    service_layer/       # Service protocols + UnitOfWork interface
+    adapters/repository/ # SQLAlchemy implementations + SqlAlchemyUnitOfWork
+    bootstrap.py         # Composition root (create_unit_of_work, etc.)
+    config.py            # DATABASE_URL configuration
+
+backend/fastapi/         # FastAPI entrypoint — separate package depending on plant_service
+  src/plant_tracking_api/
+    main.py              # FastAPI app + uvicorn runner
+    config.py            # Settings (host, port, reload, log_level)
+    dependencies.py      # FastAPI DI for UoW
+    routes/              # HTTP route modules
+tests/
+  unit/                  # Domain + service layer tests (no DB)
+  integration/           # Repository + UoW tests (real DB)
 ```
 
 ### Alternatives Considered
@@ -157,7 +152,7 @@ The current codebase has SQLAlchemy models with embedded business logic. The mig
 2. **Create repository Protocols** — Define abstract interfaces in domain layer
 3. **Create service functions** — Wrap existing operations in use-case functions
 4. **Refactor CLI** — Point CLI commands to service functions
-5. **Add FastAPI** — Create HTTP routes that call same service functions
+5. **Add FastAPI** — Create HTTP routes in `backend/fastapi/` that depend on `plant_service` package
 6. **Retire legacy paths** — Remove direct SQLAlchemy usage from CLI once fully migrated
 
 ## Related NFRs

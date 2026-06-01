@@ -58,17 +58,9 @@ This diagram shows the backend architecture of the Plant Tracking System as a si
 
 **Key APIs (FastAPI):**
 
-- `GET /plants` — List/filter plant records
-- `GET /plants/{id}` — Retrieve plant record
-- `POST /plants` — Create new plant record
-- `PUT /plants/{id}` — Update plant record
-- `DELETE /plants/{id}` — Delete plant record
-- `GET /plants/{id}/logs` — List care activity log entries
-- `POST /plants/{id}/logs` — Add care activity log entry
-- `GET /seed-packets` — List all seed packets
-- `POST /seed-packets` — Create seed packet record
-- `GET /genera` — List all genera
-- `POST /genera` — Create genus record
+- `GET /` — Root endpoint
+- `GET /health` — Health check
+- `GET /api/plants/care-needed` — Plants needing care attention (returns mock data; threshold logic pending)
 
 **CLI Commands:**
 

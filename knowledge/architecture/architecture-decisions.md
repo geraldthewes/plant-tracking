@@ -125,3 +125,4 @@
 - Repository Pattern: Protocol interfaces in domain, SQLAlchemy implementations in adapters — Swappable persistence
 - Unit of Work: Transaction boundaries managed by SQLAlchemy Session — Atomic commit/rollback per use case
 - Rationale: Single bounded context, single developer, no team boundary justifies distributed complexity
+- FastAPI Entrypoint: Implemented in `backend/fastapi/` as separate package depending on `plant_service` — See PROJ-0010
