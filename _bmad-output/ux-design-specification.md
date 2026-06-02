@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3]
+stepsCompleted: [1, 2, 3, 4]
 inputDocuments: ['_bmad-output/briefs/plant-tracker-brief.md', '_bmad-output/prd.md']
 ---
 
@@ -493,31 +493,32 @@ When a Quick Action button is tapped, an inline form slides down beneath the Qui
   - Amount: Number input with units selector (oz / mL / L / cup)
   - Method: Chips — Hand Water · Drip · Soaker · Shower · Other
   - Notes: Optional text field
-  - Date: Auto-filled, editable (tap to pick different date for back-logging)
+  - Timestamp: Auto-captured as "now" on save (not visible in form)
 
 - **Fertilizer Form**:
   - Product: Text input with autocomplete from known products
   - NPK Ratio: Optional text input (e.g., "5-5-5")
   - Dilution: Chips — Full · 1/2 · 1/4 · Custom
   - Notes: Optional text field
-  - Date: Auto-filled, editable
+  - Timestamp: Auto-captured as "now" on save (not visible in form)
 
 - **Condition Form**:
   - Temperature: Number input (°F / °C toggle)
   - Humidity: Number input (%)
   - Notes: Optional text field (e.g., "heat wave", "heavy rain")
-  - Date: Auto-filled, editable
+  - Timestamp: Auto-captured as "now" on save (not visible in form)
 
 - **Photo Form**:
   - Camera capture (primary) or Gallery pick
   - Auto-preview of captured photo
   - Optional caption field
   - Retake / Delete option before saving
+  - Timestamp: Auto-captured as "now" on save (not visible in form)
 
 - **Note Form**:
   - Text area (2–4 lines, auto-expand)
   - Category chips (optional): Observation · Pest · Disease · Treatment · Other
-  - Date: Auto-filled, editable
+  - Timestamp: Auto-captured as "now" on save (not visible in form)
 
 All forms share:
 - "Save" button (bottom, full width, Burnt Sienna `#A04010`, white text)
@@ -529,3 +530,475 @@ All forms share:
 - **Hermes responses**: Left-aligned, Warm Cream `#F8F1E3` card with N-200 Sand `#D4C8B8` border, N-700 Soil `#4A3728` text
   - Response includes: insight text, data reference (collapsed by default), "Log this insight" action button (Burnt Sienna outline)
   - Loading state: Animated plant growth spinner in Saddle Brown (seed → sprout → leaf)
+
+## Garden Browse Screen Specification
+
+### Screen Purpose
+The Garden Browse screen presents all tracked plants in a scannable, filterable grid/list. It's the primary discovery surface for finding any plant without scanning a QR code — used from the Home screen via More → Garden.
+
+### Entry Points
+- Home screen → Tap "More" button → Tap "Garden" section
+- Plant Detail → "Scan Another" → QR scan fails or user backs out → lands here
+
+### Screen Layout (Portrait/Mobile — Top to Bottom)
+
+#### 1. **Header** (Sticky)
+- **Back Button**: "←" — returns to Home screen
+- **Screen Title**: "🌿 Garden" — N-900 text on Warm Cream
+- **Search Icon**: "🔍" — opens search overlay
+- **Add Button**: "+" icon — opens "Add New Plant" flow (rightmost, Burnt Sienna `#A04010` circular FAB, white "+")
+
+#### 2. **Filter Bar** (Sticky below header)
+A horizontal scrollable row of filter chips. Single-select for status, multi-select for variety/location.
+
+| Filter Chip | Default | Options |
+|---|---|---|
+| Status | "All" | Seed · Seedling · Vegetative · Flowering · Fruiting · Harvested · Lost |
+| Variety | "All" | Dynamically populated from existing plants (max 8 visible, scroll for more) |
+| Location | "All" | Dynamically populated from plant locations |
+
+**Interaction**:
+- Tap a chip → toggle selection (selected: Terracotta `#B04E2E` background, white text; unselected: N-100 Parchment background, N-700 text, N-200 border)
+- Changes apply instantly (client-side filter, no API call)
+- Active filter count shown as a small badge on the filter bar if >0 filters active
+
+#### 3. **Sort Toggle** (Right of filter bar)
+Small text link: "Recent" / "Name A→Z" / "Name Z→A" — cycles on tap. Default: "Recent" (most recently updated first).
+
+#### 4. **Plant Cards Grid** (Main content)
+A 2-column grid of plant cards. Each card shows:
+
+- **Status Badge**: Small color-coded pill in top-right corner (see Color Palette section)
+- **Variety Name**: N-700 Soil, bold, max 2 lines, ellipsis overflow
+- **Plant ID**: N-500 Loam, monospace, single line (e.g., "HABY-2026-001")
+- **Lifecycle Stage Icon**: Large emoji center of card (🌱, 🪴, 🌿, 🌸, 🌶️, ✅, ❌)
+- **Days Since Planted**: N-500 Loam, bottom of card (e.g., "42 days")
+- **Care Alert Dot**: Small Overdue Red `#A0342E` dot overlay if plant has overdue care
+
+**Interaction**:
+- Tap card → opens Plant Detail screen for that plant
+- Long-press card → context menu: Print Label · Duplicate · Delete
+
+#### 5. **Empty State** (When no plants exist)
+- Centered illustration: Large 🌱 emoji
+- Text: "No plants yet" — N-700 Soil
+- Subtext: "Tap + to add your first plant" — N-500 Loam
+- CTA Button: "Add Your First Plant" — Burnt Sienna `#A04010`, white text
+
+#### 6. **Search Overlay** (Modal)
+- Full-width overlay from top, Warm Cream background
+- Search input with N-200 Sand border, placeholder: "Search by ID, variety, or location"
+- Real-time results below input as user types
+- "✕" dismiss button (top-right)
+- Tap outside overlay to dismiss
+
+### Design Principles Applied
+- **Quick Discovery**: 2-column grid maximizes visible plants per screen
+- **Status-First**: Color badges visible at a glance — user can spot plants needing attention
+- **Progressive Filtering**: Start broad, filter down. No empty filter states.
+- **One-Tap to Action**: Add button always visible, card tap goes straight to detail
+- **Garden-Optimized**: Large card touch targets, high contrast text
+
+## Add New Plant Workflow Specification
+
+### Workflow Overview
+Adding a new plant is a multi-step wizard that captures all plant data from seed packet information through planting details. The wizard guides the user through: selecting or creating the genus → selecting or creating the variety → linking a seed packet → capturing planting details → generating the unique plant ID → previewing and confirming.
+
+**Access**: Garden Browse → "+" button
+**Platform**: Optimized for both mobile and desktop (more likely to be completed on desktop with seed packet in hand)
+
+### Screen Layout — Wizard Format
+
+The wizard uses a step indicator at the top showing progress. Each step can be navigated forward ("Continue") or backward ("← Back"). The final step shows a confirmation screen.
+
+**Step Indicator**: Horizontal dots with labels — "Genus" · "Variety" · "Packet" · "Details" · "Confirm" — current step in Terracotta `#B04E2E`, completed steps in Growth Green `#4A6B2E`, future steps in N-300 Dust.
+
+### Step 1: Select or Create Genus
+
+**Purpose**: Identify the biological genus of the plant (e.g., *Capsicum*, *Solanum*, *Brassica*).
+
+**Layout**:
+- **Header**: "Which genus?" — N-900 text
+- **Help Text**: "The biological genus (e.g., Capsicum for peppers, Solanum for tomatoes)" — N-500
+- **Existing Genus List**: Scrollable list of known genera, each as a tappable card:
+  - Genus name (italicized, N-700, e.g., "*Capsicum*")
+  - Species count (N-500, e.g., "3 varieties")
+- **Search Bar**: "Search genera..." — appears when 5+ genera exist
+- **"Create New Genus" Button**: Burnt Sienna outline button, full width, at bottom: "+ Create New Genus"
+
+**Interaction — Select Existing**:
+- Tap genus card → highlighted with Terracotta border → "Continue" button enabled → advances to Step 2
+
+**Interaction — Create New**:
+- Tap "+ Create New Genus" → inline form slides down:
+  - **Genus Name**: Text input, placeholder: "Capsicum", required, italicized preview
+  - **Common Name**: Text input, placeholder: "Peppers", optional
+  - **Family**: Text input, placeholder: "Solanaceae", optional
+  - "Save Genus" button (Burnt Sienna `#A04010`) → saves genus, auto-selects it → advances to Step 2
+  - "Cancel" → collapses form
+- Genus is saved to the library immediately and available for future plants
+
+### Step 2: Select or Create Variety
+
+**Purpose**: Select the specific variety/cultivar within the chosen genus.
+
+**Layout**:
+- **Header**: "Which variety?" — N-900 text
+- **Context Badge**: Shows selected genus (e.g., "*Capsicum*" — Terracotta pill, N-100 background)
+- **Existing Variety List**: Scrollable list of varieties within selected genus:
+  - Variety name (N-700 bold, e.g., "Yellow Habanero")
+  - Common abbreviation (N-500, e.g., "HABY")
+  - Packet count (N-500, e.g., "2 packets on file")
+- **Search Bar**: "Search varieties..." — appears when 5+ varieties exist
+- **"Add New Variety" Button**: Burnt Sienna outline button: "+ Add New Variety"
+
+**Interaction — Select Existing**:
+- Tap variety card → highlighted → "Continue" enabled → advances to Step 3
+
+**Interaction — Add New Variety**:
+- Tap "+ Add New Variety" → inline form slides down:
+  - **Variety Name**: Text input, placeholder: "Yellow Habanero", required
+  - **Abbreviation**: Text input, placeholder: "HABY", required, max 6 chars, auto-uppercased
+    - Validation: Check for duplicates within genus. If conflict: "HABY is already used for 'Habanero'. Suggest: HABY2"
+  - **Synonyms**: Text input, placeholder: "Habanero Amarillo, Yellow Heat", optional, comma-separated
+  - "Save Variety" button → saves to library → auto-selects → advances to Step 3
+  - "Cancel" → collapses form
+
+### Step 3: Link Seed Packet
+
+**Purpose**: Associate the plant with a physical seed packet. This pre-fills planting specifications from the packet's stored data.
+
+**Layout**:
+- **Header**: "Which seed packet?" — N-900 text
+- **Context Summary**: Shows selected genus + variety (e.g., "*Capsicum* — Yellow Habanero")
+- **Existing Packet List**: Cards showing seed packets matching the selected variety:
+  - Brand name (N-700 bold, e.g., "Baker Creek")
+  - Packet date (N-500, e.g., "Packed for 2024")
+  - Small thumbnail of packet photo (if available)
+  - Specs summary (N-500, e.g., "80–100 days · 1/4\" deep · Full Sun")
+- **No Matching Packets State**: If no packets exist for this variety:
+  - Message: "No packets on file for Yellow Habanero" — N-500
+  - CTA: "+ Add Seed Packet" (Burnt Sienna outline) → opens Add Seed Packet flow (see below)
+- **"Skip for Now" Link**: N-500 text link at bottom: "Skip — I'll add details manually"
+
+**Interaction — Select Existing**:
+- Tap packet card → highlighted → packet data pre-fills into Step 4 → "Continue" advances to Step 4
+
+**Interaction — Add Seed Packet**:
+- Tap "+ Add Seed Packet" → navigates to Add Seed Packet flow (see full spec below)
+- Upon completion of Add Seed Packet → returns here with new packet pre-selected → advances to Step 4
+
+**Interaction — Skip**:
+- Tap "Skip for Now" → advances to Step 4 with empty fields for manual entry
+
+### Step 4: Planting Details
+
+**Purpose**: Capture all planting-specific data. If a seed packet was linked in Step 3, the packet's specifications pre-fill the form. User can override any field.
+
+**Layout**:
+- **Header**: "Planting details" — N-900 text
+- **Form Fields** (all scrollable, grouped logically):
+
+**Group: Identity**
+| Field | Type | Pre-filled? | Required? | Notes |
+|---|---|---|---|---|
+| Plant ID Preview | Display only | Auto-generated | Yes | Shows next ID in VARIETY-YYYY-SEQ format (e.g., "HABY-2026-002"). Read-only. |
+| Year Planted | Year picker | Current year | Yes | Default: current year |
+
+**Group: Seed Packet Info** (greyed out / read-only if packet linked; editable if skipped)
+| Field | Type | Pre-filled from packet? | Required? |
+|---|---|---|---|
+| Variety Name | Text | Yes | Yes |
+| Latin Name | Text | Yes | Yes | Italicized display |
+| Brand | Text | Yes | Yes |
+| Days to Maturity | Text range | Yes | Yes | e.g., "80–100" |
+| Days to Germination | Text range | Yes | Yes | e.g., "7–21" |
+| Planting Depth | Text | Yes | Yes | e.g., "1/4\"" |
+| Plant Spacing | Text range | Yes | Yes | e.g., "12\"–18\"" |
+| Sun Requirement | Dropdown | Yes | Yes | Full Sun · Partial Sun · Full Shade · Partial Shade |
+| Start Indoors | Text | Yes | Yes | e.g., "8–10 weeks before last frost" |
+| Heirloom / Non-GMO / Organic | Multi-chips | Yes | No | Toggles: Heirloom · Non-GMO · Organic · Open-Pollinated |
+| Scoville Units | Text | Yes | No | e.g., "100,000–350,000" |
+
+**Group: Planting Actions**
+| Field | Type | Default | Required? |
+|---|---|---|---|
+| Planted Date | Date picker | Today | Yes | |
+| Planting Location | Text | Empty | No | e.g., "indoor seed tray", "garden bed 3, row 2" |
+| Seed Packet Photo | Photo upload | Empty | Recommended | Tap to take photo or pick from gallery |
+| Notes | Text area (2–4 lines) | Empty | No | Any additional observations |
+
+**Interaction**:
+- All fields are editable even if pre-filled (user can override packet data)
+- Required fields validated on "Continue" — inline error messages in Overdue Red `#A0342E`
+- "Continue" button (bottom, Burnt Sienna `#A04010`) → advances to Step 5
+- "Save as Draft" link (N-500) → saves partial data, returns to Garden Browse
+
+### Step 5: Confirm & Generate
+
+**Purpose**: Review all data, confirm, and generate the plant record + QR label.
+
+**Layout**:
+- **Header**: "Review & confirm" — N-900 text
+- **Data Summary**: Read-only card showing all entered data, organized in collapsible sections:
+  - **Identity**: Plant ID, Variety, Genus
+  - **Packet Info**: All seed packet fields
+  - **Planting**: Date, location, notes
+  - **Photos**: Packet photo thumbnail (if attached)
+- **Edit Links**: Each section has a "← Edit" link that jumps back to the relevant step
+- **Label Preview**: QR label mockup showing:
+  - Top: Variety name
+  - Middle: QR code (visual placeholder)
+  - Bottom: Year planted + Latin name
+- **Action Buttons** (bottom, sticky):
+  - "Confirm & Create Plant" — Burnt Sienna `#A04010`, white text, full width
+  - "Add to Print Queue" — Burnt Sienna outline checkbox: "☐ Add label to print queue"
+
+**Interaction**:
+- Tap "Confirm & Create Plant" → saves plant record → shows success screen
+- Success screen: Large ✅ Growth Green icon, "Plant HABY-2026-002 created!" text
+- Post-success actions (button row):
+  - "View Plant Record" → navigates to Plant Detail screen
+  - "Print Label" → sends label to print queue (Phomemo M120)
+  - "Add Another Plant" → resets wizard to Step 1, keeps genus/variety selected
+  - "Done" → returns to Garden Browse screen
+
+### User Flow — Add New Plant (Complete Path)
+
+#### Flow 1: New plant from existing packet
+1. Garden Browse → tap "+" button → wizard opens at Step 1
+2. Select existing genus: "Capsicum" → Continue
+3. Select existing variety: "Yellow Habanero" → Continue
+4. Select existing seed packet: "Baker Creek, Packed 2024" → packet data pre-fills → Continue
+5. Review pre-filled details, adjust planted date to today, add location: "indoor seed tray" → Continue
+6. Review summary, confirm → Plant HABY-2026-002 created
+7. Tap "View Plant Record" → Plant Detail screen loads
+
+#### Flow 2: Completely new variety (no packet, no variety, no genus)
+1. Garden Browse → tap "+" → Step 1
+2. Tap "+ Create New Genus" → enter "Solanum", common: "Tomatoes" → Save → auto-selects → Continue
+3. Step 2: Tap "+ Add New Variety" → enter "Brandywine", abbreviation: "BRNW" → Save → Continue
+4. Step 3: No packets exist → tap "+ Add Seed Packet" → complete packet flow → return with packet selected → Continue
+5. Step 4: Packet data pre-fills → add planting location → Continue
+6. Step 5: Review → Confirm → Plant BRNW-2026-001 created
+7. Tap "Add Another Plant" → wizard resets to Step 1, Solanum pre-selected
+
+#### Flow 3: Quick add (skip packet)
+1. Garden Browse → tap "+" → Step 1
+2. Select "Capsicum" → Continue
+3. Select "Jimmy Nardello" → Continue
+4. Step 3: Tap "Skip for Now" → Continue
+5. Step 4: Manually enter all variety details, planted date, location → Continue
+6. Step 5: Review → Confirm → Plant JIMN-2026-004 created
+
+## Add Seed Packet Workflow Specification
+
+### Workflow Overview
+The Add Seed Packet flow captures all data from a physical seed packet: a front/back photo, the brand, variety details, and all planting specifications printed on the packet. This data is stored once and reused for every plant created from that packet.
+
+**Access**: During "Add New Plant" (Step 3) OR from Library → Seed Packets → "+"
+
+### Screen Layout — Single-Page Form
+
+Unlike the multi-step plant wizard, the seed packet form is a single scrollable page with clear sections. The primary input method is manual entry after photographing the packet.
+
+#### 1. **Header**
+- **Back Button**: "←" — returns to previous screen (Add Plant wizard or Packet List)
+- **Screen Title**: "📦 New Seed Packet" — N-900 text
+
+#### 2. **Photo Capture Section** (Top, prominent)
+- **Dual Photo Areas**: Two side-by-side photo drop zones:
+  - Left: "Front of Packet" — large tap target, N-200 border, camera icon centered
+  - Right: "Back of Packet" — same styling
+- **Interaction**:
+  - Tap zone → opens camera (primary) or gallery picker (secondary option)
+  - Photo fills zone with 100% width, aspect-ratio preserved
+  - "Retake" and "✕ Remove" buttons appear on photo overlay (top-right)
+  - Both photos are required for complete records but only Front is technically required
+
+#### 3. **Brand & Origin Section**
+| Field | Type | Required? | Notes |
+|---|---|---|---|
+| Brand | Text input with autocomplete | Yes | Autocomplete from known brands (Baker Creek, Botanical Interests, etc.) |
+| Origin (Supplier) | Dropdown with "Add New" | No | Select from known suppliers or create new inline |
+| Packed For / Lot Date | Text input | No | e.g., "Packed for 2024" |
+| Seed Count / Weight | Text input | No | e.g., "18 seeds" or "300 mg" |
+
+**Interaction — New Brand**: If brand not in autocomplete list, user types it → on blur, it's added to the brand library.
+
+**Interaction — New Origin**: Tap "+ New" in dropdown → inline text input appears → type name → "Add" saves it.
+
+#### 4. **Variety Information Section**
+| Field | Type | Required? | Notes |
+|---|---|---|---|
+| Variety Name | Text input | Yes | e.g., "Yellow Habanero Pepper" |
+| Latin Name | Text input | Yes | Italicized preview, e.g., "*Capsicum chinense*" |
+| Genus | Dropdown with "Add New" | Yes | Auto-suggested from Latin name (first word). If Latin name is "*Capsicum chinense*", pre-selects "Capsicum". |
+| Scoville Units | Text input | No | e.g., "100,000–350,000" (for peppers) |
+| Certifications | Multi-chips | No | Heirloom · Non-GMO · Organic · Open-Pollinated · Hybrid |
+
+**Interaction — Genus Auto-Suggest**: When Latin Name is entered, the system extracts the genus (first word) and checks if it exists in the library. If it exists, it's pre-selected. If not, "Add New Genus" option appears inline: "Capsicum not found. [Create it?]" — tapping creates the genus with the extracted name.
+
+#### 5. **Planting Specifications Section**
+| Field | Type | Required? | Notes |
+|---|---|---|---|
+| Days to Maturity | Text range input | Yes | e.g., "80–100" |
+| Days to Germination | Text range input | Yes | e.g., "7–21" |
+| Planting Depth | Text input | Yes | e.g., "1/4\"" |
+| Plant Spacing | Text range input | Yes | e.g., "12\"–18\"" |
+| Sun Requirement | Dropdown | Yes | Full Sun · Partial Sun · Full Shade · Partial Shade |
+| Start Indoors | Text input | Yes | e.g., "8–10 weeks before last frost" |
+
+#### 6. **Notes Section**
+- Free-text area (2–4 lines, auto-expand)
+- Placeholder: "Any special instructions printed on the packet..."
+- Optional
+
+#### 7. **Action Buttons** (Bottom, sticky)
+- **"Save Packet"** — Burnt Sienna `#A04010`, white text, full width — saves packet to library
+- **Post-save behavior**:
+  - If accessed from Add Plant wizard → returns to Step 3 with new packet pre-selected
+  - If accessed from Library → shows success toast: "Packet saved" → returns to Packet List
+
+### User Flow — Add Seed Packet
+
+#### Flow 1: From Add Plant wizard
+1. Add Plant wizard, Step 3 → tap "+ Add Seed Packet"
+2. Photo capture: tap "Front" → take photo of packet front → tap "Back" → take photo of packet back
+3. Enter brand: "Baker Creek Heirloom Seeds" (autocomplete matches)
+4. Enter variety: "Yellow Habanero Pepper", Latin: "Capsicum chinense"
+5. Genus auto-suggested as "Capsicum" (exists in library) — pre-selected
+6. Enter planting specs: 80–100 days maturity, 7–21 germination, 1/4" depth, 12"–18" spacing, Full Sun, 8–10 weeks before last frost
+7. Add certifications: toggle Heirloom, Non-GMO chips
+8. Tap "Save Packet" → packet saved → returns to Step 3 of Add Plant wizard with packet pre-selected
+
+#### Flow 2: From Library (standalone)
+1. More → Library → Seed Packets → tap "+"
+2. Same form as Flow 1
+3. Tap "Save Packet" → success toast → returns to Seed Packets list
+
+## Add Genus Workflow Specification
+
+### Workflow Overview
+The Genus workflow exists in two forms: **inline creation** (during plant/packet creation when a new genus is needed) and **Library management** (full CRUD from the Library screen).
+
+### Inline Genus Creation
+
+**Trigger**: During Add Plant (Step 1) or Add Seed Packet (Variety section, Genus field)
+
+**Form** (inline, slides down in context):
+| Field | Type | Required? | Notes |
+|---|---|---|---|
+| Genus Name | Text input | Yes | Auto-italicized preview (e.g., "*Capsicum*") |
+| Common Name | Text input | No | e.g., "Peppers" |
+| Family | Text input | No | e.g., "Solanaceae" |
+
+**Buttons**:
+- "Save" (Burnt Sienna `#A04010`) → saves genus → auto-selects in parent form
+- "Cancel" → collapses form
+
+**Validation**: Duplicate check — if genus name already exists (case-insensitive), show: "Capsicum already exists. [Select it instead?]" — tapping the link cancels inline form and selects the existing genus.
+
+### Library Genus Management Screen
+
+**Access**: More → Library → "Genus" section
+
+#### Screen Layout
+
+1. **Header**: "🧬 Genus" — N-900, Back button, "+" FAB (Burnt Sienna)
+2. **Genus List**: Scrollable cards, alphabetical:
+   - Genus name (italicized, N-700 bold, e.g., "*Capsicum*")
+   - Common name (N-500, e.g., "Peppers")
+   - Variety count (N-500, e.g., "3 varieties")
+   - Plant count (N-500, e.g., "12 plants tracked")
+3. **Empty State**: "No genera yet" — N-500, with "+" CTA
+
+#### Add Genus (from Library)
+- Tap "+" FAB → full-page form:
+  - Same fields as inline form (Genus Name, Common Name, Family)
+  - Additional field: **Description** — text area, optional, for notes
+  - "Save Genus" button (sticky bottom)
+- On save → returns to Genus list, new genus visible
+
+#### Edit Genus
+- Tap genus card → Genus Detail screen:
+  - All fields editable
+  - "Varieties" section: scrollable list of varieties under this genus
+  - "Plants" section: scrollable list of all tracked plants in this genus
+  - "Delete Genus" button (Overdue Red, only appears if 0 varieties — with confirmation dialog)
+
+### User Flow — Inline Genus Creation
+1. Add Seed Packet → enter Latin Name: "Solanum lycopersicum"
+2. Genus field shows: "Solanum not found. [Create it?]"
+3. Tap "Create it?" → inline form slides down
+4. Common Name auto-suggested: "Tomatoes" (based on known taxonomy), Family: "Solanaceae"
+5. Tap "Save" → genus saved → pre-selected in parent form → continue with packet entry
+
+## Library Screen Specification
+
+### Screen Purpose
+The Library is the management hub for reference data: Genus, Seed Packets, Varieties, and Label Templates. It's accessed via More → Library from the Home screen.
+
+### Screen Layout
+
+#### 1. **Header**
+- **Back Button**: "←" — returns to More screen
+- **Screen Title**: "📚 Library" — N-900 text
+
+#### 2. **Section Cards** (Scrollable, each is a tappable card)
+Each section shows a summary card with a count badge.
+
+| Section | Icon | Description | Badge |
+|---|---|---|---|
+| Genus | 🧬 | Biological genera | Count of genera |
+| Varieties | 🌱 | Plant varieties | Count of varieties |
+| Seed Packets | 📦 | Seed packet records | Count of packets |
+| Label Templates | 🏷️ | Label designs for printing | Count of templates |
+
+**Card Layout**:
+- Left: Section icon (large, Terracotta)
+- Middle: Section name (N-700 bold) + description (N-500)
+- Right: Count badge (N-100 Parchment circle, N-700 text) + chevron "›"
+
+**Interaction**:
+- Tap section card → navigates to the section's list screen (e.g., tap "Seed Packets" → Seed Packets list)
+
+### Design Principles Applied
+- **Reference Data Separation**: Library isolates management tasks from garden workflow
+- **Count Badges**: Instant visibility into data volume
+- **Minimal Navigation**: One tap from Library to any management screen
+- **Inline Creation**: Reference data can be created on-the-fly during plant creation, reducing friction
+
+## Quick Action Bar — Future Expansion
+
+### Current State (5 Buttons)
+The Quick Action Bar currently contains 5 buttons: 💧 Water, 🧪 Feed, 🌡️ Condition, 📷 Photo, 📝 Note.
+
+### Planned Expansion
+A "More" button (⋮ or "+") will be added to the Quick Action Bar to surface additional action types without exceeding the 5-button limit. This will include:
+
+| Future Button | Icon | Action |
+|---|---|---|
+| Measurement | 📏 | Record plant height, leaf count, fruit count, stem diameter |
+| Pest / Disease | 🐛 | Log pest observation or disease symptoms |
+| Treatment | 💊 | Record pest treatment, pruning, staking, soil amendment |
+| Harvest | 🫙 | Log harvest event with yield quantity |
+| Transplant | 🪴 | Record transplant event with new location |
+| Lifecycle Change | 🔄 | Advance plant lifecycle stage (e.g., Seedling → Vegetative) |
+
+**Interaction**: Tapping "More" opens a horizontally-scrollable chip row below the Quick Action Bar with the additional action types. Each chip opens its own inline form (following the same pattern as existing Quick Action forms).
+
+### Measurement Form (Specified for Future)
+When the Measurement action is tapped:
+
+- **Metric Type**: Chips — Height · Leaf Count · Fruit Count · Stem Diameter · Other
+- **Value**: Number input
+- **Unit**: Unit selector (depends on metric):
+  - Height: inches / cm
+  - Leaf Count: count (no unit)
+  - Fruit Count: count (no unit)
+  - Stem Diameter: inches / mm
+  - Other: free-text unit input
+- **Notes**: Optional text field
+- **Date**: Auto-filled, editable
+- Shared Save / Dismiss pattern

@@ -266,7 +266,7 @@
                         <div style="font-size:24px;margin-bottom:4px;">📓</div>
                         <div style="font-weight:500;text-align:center;color:var(--n-700);font-size:13px;">Activity Log</div>
                     </button>
-                    <button style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(44,24,16,0.06);cursor:pointer;">
+                    <button onclick="showMore()" style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(44,24,16,0.06);cursor:pointer;">
                         <div style="font-size:24px;margin-bottom:4px;">☰</div>
                         <div style="font-weight:500;text-align:center;color:var(--n-700);font-size:13px;">More</div>
                     </button>
@@ -374,10 +374,6 @@
                                 <label class="form-label">Method</label>
                                 <select class="form-input" style="margin-top:4px;"><option>Hand Water</option><option>Drip</option><option>Soaker</option><option>Shower</option></select>
                             </div>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                            <label class="form-label">Date</label>
-                            <input type="datetime-local" class="form-input" style="flex:1;font-size:11px;" value="2026-05-17T10:41">
                         </div>
                         <button class="btn-save" style="background:var(--growth-green);" onclick="saveEntry('Watered — 8 oz, hand water')">Save</button>
                     </div>
@@ -612,20 +608,643 @@
             <!-- Toast -->
             <div id="toast" class="toast"></div>
         </div>
+
+        <!-- ==================== MORE SCREEN ==================== -->
+        <div id="screen-more" class="screen hidden-screen">
+            <div class="screen-content" style="background-color: var(--warm-cream); padding: 20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--n-500);margin-bottom:16px;">
+                    <span>10:41 AM</span>
+                    <span>87%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+                    <button onclick="goBackFrom('more','home')" style="color:var(--n-500);font-size:18px;background:none;border:none;cursor:pointer;">←</button>
+                    <span style="font-size:20px;font-weight:700;color:var(--n-900);">More</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <button onclick="goBackFrom('more','garden')" style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;">
+                        <span style="font-size:24px;">🌿</span>
+                        <div style="flex:1;"><div style="font-weight:600;color:var(--n-700);font-size:14px;">Garden</div><div style="font-size:12px;color:var(--n-500);">Browse all your plants</div></div>
+                        <span style="color:var(--n-300);">›</span>
+                    </button>
+                    <button onclick="showToast('Analysis coming soon')" style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;">
+                        <span style="font-size:24px;">📊</span>
+                        <div style="flex:1;"><div style="font-weight:600;color:var(--n-700);font-size:14px;">Analysis</div><div style="font-size:12px;color:var(--n-500);">Insights &amp; trends</div></div>
+                        <span style="color:var(--n-300);">›</span>
+                    </button>
+                    <button onclick="goBackFrom('more','library')" style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;">
+                        <span style="font-size:24px;">📚</span>
+                        <div style="flex:1;"><div style="font-weight:600;color:var(--n-700);font-size:14px;">Library</div><div style="font-size:12px;color:var(--n-500);">Varieties, packets, labels</div></div>
+                        <span style="color:var(--n-300);">›</span>
+                    </button>
+                    <button onclick="showToast('Settings coming soon')" style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;">
+                        <span style="font-size:24px;">⚙️</span>
+                        <div style="flex:1;"><div style="font-weight:600;color:var(--n-700);font-size:14px;">Settings</div><div style="font-size:12px;color:var(--n-500);">Preferences &amp; configuration</div></div>
+                        <span style="color:var(--n-300);">›</span>
+                    </button>
+                    <button onclick="showToast('Help coming soon')" style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;">
+                        <span style="font-size:24px;">❓</span>
+                        <div style="flex:1;"><div style="font-weight:600;color:var(--n-700);font-size:14px;">Help</div><div style="font-size:12px;color:var(--n-500);">Tutorials, FAQ &amp; support</div></div>
+                        <span style="color:var(--n-300);">›</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== GARDEN BROWSE SCREEN ==================== -->
+        <div id="screen-garden" class="screen hidden-screen">
+            <div class="screen-content" style="background-color: var(--warm-cream);">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--n-500);padding:12px 20px 4px;">
+                    <span>10:41 AM</span>
+                    <span>87%</span>
+                </div>
+                <!-- Header -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--n-200);">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <button onclick="goBackFrom('garden','more')" style="color:var(--n-500);font-size:18px;background:none;border:none;cursor:pointer;">←</button>
+                        <span style="font-size:18px;font-weight:700;color:var(--n-900);">🌿 Garden</span>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button style="color:var(--n-500);font-size:16px;background:none;border:none;cursor:pointer;">🔍</button>
+                        <button onclick="showAddPlant()" style="width:36px;height:36px;border-radius:50%;background:var(--burnt-sienna);color:white;font-size:20px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(160,64,16,0.3);">+</button>
+                    </div>
+                </div>
+                <!-- Filter Bar -->
+                <div style="padding:8px 16px;display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--n-200);">
+                    <span style="font-size:11px;background:var(--terracotta);color:white;padding:4px 10px;border-radius:12px;white-space:nowrap;">All</span>
+                    <span style="font-size:11px;background:var(--n-100);color:var(--n-700);padding:4px 10px;border-radius:12px;border:1px solid var(--n-200);white-space:nowrap;">🌱 Seed</span>
+                    <span style="font-size:11px;background:var(--n-100);color:var(--n-700);padding:4px 10px;border-radius:12px;border:1px solid var(--n-200);white-space:nowrap;">🪴 Seedling</span>
+                    <span style="font-size:11px;background:var(--n-100);color:var(--n-700);padding:4px 10px;border-radius:12px;border:1px solid var(--n-200);white-space:nowrap;">🌿 Vegetative</span>
+                    <span style="font-size:11px;background:var(--n-100);color:var(--n-700);padding:4px 10px;border-radius:12px;border:1px solid var(--n-200);white-space:nowrap;">🌸 Flowering</span>
+                    <span style="font-size:11px;background:var(--n-100);color:var(--n-700);padding:4px 10px;border-radius:12px;border:1px solid var(--n-200);white-space:nowrap;">🌶️ Fruiting</span>
+                </div>
+                <!-- Sort Toggle -->
+                <div style="padding:6px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--n-200);">
+                    <span style="font-size:11px;color:var(--n-500);">12 plants</span>
+                    <span style="font-size:11px;color:var(--terracotta);font-weight:500;cursor:pointer;">Recent ▼</span>
+                </div>
+                <!-- Plant Cards Grid -->
+                <div style="padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <!-- Card 1 -->
+                    <button onclick="goBackFrom('garden','detail')" style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;cursor:pointer;text-align:center;position:relative;">
+                        <span class="status-badge" style="position:absolute;top:8px;right:8px;background:var(--growth-green);color:white;font-size:9px;">🌿 Veg</span>
+                        <div style="font-size:28px;margin:8px 0;">🌿</div>
+                        <div style="font-weight:600;color:var(--n-700);font-size:13px;">Yellow Habanero</div>
+                        <div style="font-family:monospace;font-size:11px;color:var(--n-500);margin-top:2px;">HABY-2026-001</div>
+                        <div style="font-size:10px;color:var(--n-300);margin-top:4px;">42 days</div>
+                        <div style="position:absolute;bottom:8px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--overdue-red);"></div>
+                    </button>
+                    <!-- Card 2 -->
+                    <button style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;cursor:pointer;text-align:center;position:relative;" onclick="goBackFrom('garden','detail')">
+                        <span class="status-badge" style="position:absolute;top:8px;right:8px;background:#6B8F4E;color:white;font-size:9px;">🪴 Seed</span>
+                        <div style="font-size:28px;margin:8px 0;">🪴</div>
+                        <div style="font-weight:600;color:var(--n-700);font-size:13px;">Jimmy Nardello</div>
+                        <div style="font-family:monospace;font-size:11px;color:var(--n-500);margin-top:2px;">JIMN-2026-003</div>
+                        <div style="font-size:10px;color:var(--n-300);margin-top:4px;">28 days</div>
+                    </button>
+                    <!-- Card 3 -->
+                    <button style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;cursor:pointer;text-align:center;position:relative;" onclick="goBackFrom('garden','detail')">
+                        <span class="status-badge" style="position:absolute;top:8px;right:8px;background:var(--terracotta);color:white;font-size:9px;">🌸 Bloom</span>
+                        <div style="font-size:28px;margin:8px 0;">🌸</div>
+                        <div style="font-weight:600;color:var(--n-700);font-size:13px;">Jalapeño</div>
+                        <div style="font-family:monospace;font-size:11px;color:var(--n-500);margin-top:2px;">JALP-2026-002</div>
+                        <div style="font-size:10px;color:var(--n-300);margin-top:4px;">61 days</div>
+                    </button>
+                    <!-- Card 4 -->
+                    <button style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;cursor:pointer;text-align:center;position:relative;" onclick="goBackFrom('garden','detail')">
+                        <span class="status-badge" style="position:absolute;top:8px;right:8px;background:var(--growth-green);color:white;font-size:9px;">🌿 Veg</span>
+                        <div style="font-size:28px;margin:8px 0;">🌿</div>
+                        <div style="font-weight:600;color:var(--n-700);font-size:13px;">Serrano</div>
+                        <div style="font-family:monospace;font-size:11px;color:var(--n-500);margin-top:2px;">SERR-2026-001</div>
+                        <div style="font-size:10px;color:var(--n-300);margin-top:4px;">55 days</div>
+                    </button>
+                    <!-- Card 5 -->
+                    <button style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;cursor:pointer;text-align:center;position:relative;" onclick="goBackFrom('garden','detail')">
+                        <span class="status-badge" style="position:absolute;top:8px;right:8px;background:var(--golden-earth);color:white;font-size:9px;">🌶️ Fruit</span>
+                        <div style="font-size:28px;margin:8px 0;">🌶️</div>
+                        <div style="font-weight:600;color:var(--n-700);font-size:13px;">Habanero Red</div>
+                        <div style="font-family:monospace;font-size:11px;color:var(--n-500);margin-top:2px;">HABR-2026-001</div>
+                        <div style="font-size:10px;color:var(--n-300);margin-top:4px;">78 days</div>
+                    </button>
+                    <!-- Card 6 -->
+                    <button style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;cursor:pointer;text-align:center;position:relative;" onclick="goBackFrom('garden','detail')">
+                        <span class="status-badge" style="position:absolute;top:8px;right:8px;background:#A0342E;color:white;font-size:9px;">❌ Lost</span>
+                        <div style="font-size:28px;margin:8px 0;">❌</div>
+                        <div style="font-weight:600;color:var(--n-700);font-size:13px;">Banana Pepper</div>
+                        <div style="font-family:monospace;font-size:11px;color:var(--n-500);margin-top:2px;">BANP-2026-001</div>
+                        <div style="font-size:10px;color:var(--n-300);margin-top:4px;">35 days</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ADD PLANT WIZARD SCREEN ==================== -->
+        <div id="screen-add-plant" class="screen hidden-screen">
+            <div class="screen-content" style="background-color: var(--warm-cream);">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--n-500);padding:12px 20px 4px;">
+                    <span>10:41 AM</span>
+                    <span>87%</span>
+                </div>
+                <!-- Header -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--n-200);">
+                    <button onclick="goBackFrom('add-plant','garden')" style="color:var(--n-500);font-size:18px;background:none;border:none;cursor:pointer;">←</button>
+                    <span style="font-size:16px;font-weight:700;color:var(--n-900);">New Plant</span>
+                    <div style="width:28px;"></div>
+                </div>
+                <!-- Step Indicator -->
+                <div id="step-indicator" style="padding:16px;display:flex;justify-content:space-around;align-items:center;">
+                    <span id="step-dot-1" style="font-size:10px;font-weight:600;color:var(--terracotta);">● Genus</span>
+                    <span id="step-line-1" style="width:24px;height:2px;background:var(--n-200);"></span>
+                    <span id="step-dot-2" style="font-size:10px;color:var(--n-300);">○ Variety</span>
+                    <span id="step-line-2" style="width:24px;height:2px;background:var(--n-200);"></span>
+                    <span id="step-dot-3" style="font-size:10px;color:var(--n-300);">○ Packet</span>
+                    <span id="step-line-3" style="width:24px;height:2px;background:var(--n-200);"></span>
+                    <span id="step-dot-4" style="font-size:10px;color:var(--n-300);">○ Details</span>
+                    <span id="step-line-4" style="width:24px;height:2px;background:var(--n-200);"></span>
+                    <span id="step-dot-5" style="font-size:10px;color:var(--n-300);">○ Confirm</span>
+                </div>
+
+                <!-- Step 1: Genus -->
+                <div id="wizard-step-1" style="padding:16px;">
+                    <h2 style="font-size:18px;font-weight:700;color:var(--n-900);margin-bottom:4px;">Which genus?</h2>
+                    <p style="font-size:12px;color:var(--n-500);margin-bottom:16px;">The biological genus — e.g., <em>Capsicum</em> for peppers, <em>Solanum</em> for tomatoes</p>
+                    <!-- Existing genera list -->
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+                        <button onclick="selectGenus(this,'Capsicum')" style="background:var(--n-100);border:2px solid var(--n-200);border-radius:12px;padding:12px 16px;cursor:pointer;text-align:left;transition:border-color 0.15s;">
+                            <div style="font-style:italic;font-weight:600;color:var(--n-700);font-size:14px;">Capsicum</div>
+                            <div style="font-size:11px;color:var(--n-500);">Peppers · 3 varieties · 8 plants</div>
+                        </button>
+                        <button onclick="selectGenus(this,'Solanum')" style="background:var(--n-100);border:2px solid var(--n-200);border-radius:12px;padding:12px 16px;cursor:pointer;text-align:left;transition:border-color 0.15s;">
+                            <div style="font-style:italic;font-weight:600;color:var(--n-700);font-size:14px;">Solanum</div>
+                            <div style="font-size:11px;color:var(--n-500);">Tomatoes · 2 varieties · 5 plants</div>
+                        </button>
+                        <button onclick="selectGenus(this,'Brassica')" style="background:var(--n-100);border:2px solid var(--n-200);border-radius:12px;padding:12px 16px;cursor:pointer;text-align:left;transition:border-color 0.15s;">
+                            <div style="font-style:italic;font-weight:600;color:var(--n-700);font-size:14px;">Brassica</div>
+                            <div style="font-size:11px;color:var(--n-500);">Cabbage family · 1 variety · 3 plants</div>
+                        </button>
+                    </div>
+                    <!-- Create new genus button -->
+                    <button onclick="toggleInlineForm('genus-form')" style="width:100%;border:2px dashed var(--burnt-sienna);background:rgba(160,64,16,0.04);color:var(--burnt-sienna);border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;">
+                        + Create New Genus
+                    </button>
+                    <!-- Inline genus form -->
+                    <div id="genus-form" class="expand-form" style="background:rgba(160,64,16,0.06);border:1px solid rgba(160,64,16,0.2);border-radius:12px;margin-top:8px;padding:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-weight:600;font-size:13px;color:var(--burnt-sienna);">New Genus</span>
+                            <button onclick="toggleInlineForm('genus-form')" style="color:var(--n-300);background:none;border:none;cursor:pointer;font-size:16px;">✕</button>
+                        </div>
+                        <div style="margin-bottom:8px;">
+                            <label class="form-label">Genus Name <span style="color:var(--overdue-red);">*</span></label>
+                            <input type="text" class="form-input" placeholder="e.g. Capsicum" style="margin-top:4px;font-style:italic;">
+                        </div>
+                        <div style="margin-bottom:8px;">
+                            <label class="form-label">Common Name</label>
+                            <input type="text" class="form-input" placeholder="e.g. Peppers" style="margin-top:4px;">
+                        </div>
+                        <div style="margin-bottom:8px;">
+                            <label class="form-label">Family</label>
+                            <input type="text" class="form-input" placeholder="e.g. Solanaceae" style="margin-top:4px;">
+                        </div>
+                        <button class="btn-save" style="background:var(--burnt-sienna);" onclick="saveInlineGenus()">Save Genus</button>
+                    </div>
+                    <!-- Continue button -->
+                    <button id="btn-step-1" onclick="nextStep(2)" style="width:100%;margin-top:16px;padding:12px;background:var(--n-200);color:var(--n-300);border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:not-allowed;" disabled>Select a genus first</button>
+                </div>
+
+                <!-- Step 2: Variety -->
+                <div id="wizard-step-2" class="expand-form" style="padding:16px;">
+                    <h2 style="font-size:18px;font-weight:700;color:var(--n-900);margin-bottom:4px;">Which variety?</h2>
+                    <div id="genus-context" style="display:inline-block;background:var(--terracotta);color:white;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:500;font-style:italic;margin-bottom:16px;">Capsicum</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+                        <button onclick="selectVariety(this)" style="background:var(--n-100);border:2px solid var(--n-200);border-radius:12px;padding:12px 16px;cursor:pointer;text-align:left;">
+                            <div style="font-weight:600;color:var(--n-700);font-size:14px;">Yellow Habanero</div>
+                            <div style="font-size:11px;color:var(--n-500);">HABY · 2 packets · 3 plants</div>
+                        </button>
+                        <button onclick="selectVariety(this)" style="background:var(--n-100);border:2px solid var(--n-200);border-radius:12px;padding:12px 16px;cursor:pointer;text-align:left;">
+                            <div style="font-weight:600;color:var(--n-700);font-size:14px;">Jimmy Nardello</div>
+                            <div style="font-size:11px;color:var(--n-500);">JIMN · 1 packet · 2 plants</div>
+                        </button>
+                        <button onclick="selectVariety(this)" style="background:var(--n-100);border:2px solid var(--n-200);border-radius:12px;padding:12px 16px;cursor:pointer;text-align:left;">
+                            <div style="font-weight:600;color:var(--n-700);font-size:14px;">Serrano</div>
+                            <div style="font-size:11px;color:var(--n-500);">SERR · 1 packet · 1 plant</div>
+                        </button>
+                    </div>
+                    <button onclick="toggleInlineForm('variety-form')" style="width:100%;border:2px dashed var(--burnt-sienna);background:rgba(160,64,16,0.04);color:var(--burnt-sienna);border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;">
+                        + Add New Variety
+                    </button>
+                    <!-- Inline variety form -->
+                    <div id="variety-form" class="expand-form" style="background:rgba(160,64,16,0.06);border:1px solid rgba(160,64,16,0.2);border-radius:12px;margin-top:8px;padding:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-weight:600;font-size:13px;color:var(--burnt-sienna);">New Variety</span>
+                            <button onclick="toggleInlineForm('variety-form')" style="color:var(--n-300);background:none;border:none;cursor:pointer;font-size:16px;">✕</button>
+                        </div>
+                        <div style="margin-bottom:8px;">
+                            <label class="form-label">Variety Name <span style="color:var(--overdue-red);">*</span></label>
+                            <input type="text" class="form-input" placeholder="e.g. Yellow Habanero" style="margin-top:4px;">
+                        </div>
+                        <div style="margin-bottom:8px;">
+                            <label class="form-label">Abbreviation <span style="color:var(--overdue-red);">*</span></label>
+                            <input type="text" class="form-input" placeholder="e.g. HABY (max 6 chars)" maxlength="6" style="margin-top:4px;text-transform:uppercase;">
+                        </div>
+                        <div style="margin-bottom:8px;">
+                            <label class="form-label">Synonyms</label>
+                            <input type="text" class="form-input" placeholder="e.g. Habanero Amarillo, Yellow Heat" style="margin-top:4px;">
+                        </div>
+                        <button class="btn-save" style="background:var(--burnt-sienna);" onclick="saveInlineVariety()">Save Variety</button>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:16px;">
+                        <button onclick="nextStep(1)" style="flex:1;padding:12px;background:var(--n-200);color:var(--n-700);border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:pointer;">← Back</button>
+                        <button id="btn-step-2" onclick="nextStep(3)" style="flex:2;padding:12px;background:var(--n-200);color:var(--n-300);border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:not-allowed;" disabled>Select a variety first</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Seed Packet -->
+                <div id="wizard-step-3" class="expand-form" style="padding:16px;">
+                    <h2 style="font-size:18px;font-weight:700;color:var(--n-900);margin-bottom:4px;">Which seed packet?</h2>
+                    <div style="font-size:12px;color:var(--n-500);margin-bottom:16px;">Link a packet to auto-fill planting specs</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+                        <button onclick="selectPacket(this)" style="background:var(--n-100);border:2px solid var(--n-200);border-radius:12px;padding:12px 16px;cursor:pointer;text-align:left;display:flex;gap:12px;">
+                            <div style="width:48px;height:48px;border-radius:8px;background:var(--n-200);display:flex;align-items:center;justify-content:center;flex-shrink:0;">📦</div>
+                            <div style="flex:1;">
+                                <div style="font-weight:600;color:var(--n-700);font-size:14px;">Baker Creek Heirloom</div>
+                                <div style="font-size:11px;color:var(--n-500);">Packed for 2024 · 80–100 days · 1/4" deep · Full Sun</div>
+                            </div>
+                        </button>
+                        <button onclick="selectPacket(this)" style="background:var(--n-100);border:2px solid var(--n-200);border-radius:12px;padding:12px 16px;cursor:pointer;text-align:left;display:flex;gap:12px;">
+                            <div style="width:48px;height:48px;border-radius:8px;background:var(--n-200);display:flex;align-items:center;justify-content:center;flex-shrink:0;">📦</div>
+                            <div style="flex:1;">
+                                <div style="font-weight:600;color:var(--n-700);font-size:14px;">Botanical Interests</div>
+                                <div style="font-size:11px;color:var(--n-500);">Packed for 2023 · 75–90 days · 1/4" deep · Full Sun</div>
+                            </div>
+                        </button>
+                    </div>
+                    <button onclick="goBackFrom('add-plant','add-packet')" style="width:100%;border:2px dashed var(--burnt-sienna);background:rgba(160,64,16,0.04);color:var(--burnt-sienna);border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:8px;">
+                        + Add Seed Packet
+                    </button>
+                    <button onclick="nextStep(4)" style="width:100%;border:none;background:none;color:var(--n-500);font-size:12px;cursor:pointer;padding:8px;text-decoration:underline;">Skip — I'll add details manually</button>
+                    <div style="display:flex;gap:8px;margin-top:16px;">
+                        <button onclick="nextStep(2)" style="flex:1;padding:12px;background:var(--n-200);color:var(--n-700);border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:pointer;">← Back</button>
+                        <button id="btn-step-3" onclick="nextStep(4)" style="flex:2;padding:12px;background:var(--burnt-sienna);color:white;border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:pointer;">Continue</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Planting Details -->
+                <div id="wizard-step-4" class="expand-form" style="padding:16px;padding-bottom:80px;">
+                    <h2 style="font-size:18px;font-weight:700;color:var(--n-900);margin-bottom:12px;">Planting details</h2>
+                    <!-- Identity -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Identity</div>
+                        <div style="background:var(--n-100);border:1px solid var(--n-200);border-radius:12px;padding:12px;">
+                            <div style="font-size:11px;color:var(--n-500);">Plant ID (auto-generated)</div>
+                            <div style="font-family:monospace;font-size:16px;font-weight:700;color:var(--terracotta);">HABY-2026-002</div>
+                        </div>
+                    </div>
+                    <!-- Packet Info (pre-filled, editable) -->
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                            <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;">Seed Packet Info</div>
+                            <span style="font-size:10px;color:var(--growth-green);font-weight:500;">✓ from packet</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div>
+                                <label class="form-label">Variety Name</label>
+                                <input type="text" class="form-input" value="Yellow Habanero Pepper" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Latin Name</label>
+                                <input type="text" class="form-input" value="Capsicum chinense" style="margin-top:4px;font-style:italic;">
+                            </div>
+                            <div>
+                                <label class="form-label">Brand</label>
+                                <input type="text" class="form-input" value="Baker Creek Heirloom" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Days to Maturity</label>
+                                <input type="text" class="form-input" value="80–100" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Days to Germination</label>
+                                <input type="text" class="form-input" value="7–21" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Planting Depth</label>
+                                <input type="text" class="form-input" value="1/4&quot;" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Spacing</label>
+                                <input type="text" class="form-input" value="12&quot;–18&quot;" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Sun</label>
+                                <select class="form-input" style="margin-top:4px;"><option selected>Full Sun</option><option>Partial Sun</option><option>Full Shade</option></select>
+                            </div>
+                            <div style="grid-column:span 2;">
+                                <label class="form-label">Start Indoors</label>
+                                <input type="text" class="form-input" value="8–10 weeks before last frost" style="margin-top:4px;">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Planting Actions -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Planting</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div>
+                                <label class="form-label">Planted Date</label>
+                                <input type="date" class="form-input" value="2026-06-01" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Packet Photo</label>
+                                <button style="margin-top:4px;width:100%;padding:6px 8px;border:1px dashed var(--n-300);border-radius:8px;background:none;color:var(--n-500);font-size:11px;cursor:pointer;">📷 Add photo</button>
+                            </div>
+                            <div style="grid-column:span 2;">
+                                <label class="form-label">Location</label>
+                                <input type="text" class="form-input" placeholder="e.g. indoor seed tray, garden bed 3" style="margin-top:4px;">
+                            </div>
+                            <div style="grid-column:span 2;">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-input" rows="2" placeholder="Any additional observations..." style="margin-top:4px;resize:none;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Certifications chips -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Certifications</div>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <span style="font-size:11px;background:var(--terracotta);color:white;padding:4px 10px;border-radius:12px;cursor:pointer;">Heirloom</span>
+                            <span style="font-size:11px;background:var(--terracotta);color:white;padding:4px 10px;border-radius:12px;cursor:pointer;">Non-GMO</span>
+                            <span style="font-size:11px;background:var(--n-200);color:var(--n-700);padding:4px 10px;border-radius:12px;cursor:pointer;">Organic</span>
+                            <span style="font-size:11px;background:var(--n-200);color:var(--n-700);padding:4px 10px;border-radius:12px;cursor:pointer;">Open-Pollinated</span>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="nextStep(3)" style="flex:1;padding:12px;background:var(--n-200);color:var(--n-700);border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:pointer;">← Back</button>
+                        <button onclick="nextStep(5)" style="flex:2;padding:12px;background:var(--burnt-sienna);color:white;border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:pointer;">Continue</button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Confirm -->
+                <div id="wizard-step-5" class="expand-form" style="padding:16px;padding-bottom:80px;">
+                    <h2 style="font-size:18px;font-weight:700;color:var(--n-900);margin-bottom:12px;">Review &amp; confirm</h2>
+                    <!-- Summary sections -->
+                    <div style="margin-bottom:12px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                            <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;">Identity</div>
+                            <button style="font-size:11px;color:var(--terracotta);background:none;border:none;cursor:pointer;font-weight:500;" onclick="nextStep(4)">← Edit</button>
+                        </div>
+                        <div style="background:var(--n-100);border:1px solid var(--n-200);border-radius:12px;padding:10px 12px;">
+                            <div style="font-family:monospace;font-weight:700;color:var(--terracotta);font-size:14px;">HABY-2026-002</div>
+                            <div style="font-size:12px;color:var(--n-700);">Yellow Habanero · <em>Capsicum chinense</em></div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                            <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;">Packet Info</div>
+                            <button style="font-size:11px;color:var(--terracotta);background:none;border:none;cursor:pointer;font-weight:500;" onclick="nextStep(4)">← Edit</button>
+                        </div>
+                        <div style="background:var(--n-100);border:1px solid var(--n-200);border-radius:12px;padding:10px 12px;">
+                            <div style="font-size:12px;color:var(--n-700);">Baker Creek Heirloom · 80–100 days · Full Sun</div>
+                            <div style="font-size:11px;color:var(--n-500);margin-top:2px;">1/4" deep · 12"–18" spacing · Heirloom, Non-GMO</div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                            <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;">Planting</div>
+                            <button style="font-size:11px;color:var(--terracotta);background:none;border:none;cursor:pointer;font-weight:500;" onclick="nextStep(4)">← Edit</button>
+                        </div>
+                        <div style="background:var(--n-100);border:1px solid var(--n-200);border-radius:12px;padding:10px 12px;">
+                            <div style="font-size:12px;color:var(--n-700);">Planted: Jun 1, 2026</div>
+                            <div style="font-size:11px;color:var(--n-500);">Location: indoor seed tray</div>
+                        </div>
+                    </div>
+                    <!-- Label Preview -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Label Preview</div>
+                        <div style="background:white;border:1px solid var(--n-200);border-radius:12px;padding:16px;text-align:center;max-width:200px;margin:0 auto;">
+                            <div style="font-weight:700;font-size:12px;color:var(--n-900);margin-bottom:6px;">Yellow Habanero</div>
+                            <div style="width:80px;height:80px;border:2px solid var(--n-300);border-radius:4px;margin:8px auto;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(0deg,var(--n-100),var(--n-100) 2px,white 2px,white 4px),repeating-linear-gradient(90deg,var(--n-100),var(--n-100) 2px,white 2px,white 4px);"></div>
+                            <div style="font-size:9px;color:var(--n-500);margin-top:6px;">HABY-2026-002</div>
+                            <div style="font-size:8px;color:var(--n-300);">Planted 2026 · <em>C. chinense</em></div>
+                        </div>
+                    </div>
+                    <!-- Print queue checkbox -->
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer;">
+                        <input type="checkbox" style="accent-color:var(--burnt-sienna);">
+                        <span style="font-size:12px;color:var(--n-700);">Add label to print queue</span>
+                    </label>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="nextStep(4)" style="flex:1;padding:12px;background:var(--n-200);color:var(--n-700);border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:pointer;">← Back</button>
+                        <button onclick="confirmPlant()" style="flex:2;padding:12px;background:var(--burnt-sienna);color:white;border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:pointer;">Confirm &amp; Create Plant</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ADD SEED PACKET SCREEN ==================== -->
+        <div id="screen-add-packet" class="screen hidden-screen">
+            <div class="screen-content" style="background-color: var(--warm-cream);">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--n-500);padding:12px 20px 4px;">
+                    <span>10:41 AM</span>
+                    <span>87%</span>
+                </div>
+                <!-- Header -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--n-200);">
+                    <button onclick="goBackFrom('add-packet','add-plant')" style="color:var(--n-500);font-size:18px;background:none;border:none;cursor:pointer;">←</button>
+                    <span style="font-size:16px;font-weight:700;color:var(--n-900);">📦 New Seed Packet</span>
+                    <div style="width:28px;"></div>
+                </div>
+                <div style="padding:16px;padding-bottom:80px;">
+                    <!-- Photo Capture -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Packet Photos</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div style="border:2px dashed var(--n-300);border-radius:12px;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:rgba(176,78,46,0.03);" onclick="showToast('Camera opened')">
+                                <span style="font-size:24px;margin-bottom:4px;">📷</span>
+                                <span style="font-size:11px;color:var(--n-500);">Front of Packet</span>
+                            </div>
+                            <div style="border:2px dashed var(--n-300);border-radius:12px;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:rgba(176,78,46,0.03);" onclick="showToast('Camera opened')">
+                                <span style="font-size:24px;margin-bottom:4px;">📷</span>
+                                <span style="font-size:11px;color:var(--n-500);">Back of Packet</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Brand & Origin -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Brand &amp; Origin</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div style="grid-column:span 2;">
+                                <label class="form-label">Brand <span style="color:var(--overdue-red);">*</span></label>
+                                <input type="text" class="form-input" placeholder="e.g. Baker Creek" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Origin / Supplier</label>
+                                <select class="form-input" style="margin-top:4px;"><option>Select supplier</option><option>Baker Creek</option><option>Botanical Interests</option><option>Burpee</option><option>+ New</option></select>
+                            </div>
+                            <div>
+                                <label class="form-label">Packed For / Lot</label>
+                                <input type="text" class="form-input" placeholder="e.g. 2024" style="margin-top:4px;">
+                            </div>
+                            <div style="grid-column:span 2;">
+                                <label class="form-label">Seed Count / Weight</label>
+                                <input type="text" class="form-input" placeholder="e.g. 18 seeds or 300 mg" style="margin-top:4px;">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Variety Info -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Variety Information</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div style="grid-column:span 2;">
+                                <label class="form-label">Variety Name <span style="color:var(--overdue-red);">*</span></label>
+                                <input type="text" class="form-input" placeholder="e.g. Yellow Habanero Pepper" style="margin-top:4px;">
+                            </div>
+                            <div style="grid-column:span 2;">
+                                <label class="form-label">Latin Name <span style="color:var(--overdue-red);">*</span></label>
+                                <input type="text" class="form-input" placeholder="e.g. Capsicum chinense" style="margin-top:4px;font-style:italic;">
+                            </div>
+                            <div style="grid-column:span 2;">
+                                <label class="form-label">Genus</label>
+                                <div style="display:flex;gap:4px;margin-top:4px;">
+                                    <select class="form-input" style="flex:1;"><option>Capsicum</option><option>Solanum</option><option>Brassica</option></select>
+                                    <button style="padding:6px 10px;background:var(--n-200);border:none;border-radius:8px;font-size:11px;color:var(--n-700);cursor:pointer;">+ New</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label">Scoville Units</label>
+                                <input type="text" class="form-input" placeholder="e.g. 100,000–350,000" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Certifications</label>
+                                <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;">
+                                    <span style="font-size:10px;background:var(--terracotta);color:white;padding:3px 8px;border-radius:12px;cursor:pointer;">Heirloom</span>
+                                    <span style="font-size:10px;background:var(--n-200);color:var(--n-700);padding:3px 8px;border-radius:12px;cursor:pointer;">Non-GMO</span>
+                                    <span style="font-size:10px;background:var(--n-200);color:var(--n-700);padding:3px 8px;border-radius:12px;cursor:pointer;">Organic</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Planting Specs -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px;font-weight:600;color:var(--n-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Planting Specifications</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div>
+                                <label class="form-label">Days to Maturity <span style="color:var(--overdue-red);">*</span></label>
+                                <input type="text" class="form-input" placeholder="e.g. 80–100" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Days to Germination <span style="color:var(--overdue-red);">*</span></label>
+                                <input type="text" class="form-input" placeholder="e.g. 7–21" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Planting Depth <span style="color:var(--overdue-red);">*</span></label>
+                                <input type="text" class="form-input" placeholder="e.g. 1/4&quot;" style="margin-top:4px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Spacing <span style="color:var(--overdue-red);">*</span></label>
+                                <input type="text" class="form-input" placeholder="e.g. 12&quot;–18&quot;" style="margin-top:4px;">
+                            </div>
+                            <div style="grid-column:span 2;">
+                                <label class="form-label">Sun Requirement <span style="color:var(--overdue-red);">*</span></label>
+                                <select class="form-input" style="margin-top:4px;"><option>Full Sun</option><option>Partial Sun</option><option>Full Shade</option><option>Partial Shade</option></select>
+                            </div>
+                            <div style="grid-column:span 2;">
+                                <label class="form-label">Start Indoors <span style="color:var(--overdue-red);">*</span></label>
+                                <input type="text" class="form-input" placeholder="e.g. 8–10 weeks before last frost" style="margin-top:4px;">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Notes -->
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-input" rows="2" placeholder="Any special instructions printed on the packet..." style="margin-top:4px;resize:none;"></textarea>
+                    </div>
+                    <!-- Save button -->
+                    <button class="btn-save" style="background:var(--burnt-sienna);padding:12px;" onclick="savePacket()">Save Packet</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== LIBRARY SCREEN ==================== -->
+        <div id="screen-library" class="screen hidden-screen">
+            <div class="screen-content" style="background-color: var(--warm-cream); padding: 20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--n-500);margin-bottom:16px;">
+                    <span>10:41 AM</span>
+                    <span>87%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+                    <button onclick="goBackFrom('library','more')" style="color:var(--n-500);font-size:18px;background:none;border:none;cursor:pointer;">←</button>
+                    <span style="font-size:20px;font-weight:700;color:var(--n-900);">📚 Library</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <button onclick="showToast('Genus list coming soon')" style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;">
+                        <span style="font-size:28px;">🧬</span>
+                        <div style="flex:1;"><div style="font-weight:600;color:var(--n-700);font-size:14px;">Genus</div><div style="font-size:12px;color:var(--n-500);">Biological genera</div></div>
+                        <span style="background:var(--n-200);color:var(--n-700);font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;">3</span>
+                        <span style="color:var(--n-300);">›</span>
+                    </button>
+                    <button onclick="showToast('Varieties list coming soon')" style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;">
+                        <span style="font-size:28px;">🌱</span>
+                        <div style="flex:1;"><div style="font-weight:600;color:var(--n-700);font-size:14px;">Varieties</div><div style="font-size:12px;color:var(--n-500);">Plant varieties</div></div>
+                        <span style="background:var(--n-200);color:var(--n-700);font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;">6</span>
+                        <span style="color:var(--n-300);">›</span>
+                    </button>
+                    <button onclick="goBackFrom('library','add-packet')" style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;">
+                        <span style="font-size:28px;">📦</span>
+                        <div style="flex:1;"><div style="font-weight:600;color:var(--n-700);font-size:14px;">Seed Packets</div><div style="font-size:12px;color:var(--n-500);">Seed packet records</div></div>
+                        <span style="background:var(--n-200);color:var(--n-700);font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;">4</span>
+                        <span style="color:var(--n-300);">›</span>
+                    </button>
+                    <button onclick="showToast('Label templates coming soon')" style="background:var(--n-100);border:1px solid var(--n-200);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;">
+                        <span style="font-size:28px;">🏷️</span>
+                        <div style="flex:1;"><div style="font-weight:600;color:var(--n-700);font-size:14px;">Label Templates</div><div style="font-size:12px;color:var(--n-500);">Label designs for printing</div></div>
+                        <span style="background:var(--n-200);color:var(--n-700);font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;">2</span>
+                        <span style="color:var(--n-300);">›</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
+        // Screen navigation
+        const screens = ['home','detail','more','garden','add-plant','add-packet','library'];
+        let currentScreen = 'home';
+        let prevScreen = null;
+
+        function showScreen(name) {
+            screens.forEach(s => {
+                const el = document.getElementById('screen-' + s);
+                el.classList.add('hidden-screen');
+                el.classList.remove('back-hidden');
+            });
+            const target = document.getElementById('screen-' + name);
+            target.classList.remove('hidden-screen');
+            prevScreen = currentScreen;
+            currentScreen = name;
+            // Reset scroll
+            target.querySelector('.screen-content').scrollTop = 0;
+        }
+
+        function goBackFrom(from, to) {
+            showScreen(to);
+        }
+
         function showDetail() {
-            document.getElementById('screen-home').classList.add('back-hidden');
-            document.getElementById('screen-detail').classList.remove('hidden-screen');
+            showScreen('detail');
         }
 
         function goHome() {
-            document.getElementById('screen-home').classList.remove('back-hidden');
-            document.getElementById('screen-detail').classList.add('hidden-screen');
-            document.getElementById('scanner-overlay').style.display = 'none';
+            showScreen('home');
         }
 
+        function showMore() {
+            showScreen('more');
+        }
+
+        function showAddPlant() {
+            showScreen('add-plant');
+            resetWizard();
+        }
+
+        // Scanner
         function activateScanner() {
             document.getElementById('scanner-overlay').style.display = 'flex';
             setTimeout(() => {
@@ -634,6 +1253,7 @@
             }, 2000);
         }
 
+        // Quick action forms
         function toggleForm(type) {
             const forms = ['water', 'feed', 'condition', 'photo', 'note'];
             forms.forEach(f => {
@@ -653,6 +1273,7 @@
             toggleForm(type);
         }
 
+        // Hermes chat
         function toggleHermes() {
             const collapsed = document.getElementById('hermes-collapsed');
             const expanded = document.getElementById('hermes-expanded');
@@ -665,11 +1286,152 @@
             }
         }
 
+        // Toast
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // Inline form toggle
+        function toggleInlineForm(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('open');
+        }
+
+        // Wizard step navigation
+        let selectedGenus = null;
+        let selectedVariety = null;
+
+        function resetWizard() {
+            selectedGenus = null;
+            selectedVariety = null;
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById('wizard-step-' + i).classList.remove('open');
+            }
+            document.getElementById('wizard-step-1').classList.add('open');
+            updateStepIndicator(1);
+            // Reset selection buttons
+            document.getElementById('btn-step-1').disabled = true;
+            document.getElementById('btn-step-1').style.background = 'var(--n-200)';
+            document.getElementById('btn-step-1').style.color = 'var(--n-300)';
+            document.getElementById('btn-step-1').style.cursor = 'not-allowed';
+            document.getElementById('btn-step-2').disabled = true;
+            document.getElementById('btn-step-2').style.background = 'var(--n-200)';
+            document.getElementById('btn-step-2').style.color = 'var(--n-300)';
+            document.getElementById('btn-step-2').style.cursor = 'not-allowed';
+        }
+
+        function nextStep(step) {
+            for (let i = 1; i <= 5; i++) {
+                const el = document.getElementById('wizard-step-' + i);
+                if (i === step) {
+                    el.classList.add('open');
+                } else {
+                    el.classList.remove('open');
+                }
+            }
+            updateStepIndicator(step);
+            // Scroll to top
+            const sc = document.querySelector('#screen-add-plant .screen-content');
+            if (sc) sc.scrollTop = 0;
+        }
+
+        function updateStepIndicator(current) {
+            for (let i = 1; i <= 5; i++) {
+                const dot = document.getElementById('step-dot-' + i);
+                const line = document.getElementById('step-line-' + (i - 1));
+                if (i < current) {
+                    dot.style.color = 'var(--growth-green)';
+                    dot.textContent = '● ' + dot.textContent.replace(/[●○] /, '');
+                } else if (i === current) {
+                    dot.style.color = 'var(--terracotta)';
+                    dot.textContent = '● ' + dot.textContent.replace(/[●○] /, '');
+                } else {
+                    dot.style.color = 'var(--n-300)';
+                    dot.textContent = '○ ' + dot.textContent.replace(/[●○] /, '');
+                }
+                if (line) {
+                    line.style.background = i < current ? 'var(--growth-green)' : 'var(--n-200)';
+                }
+            }
+        }
+
+        // Genus selection
+        function selectGenus(el, name) {
+            selectedGenus = name;
+            // Reset all borders
+            el.parentElement.querySelectorAll('button').forEach(b => {
+                b.style.borderColor = 'var(--n-200)';
+            });
+            el.style.borderColor = 'var(--terracotta)';
+            // Enable continue
+            const btn = document.getElementById('btn-step-1');
+            btn.disabled = false;
+            btn.style.background = 'var(--burnt-sienna)';
+            btn.style.color = 'white';
+            btn.style.cursor = 'pointer';
+            btn.textContent = 'Continue';
+        }
+
+        // Inline genus save
+        function saveInlineGenus() {
+            toggleInlineForm('genus-form');
+            showToast('✓ Genus created');
+            // Simulate selection
+            selectedGenus = 'New Genus';
+            const btn = document.getElementById('btn-step-1');
+            btn.disabled = false;
+            btn.style.background = 'var(--burnt-sienna)';
+            btn.style.color = 'white';
+            btn.style.cursor = 'pointer';
+            btn.textContent = 'Continue';
+        }
+
+        // Variety selection
+        function selectVariety(el) {
+            selectedVariety = true;
+            el.parentElement.querySelectorAll('button').forEach(b => {
+                b.style.borderColor = 'var(--n-200)';
+            });
+            el.style.borderColor = 'var(--terracotta)';
+            const btn = document.getElementById('btn-step-2');
+            btn.disabled = false;
+            btn.style.background = 'var(--burnt-sienna)';
+            btn.style.color = 'white';
+            btn.style.cursor = 'pointer';
+        }
+
+        // Inline variety save
+        function saveInlineVariety() {
+            toggleInlineForm('variety-form');
+            showToast('✓ Variety saved');
+            const btn = document.getElementById('btn-step-2');
+            btn.disabled = false;
+            btn.style.background = 'var(--burnt-sienna)';
+            btn.style.color = 'white';
+            btn.style.cursor = 'pointer';
+        }
+
+        // Packet selection
+        function selectPacket(el) {
+            el.parentElement.querySelectorAll('button').forEach(b => {
+                b.style.borderColor = 'var(--n-200)';
+            });
+            el.style.borderColor = 'var(--terracotta)';
+        }
+
+        // Save packet
+        function savePacket() {
+            showToast('✓ Packet saved');
+            setTimeout(() => goBackFrom('add-packet','add-plant'), 1000);
+        }
+
+        // Confirm plant creation
+        function confirmPlant() {
+            showToast('✓ Plant HABY-2026-002 created!');
+            setTimeout(() => goBackFrom('add-plant','detail'), 1500);
         }
     </script>
 </body>

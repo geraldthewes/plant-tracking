@@ -1,0 +1,117 @@
+@startuml
+skinparam activity {
+  BackgroundColor #F8F1E3
+  BorderColor #6B4226
+  FontColor #4A3728
+}
+skinparam condition {
+  BackgroundColor #EDE5D8
+  BorderColor #B04E2E
+  FontColor #4A3728
+}
+skinparam start {
+  BackgroundColor #4A6B2E
+  BorderColor #3D5A24
+  FontColor #FFFFFF
+}
+skinparam stop {
+  BackgroundColor #A0342E
+  BorderColor #8B2E28
+  FontColor #FFFFFF
+}
+skinparam note {
+  BackgroundColor #EDE5D8
+  BorderColor #D4C8B8
+  FontColor #6B4226
+}
+skinparam defaultFontColor #4A3728
+skinparam arrowColor #6B4226
+skinparam shadowing false
+
+title Add New Plant Workflow
+
+start
+
+:Home screen — tap "More";
+:Tap "Garden" section;
+:Garden Browse — tap "+" button;
+
+partition "Step 1: Genus" {
+  if (Genus exists?) then (Yes)
+    :Select existing genus;
+  else (No)
+    :Tap "+ Create New Genus";
+    :Enter genus name, common name, family;
+    :Save new genus;
+  endif
+}
+
+partition "Step 2: Variety" {
+  if (Variety exists?) then (Yes)
+    :Select existing variety;
+  else (No)
+    :Tap "+ Add New Variety";
+    :Enter variety name, abbreviation;
+    :Save new variety;
+  endif
+}
+
+partition "Step 3: Seed Packet" {
+  if (Packet exists for variety?) then (Yes)
+    :Select existing seed packet;
+    :Packet data pre-fills Step 4;
+  else (No)
+    if (Add packet now?) then (Yes)
+      :Tap "+ Add Seed Packet";
+      :Photograph packet front & back;
+      :Enter brand, variety info, planting specs;
+      :Save seed packet;
+      :New packet pre-selected;
+    else (Skip)
+      :Tap "Skip for Now";
+      :Step 4 fields empty for manual entry;
+    endif
+  endif
+}
+
+partition "Step 4: Planting Details" {
+  :Review / edit pre-filled packet data;
+  :Enter planted date (default: today);
+  :Enter planting location (optional);
+  :Attach seed packet photo (optional);
+  :Add notes (optional);
+}
+
+partition "Step 5: Confirm" {
+  :Review complete data summary;
+  :View QR label preview;
+  :Optional: check "Add to print queue";
+  
+  if (Data correct?) then (Yes)
+    :Tap "Confirm & Create Plant";
+    :Plant record created;\nID assigned (VARIETY-YYYY-SEQ);
+  else (No)
+    :Tap "← Edit" on section to correct;
+    :Return to relevant step;
+    :Re-review and confirm;
+  endif
+}
+
+partition "Post-Creation" {
+  if (View plant record?) then (Yes)
+    :Navigate to Plant Detail screen;
+  else (No)
+    if (Add another plant?) then (Yes)
+      :Reset wizard to Step 1;\ngenus & variety pre-selected;
+    else (No)
+      if (Print label?) then (Yes)
+        :Send label to Phomemo M120 queue;
+      else (No)
+        :Return to Garden Browse;
+      endif
+    endif
+  endif
+}
+
+stop
+@enduml

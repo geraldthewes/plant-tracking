@@ -1,0 +1,88 @@
+@startuml
+skinparam activity {
+  BackgroundColor #F8F1E3
+  BorderColor #6B4226
+  FontColor #4A3728
+}
+skinparam condition {
+  BackgroundColor #EDE5D8
+  BorderColor #B04E2E
+  FontColor #4A3728
+}
+skinparam start {
+  BackgroundColor #4A6B2E
+  BorderColor #3D5A24
+  FontColor #FFFFFF
+}
+skinparam stop {
+  BackgroundColor #A0342E
+  BorderColor #8B2E28
+  FontColor #FFFFFF
+}
+skinparam note {
+  BackgroundColor #EDE5D8
+  BorderColor #D4C8B8
+  FontColor #6B4226
+}
+skinparam defaultFontColor #4A3728
+skinparam arrowColor #6B4226
+skinparam shadowing false
+
+title Add Genus Workflow
+
+start
+
+if (Entry point?) then ("Inline — during creation")
+  :Adding plant or seed packet;\ngenus field needs new entry;
+  
+  partition "Inline Creation" {
+    :Prompt: "Genus not found. [Create it?]";
+    :Tap "Create it?";
+    :Inline form slides down;
+    :Enter genus name (auto-italicized);
+    :Enter common name (optional);\n(auto-suggested from taxonomy);
+    :Enter family (optional);
+    
+    if (Duplicate check?) then (Exists)
+      :Warning: "Genus already exists";
+      :Tap link to select existing genus;
+    else (New)
+      :Tap "Save";
+      :Genus saved — auto-selected\nin parent form;
+      :Continue with plant/packet entry;
+    endif
+  }
+  
+else ("Library → Genus → +")
+  :From Library management screen;
+  
+  partition "Library Management" {
+    :Tap "+" FAB on Genus list;
+    :Full-page form opens;
+    :Enter genus name (required);
+    :Enter common name (optional);
+    :Enter family (optional);
+    :Enter description (optional);
+    :Tap "Save Genus";
+    :Return to Genus list;\nnew genus visible;
+  }
+  
+  partition "Genus Detail (post-creation)" {
+    :Tap genus card in list;
+    :View/edit all fields;
+    :See varieties under this genus;
+    :See all tracked plants in genus;
+    
+    if (Delete requested?) then (Yes)
+      if (Has varieties?) then (Yes)
+        :Delete blocked — must remove\nvarieties first;
+      else (No)
+        :Confirmation dialog;
+        :Delete genus;
+      endif
+    endif
+  }
+endif
+
+stop
+@enduml
