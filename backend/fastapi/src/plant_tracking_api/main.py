@@ -3,7 +3,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from plant_tracking_api.config import settings
-from plant_tracking_api.routes import health, plants
+from plant_tracking_api.routes import health, plants, media_attachments
 
 app = FastAPI(
     title="Plant Tracking API",
@@ -13,7 +13,9 @@ app = FastAPI(
 
 app.include_router(health.router, tags=["health"])
 app.include_router(plants.router, prefix="/api/plants", tags=["plants"])
-
+app.include_router(
+    media_attachments.router, prefix="/api/media", tags=["media-attachments"]
+)
 
 if __name__ == "__main__":
     uvicorn.run(

@@ -3,6 +3,7 @@
 Plant Tracking CLI - Main entry point for plant tracking commands
 """
 import argparse
+import os
 import sys
 
 # Markdown model imports (for backup/export during transition)
@@ -187,7 +188,11 @@ def main():
     )
 
     # log note
-    log_note_parser = log_subparsers.add_parser("note", help="Log a note")
+    log_note_parser = log_subparsers.add_parser(
+        "note",
+        help="Log a markdown note",
+        description="Create a new markdown-formatted note attached to a plant",
+    )
     log_note_parser.add_argument("plant_id", help="Plant ID")
     log_note_parser.add_argument("--text", "-t", required=True, help="Note text")
     log_note_parser.add_argument(
@@ -205,6 +210,70 @@ def main():
         default="all",
         help="Filter by log type",
     )
+
+    # media subcommand
+    media_parser = subparsers.add_parser(
+        "media", help="Manage media attachments (images, videos, audio)"
+    )
+    media_subparsers = media_parser.add_subparsers(
+        dest="media_command", help="Media subcommands"
+    )
+
+    media_add_image_parser = media_subparsers.add_parser(
+        "add-image", help="Add an image attachment to a plant"
+    )
+    media_add_image_parser.add_argument("plant_id", help="Plant ID")
+    media_add_image_parser.add_argument("image_path", help="Path to image file")
+    media_add_image_parser.add_argument(
+        "--label", "-l", help="Optional label for the image"
+    )
+    media_add_image_parser.add_argument(
+        "--tags", "-t", help="Optional comma-separated tags"
+    )
+
+    media_add_video_parser = media_subparsers.add_parser(
+        "add-video", help="Add a video attachment to a plant"
+    )
+    media_add_video_parser.add_argument("plant_id", help="Plant ID")
+    media_add_video_parser.add_argument("video_path", help="Path to video file")
+    media_add_video_parser.add_argument(
+        "--label", "-l", help="Optional label for the video"
+    )
+    media_add_video_parser.add_argument(
+        "--tags", "-t", help="Optional comma-separated tags"
+    )
+
+    media_add_audio_parser = media_subparsers.add_parser(
+        "add-audio", help="Add an audio attachment to a plant"
+    )
+    media_add_audio_parser.add_argument("plant_id", help="Plant ID")
+    media_add_audio_parser.add_argument("audio_path", help="Path to audio file")
+    media_add_audio_parser.add_argument(
+        "--label", "-l", help="Optional label for the audio"
+    )
+    media_add_audio_parser.add_argument(
+        "--tags", "-t", help="Optional comma-separated tags"
+    )
+
+    media_list_parser = media_subparsers.add_parser(
+        "list", help="List media attachments for a plant"
+    )
+    media_list_parser.add_argument("plant_id", help="Plant ID")
+
+    media_show_parser = media_subparsers.add_parser(
+        "show", help="Show media attachment details"
+    )
+    media_show_parser.add_argument("media_id", type=int, help="Media attachment ID")
+
+    media_delete_parser = media_subparsers.add_parser(
+        "delete", help="Delete a media attachment"
+    )
+    media_delete_parser.add_argument("media_id", type=int, help="Media attachment ID")
+
+    media_url_parser = media_subparsers.add_parser(
+        "url", help="Get presigned URL for media attachment"
+    )
+    media_url_parser.add_argument("media_id", type=int, help="Media attachment ID")
 
     args = parser.parse_args()
 
@@ -241,6 +310,23 @@ def main():
             log_list(args, db)
         else:
             log_parser.print_help()
+    elif args.command == "media":
+        if args.media_command == "add-image":
+            media_add_attachment(args, db, "image")
+        elif args.media_command == "add-video":
+            media_add_attachment(args, db, "video")
+        elif args.media_command == "add-audio":
+            media_add_attachment(args, db, "audio")
+        elif args.media_command == "list":
+            media_list_attachments(args, db)
+        elif args.media_command == "show":
+            media_show_attachment(args, db)
+        elif args.media_command == "delete":
+            media_delete_attachment(args, db)
+        elif args.media_command == "url":
+            media_get_url(args, db)
+        else:
+            media_parser.print_help()
     else:
         parser.print_help()
 
@@ -2163,6 +2249,204 @@ def log_list(args, db=None):
 
     print("-" * 80)
     print(f"Total entries: {len(entries_dict)}")
+
+
+# ─── Media command handlers ─────────────────────────────────────
+
+def media_add_attachment(args, db=None, media_type="image"):
+    """Handle adding media attachment (image, video, audio)."""
+    if db is None:
+        db = _get_db()
+
+    file_path = getattr(args, f"{media_type}_path")
+    if not os.path.exists(file_path):
+        print(f"Error: File not found: {file_path}")
+        return
+
+    plant_exists = False
+    if db and SERVICE_AVAILABLE:
+        try:
+            with create_unit_of_work() as uow:
+                plant = uow.plants.get_plant(args.plant_id)
+                if plant:
+                    plant_exists = True
+        except Exception:
+            pass
+    else:
+        plant_file = get_database_dir() / f"{args.plant_id}.md"
+        if plant_file.exists():
+            plant_exists = True
+
+    if not plant_exists:
+        print(f"Error: Plant ID '{args.plant_id}' not found")
+        return
+
+    if not db or not SERVICE_AVAILABLE:
+        print("Error: Media attachments require database service")
+        return
+
+    try:
+        from plant_service.service_layer.s3_service import S3Service
+        from plant_service.service_layer.media_attachment_service_impl import (
+            MediaAttachmentServiceImpl,
+        )
+
+        with create_unit_of_work() as uow:
+            s3_service = S3Service()
+            media_service = MediaAttachmentServiceImpl(
+                uow.media_attachments, s3_service
+            )
+
+            media_data = {
+                "plant_id": args.plant_id,
+                "media_type": media_type,
+                "label": getattr(args, "label", None),
+                "tags": getattr(args, "tags", None),
+                "file_path": file_path,
+                "filename": os.path.basename(file_path),
+            }
+
+            media_attachment = media_service.create_media_attachment(media_data)
+            uow.commit()
+
+            print(f"✓ {media_type.capitalize()} attachment created!")
+            print(f"ID: {media_attachment.id}")
+            print(f"Plant ID: {media_attachment.plant_id}")
+            print(f"Timestamp: {media_attachment.timestamp}")
+    except ValueError as e:
+        print(f"Error: {e}")
+    except Exception as e:
+        print(f"Error creating {media_type} attachment: {e}")
+
+
+def media_list_attachments(args, db=None):
+    """List media attachments for a plant."""
+    if db is None:
+        db = _get_db()
+
+    if not db or not SERVICE_AVAILABLE:
+        print("Error: Media attachments require database service")
+        return
+
+    try:
+        with create_unit_of_work() as uow:
+            media_attachments = uow.media_attachments.get_media_attachments_by_plant(
+                args.plant_id
+            )
+
+            if not media_attachments:
+                print(f"No media attachments found for plant {args.plant_id}")
+                return
+
+            print(f"Media attachments for plant {args.plant_id}:")
+            print(
+                f"{'ID':<5} {'Type':<8} {'Label':<25} {'Tags':<30} {'Timestamp':<20}"
+            )
+            print("-" * 90)
+            for ma in media_attachments:
+                label = ma.label or ""
+                tags = ma.tags or ""
+                print(
+                    f"{ma.id:<5} {ma.media_type:<8} {label:<25} "
+                    f"{tags:<30} {ma.timestamp:<20}"
+                )
+    except Exception as e:
+        print(f"Error listing media attachments: {e}")
+
+
+def media_show_attachment(args, db=None):
+    """Show media attachment details."""
+    if db is None:
+        db = _get_db()
+
+    if not db or not SERVICE_AVAILABLE:
+        print("Error: Media attachments require database service")
+        return
+
+    try:
+        with create_unit_of_work() as uow:
+            media_attachment = uow.media_attachments.get_media_attachment(
+                args.media_id
+            )
+
+            if not media_attachment:
+                print(f"Media attachment not found: {args.media_id}")
+                return
+
+            print(f"=== Media Attachment: {media_attachment.id} ===")
+            print()
+            print(f"Plant ID: {media_attachment.plant_id}")
+            print(f"Media Type: {media_attachment.media_type}")
+            print(f"S3 Key: {media_attachment.s3_key}")
+            print(f"Label: {media_attachment.label or 'N/A'}")
+            print(f"Tags: {media_attachment.tags or 'N/A'}")
+            print(f"Timestamp: {media_attachment.timestamp}")
+    except Exception as e:
+        print(f"Error showing media attachment: {e}")
+
+
+def media_delete_attachment(args, db=None):
+    """Delete media attachment."""
+    if db is None:
+        db = _get_db()
+
+    if not db or not SERVICE_AVAILABLE:
+        print("Error: Media attachments require database service")
+        return
+
+    try:
+        from plant_service.service_layer.s3_service import S3Service
+
+        with create_unit_of_work() as uow:
+            media_attachment = uow.media_attachments.get_media_attachment(
+                args.media_id
+            )
+            if not media_attachment:
+                print(f"Media attachment not found: {args.media_id}")
+                return
+
+            s3_service = S3Service()
+            s3_service.delete_file(media_attachment.s3_key)
+
+            success = uow.media_attachments.delete_media_attachment(args.media_id)
+            if success:
+                uow.commit()
+                print(f"✓ Media attachment {args.media_id} deleted successfully")
+            else:
+                print(f"Failed to delete media attachment {args.media_id}")
+    except Exception as e:
+        print(f"Error deleting media attachment: {e}")
+
+
+def media_get_url(args, db=None):
+    """Get presigned URL for media attachment."""
+    if db is None:
+        db = _get_db()
+
+    if not db or not SERVICE_AVAILABLE:
+        print("Error: Media attachments require database service")
+        return
+
+    try:
+        from plant_service.service_layer.s3_service import S3Service
+
+        with create_unit_of_work() as uow:
+            media_attachment = uow.media_attachments.get_media_attachment(
+                args.media_id
+            )
+            if not media_attachment:
+                print(f"Media attachment not found: {args.media_id}")
+                return
+
+            s3_service = S3Service()
+            url = s3_service.get_presigned_url(media_attachment.s3_key)
+            if url:
+                print(f"URL for media attachment {args.media_id}:")
+                print(url)
+            else:
+                print("Failed to generate URL")
+    except Exception as e:
+        print(f"Error getting media attachment URL: {e}")
 
 
 if __name__ == "__main__":

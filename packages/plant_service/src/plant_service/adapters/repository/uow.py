@@ -10,11 +10,15 @@ from plant_service.service_layer.plant_service import PlantService
 from plant_service.service_layer.genus_service import GenusService
 from plant_service.service_layer.seed_packet_service import SeedPacketService
 from plant_service.service_layer.log_service import LogService
+from plant_service.service_layer.media_attachment_service import (
+    MediaAttachmentService,
+)
 
 from .plant_repository import PlantRepository
 from .genus_repository import GenusRepository
 from .seed_packet_repository import SeedPacketRepository
 from .log_repository import LogRepository
+from .media_attachment_repository import MediaAttachmentRepository
 
 
 class SqlAlchemyUnitOfWork(AbstractContextManager):
@@ -27,6 +31,7 @@ class SqlAlchemyUnitOfWork(AbstractContextManager):
         self._genera: Optional[GenusService] = None
         self._seed_packets: Optional[SeedPacketService] = None
         self._logs: Optional[LogService] = None
+        self._media_attachments: Optional[MediaAttachmentService] = None
 
     @property
     def plants(self) -> PlantService:
@@ -52,6 +57,14 @@ class SqlAlchemyUnitOfWork(AbstractContextManager):
             raise RuntimeError("Accessing logs outside of transaction context")
         return self._logs
 
+    @property
+    def media_attachments(self) -> MediaAttachmentService:
+        if self._media_attachments is None:
+            raise RuntimeError(
+                "Accessing media_attachments outside of transaction context"
+            )
+        return self._media_attachments
+
     def __enter__(self) -> SqlAlchemyUnitOfWork:
         """Enter transaction context"""
         self.session = self.session_factory()
@@ -59,6 +72,7 @@ class SqlAlchemyUnitOfWork(AbstractContextManager):
         self._genera = GenusRepository(self.session)
         self._seed_packets = SeedPacketRepository(self.session)
         self._logs = LogRepository(self.session)
+        self._media_attachments = MediaAttachmentRepository(self.session)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:

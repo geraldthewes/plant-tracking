@@ -10,7 +10,10 @@ from typing import ClassVar
 
 @dataclass(frozen=False)
 class PlantLogEntry:
-    """PlantLogEntry entity matching existing SQLAlchemy model"""
+    """PlantLogEntry entity matching existing SQLAlchemy model.
+
+    Note: For event_type='note', the text field supports markdown formatting.
+    """
 
     VALID_EVENT_TYPES: ClassVar[set[str]] = {"humidity", "water", "fertilizer", "note"}
 
