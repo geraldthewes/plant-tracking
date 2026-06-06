@@ -281,18 +281,31 @@ The command accepts either a plant ID (generates the label first) or a direct pa
 
 ### `log note`
 
-Log a markdown-formatted note for a plant. The note text supports markdown syntax (headings, bold, lists, etc.).
+Log a markdown-formatted note for a plant. The note text supports markdown syntax (headings, bold, lists, etc.). Provide the note via `--text`, `--file`, or by piping to stdin.
 
 ```bash
-python -m commands.plant_tracking_cli log note <plant_id> --text "# Sprouting!\n\nFirst leaves appeared today."
+# Inline text
+python -m commands.plant_tracking_cli log note YEHA-2026-001 --text "# Sprouting!\n\nFirst leaves appeared today."
+
+# From a file
+python -m commands.plant_tracking_cli log note YEHA-2026-001 --file note.md
+
+# From stdin (pipe)
+echo "# Harvest ready" | python -m commands.plant_tracking_cli log note YEHA-2026-001
+
+# From stdin (file descriptor)
+python -m commands.plant_tracking_cli log note YEHA-2026-001 --file -
 ```
 
 **Options:**
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--text`, `-t` | Yes | Note text (markdown supported) |
+| `--text`, `-t` | No | Note text (markdown supported) |
+| `--file`, `-f` | No | Read note from file (use `-` for stdin) |
 | `--date`, `-d` | No | Date override (YYYY-MM-DD; defaults to today) |
+
+If none of `--text`, `--file`, or stdin is provided on a terminal, the command will error. Text resolution priority: `--text` > `--file` > stdin.
 
 ### `log list`
 

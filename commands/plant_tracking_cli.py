@@ -194,7 +194,10 @@ def main():
         description="Create a new markdown-formatted note attached to a plant",
     )
     log_note_parser.add_argument("plant_id", help="Plant ID")
-    log_note_parser.add_argument("--text", "-t", required=True, help="Note text")
+    log_note_parser.add_argument("--text", "-t", help="Note text (markdown supported)")
+    log_note_parser.add_argument(
+        "--file", "-f", help="Read note text from a file (or '-' for stdin)"
+    )
     log_note_parser.add_argument(
         "--date", "-d", help="Date (YYYY-MM-DD, default: today)"
     )
@@ -2040,6 +2043,32 @@ def log_note(args, db=None):
     if db is None:
         db = _get_db()
 
+    # Resolve note text: --text > --file > stdin
+    note_text = None
+    if args.text is not None:
+        note_text = args.text
+    elif args.file is not None:
+        if args.file == "-":
+            note_text = sys.stdin.read()
+        else:
+            try:
+                with open(args.file) as f:
+                    note_text = f.read()
+            except FileNotFoundError:
+                print(f"✗ Error: File not found: {args.file}")
+                return
+    else:
+        # Check if stdin has data (not a terminal)
+        if not sys.stdin.isatty():
+            note_text = sys.stdin.read()
+        else:
+            print("Error: No note text provided. Use --text, --file, or pipe to stdin.")
+            return
+
+    if not note_text or not note_text.strip():
+        print("Error: Note text is empty")
+        return
+
     # Validate plant exists
     plant_exists = False
     if db and SERVICE_AVAILABLE:
@@ -2068,7 +2097,7 @@ def log_note(args, db=None):
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
         return
 
-    entry_data = {"plant_id": args.plant_id, "event_type": "note", "text": args.text}
+    entry_data = {"plant_id": args.plant_id, "event_type": "note", "text": note_text}
 
     if args.date:
         entry_data["date"] = args.date
