@@ -16,6 +16,7 @@ Required Python packages (installed automatically):
 - `sqlalchemy>=2.0` - Database ORM
 - `psycopg2-binary>=2.9` - PostgreSQL adapter
 - `thefuzz[speedup]>=0.22` - Fuzzy genus matching
+- `boto3` - S3 storage for media attachments
 
 ## Setup
 
@@ -44,6 +45,11 @@ A `database/` directory is created automatically in the project root. All plant 
 |----------|----------|---------|-------------|
 | `DATABASE_URL` | Yes | — | PostgreSQL connection string |
 | `PLANT_DATABASE_DIR` | No | `database` | Markdown backup directory |
+| `S3_BUCKET` | No | `plant-tracking-media` | S3 bucket for media files |
+| `S3_REGION` | No | `us-east-1` | AWS region |
+| `S3_ACCESS_KEY_ID` | Conditional | — | S3 access key (omit if using IAM/EC2 role) |
+| `S3_SECRET_ACCESS_KEY` | Conditional | — | S3 secret key (omit if using IAM/EC2 role) |
+| `S3_ENDPOINT_URL` | No | — | Custom S3 endpoint (e.g., LocalStack) |
 
 ## Seed Packets
 
@@ -64,6 +70,25 @@ A **genus record** stores a unique (variety name, Latin name) pair. By storing t
 When creating a plant record, the system looks for a matching genus by variety name and Latin name. If found, it links the plant to that genus via `genus_id`. If no exact match exists, you can create a new genus, select from existing entries, or use fuzzy search.
 
 **"Unknown" case**: If you skip genus lookup, the Latin name is stored directly on the plant record and `genus_id` is set to `"unknown"`.
+
+## Media Attachments
+
+Attach **images**, **videos**, and **audio recordings** to plants. Media files are stored in an S3-compatible bucket (AWS S3, LocalStack, MinIO, etc.), with metadata (timestamp, label, tags) stored in PostgreSQL.
+
+**Relationship**: One plant → many media attachments.
+
+**Supported file types:**
+| Media Type | Extensions |
+|------------|-----------|
+| Image | `.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.webp` |
+| Video | `.mp4`, `.avi`, `.mov`, `.wmv`, `.flv`, `.webm` |
+| Audio | `.mp3`, `.wav`, `.ogg`, `.flv`, `.aac`, `.m4a` |
+
+Each media attachment has:
+- **Timestamp**: Automatically set to creation time
+- **Label**: Optional text description
+- **Tags**: Optional comma-separated tags for organization
+- **S3 Key**: Unique path in the S3 bucket (auto-generated)
 
 ## Commands
 
@@ -254,6 +279,96 @@ The generated label is saved to `database/<plant_id>_label.png` and contains:
 
 The command accepts either a plant ID (generates the label first) or a direct path to an existing label PNG file.
 
+### `log note`
+
+Log a markdown-formatted note for a plant. The note text supports markdown syntax (headings, bold, lists, etc.).
+
+```bash
+python -m commands.plant_tracking_cli log note <plant_id> --text "# Sprouting!\n\nFirst leaves appeared today."
+```
+
+**Options:**
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--text`, `-t` | Yes | Note text (markdown supported) |
+| `--date`, `-d` | No | Date override (YYYY-MM-DD; defaults to today) |
+
+### `log list`
+
+List all log entries (humidity, water, fertilizer, notes) for a plant.
+
+```bash
+python -m commands.plant_tracking_cli log list <plant_id>
+python -m commands.plant_tracking_cli log list <plant_id> --type note
+```
+
+### `media add-image <plant_id> <path>`
+
+Attach an image file to a plant. The file is uploaded to S3 and metadata is stored in the database.
+
+```bash
+python -m commands.plant_tracking_cli media add-image YEHA-2026-001 /path/to/photo.jpg
+python -m commands.plant_tracking_cli media add-image YEHA-2026-001 /path/to/photo.jpg --label "First flower" --tags "flowering, spring"
+```
+
+### `media add-video <plant_id> <path>`
+
+Attach a video file to a plant.
+
+```bash
+python -m commands.plant_tracking_cli media add-video YEHA-2026-001 /path/to/growth.mp4 --label "Time-lapse"
+```
+
+### `media add-audio <plant_id> <path>`
+
+Attach an audio file to a plant.
+
+```bash
+python -m commands.plant_tracking_cli media add-audio YEHA-2026-001 /path/to/note.mp3
+```
+
+### `media list <plant_id>`
+
+List all media attachments for a plant.
+
+```bash
+python -m commands.plant_tracking_cli media list YEHA-2026-001
+```
+
+Output:
+```
+Media attachments for plant YEHA-2026-001:
+ID    Type     Label                 Tags                      Timestamp
+------------------------------------------------------------------------------------------
+1     image    First flower          flowering, spring         2026-05-01T14:30:00Z
+2     video    Time-lapse                                           2026-05-15T09:00:00Z
+```
+
+### `media show <media_id>`
+
+Show detailed information about a specific media attachment.
+
+```bash
+python -m commands.plant_tracking_cli media show 1
+```
+
+### `media url <media_id>`
+
+Generate and display a presigned URL for downloading the media file directly from S3. URLs expire after 1 hour by default.
+
+```bash
+python -m commands.plant_tracking_cli media url 1
+```
+
+### `media delete <media_id>`
+
+Delete a media attachment, removing both the S3 object and database record.
+
+```bash
+python -m commands.plant_tracking_cli media delete 1
+```
+
 ## Plant ID Format
 
 IDs follow the pattern `VARIETY-YYYY-SEQ`:
@@ -277,6 +392,11 @@ All data is stored in PostgreSQL tables managed by the `plant_service` package:
 | `seed_packets` | Reusable variety information |
 | `genera` | Unique (variety name, Latin name) pairs |
 | `plant_log_entries` | Care activity logs (humidity, water, fertilizer, notes) |
+| `media_attachments` | Media file metadata (images, videos, audio) |
+
+### Media Files: S3
+
+All media attachments (images, videos, audio) are stored in an S3-compatible bucket. The S3 bucket is configured via `.env` variables. LocalStack or MinIO can be used for local development by setting `S3_ENDPOINT_URL`.
 
 ### Markdown Backup
 
