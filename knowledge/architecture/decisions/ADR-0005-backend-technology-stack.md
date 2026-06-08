@@ -28,6 +28,8 @@ We chose to use:
 - **Telegram Integration**: Python library (python-telegram-bot) for interacting with Telegram Bot API
 - **Data Storage**: PostgreSQL with SQLAlchemy ORM (migrated from markdown per ADR-0006)
 - **API Documentation**: OpenAPI/Swagger via FastAPI automatic docs
+- **OpenAPI Export**: Automated export script (`backend/fastapi/scripts/export_openapi.py`) generates `openapi.json` without running the server
+- **API Client Code Generation**: Orval — generates TypeScript API stubs from the exported OpenAPI spec, consumed by the frontend
 
 ### Alternatives Considered
 

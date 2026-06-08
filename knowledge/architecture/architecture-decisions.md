@@ -85,6 +85,7 @@
 - AI Integration: Hermes agent accessed via Telegram Bot API — Provides sophisticated AI capabilities without custom UI
 - Device Integration: Python libraries for Bluetooth communication with Phomemo M120 — Reliable connectivity for label printing in garden environments
 - QR Handling: Client-side QR code generation and scanning libraries — Eliminates need for separate QR service container
+- API Code Generation: Orval — Auto-generates TypeScript API client stubs from FastAPI OpenAPI spec, outputting to `frontend/src/api/`
 
 ## Sprint 7: ADRs + Cross-Cutting Concerns
 - Technology Stack: Hybrid (Next.js/React frontend, Python/FastAPI backend) — Leverages existing expertise and enables rapid web prototyping
@@ -95,6 +96,7 @@
 - AI Integration: Hermes agent accessed via Telegram Bot API — Provides sophisticated AI capabilities without custom UI
 - Device Integration: Python libraries for Bluetooth communication with Phomemo M120 — Reliable connectivity for label printing in garden environments
 - QR Handling: Client-side QR code generation and scanning libraries — Eliminates need for separate QR service container
+- API Code Generation: Orval — Auto-generates TypeScript API client stubs from FastAPI OpenAPI spec, outputting to `frontend/src/api/`
 
 ## Sprint 8: Final ADRs and Architecture Review
 - Data Persistence Strategy: Phased approach from markdown to PostgreSQL — Human-readable MVP with clear migration path to robust storage

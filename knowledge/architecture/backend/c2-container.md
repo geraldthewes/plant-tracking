@@ -61,6 +61,17 @@ This diagram shows the backend architecture of the Plant Tracking System as a si
 - `GET /` — Root endpoint
 - `GET /health` — Health check
 - `GET /api/plants/care-needed` — Plants needing care attention (returns mock data; threshold logic pending)
+- `POST /api/media/media-attachments/` — Create media attachment (multipart file upload)
+- `GET /api/media/media-attachments/{media_id}` — Get media attachment by ID
+- `PUT /api/media/media-attachments/{media_id}` — Update media attachment metadata
+- `DELETE /api/media/media-attachments/{media_id}` — Delete media attachment
+- `GET /api/media/media-attachments/plant/{plant_id}` — Get all media attachments for a plant
+- `GET /api/media/media-attachments/{media_id}/url` — Get presigned S3 URL for media
+
+**OpenAPI Export:**
+
+- `scripts/export_openapi.py` — Exports OpenAPI 3.1 spec to `openapi.json` without running the server
+- Exported spec consumed by Orval to generate TypeScript API client stubs for the frontend
 
 **CLI Commands:**
 

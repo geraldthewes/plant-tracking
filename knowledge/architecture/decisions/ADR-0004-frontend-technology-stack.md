@@ -25,11 +25,16 @@ We chose to use:
   - Cross-platform iOS and Android support
   - Access to native device capabilities (camera, Bluetooth)
   - Same business logic sharing potential with web interface
-- **Shared Components**: 
+- **Shared Components**:
   - QR code scanning library (react-qr-reader for web, react-native-camera for mobile)
   - State management with React Context or Zustand
   - Form handling with React Hook Form
   - Date handling with date-fns
+  - API Client: Orval-generated TypeScript stubs (`frontend/src/api/`) from FastAPI OpenAPI spec
+- **API Code Generation**: Orval (v8.x) with React Query preset and fetch client
+  - `npm run generate:api` exports OpenAPI spec and regenerates TypeScript stubs
+  - Generated types for all request/response models across health, plants, and media endpoints
+  - Fetch-based HTTP client functions for framework-agnostic reuse
 
 ### Alternatives Considered
 

@@ -31,6 +31,7 @@ We chose to use a hybrid technology stack consisting of:
 - **AI Integration**: Hermes agent accessed via Telegram Bot API
 - **Device Integration**: Python libraries for Bluetooth communication with Phomemo M120
 - **QR Handling**: Client-side QR code generation and scanning libraries
+- **API Code Generation**: Orval — auto-generates TypeScript API client stubs from FastAPI OpenAPI spec
 
 ### Alternatives Considered
 

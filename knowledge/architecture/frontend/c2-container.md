@@ -24,10 +24,11 @@ This C2 container diagram focuses on the frontend components of the Plant Tracki
 **Failure/Graceful Degradation**: If Hermes agent unavailable, queues requests locally with exponential backoff retry (max 5 min) and notifies user of degraded state; core QR scanning and photo capture remain functional (PRD: NFR - Reliability, Hermes Degradation edge case).
 
 ### Web Interface
-**Primary Responsibility**: Delivers responsive web application (Next.js/React) for plant tracking via mobile/desktop browsers, mirroring core Mobile App Frontend functionality (PRD: FR41-FR45)  
-**Input Data/Triggers**: Browser-based user interactions, QR scan via camera API, photo capture via camera API, Hermes agent responses.  
-**Output/Downstream Effects**: Communicates with Hermes Agent for analysis, manages local state for offline resilience, updates UI based on data and insights.  
+**Primary Responsibility**: Delivers responsive web application (Next.js/React) for plant tracking via mobile/desktop browsers, mirroring core Mobile App Frontend functionality (PRD: FR41-FR45)
+**Input Data/Triggers**: Browser-based user interactions, QR scan via camera API, photo capture via camera API, Hermes agent responses.
+**Output/Downstream Effects**: Communicates with Hermes Agent for analysis, manages local state for offline resilience, updates UI based on data and insights.
 **Failure/Graceful Degradation**: Falls back to cached data and local queue when Hermes agent unavailable; displays stale data warning after 24h; retry attempts with exponential backoff capped at 5 minutes (PRD: NFR - Usability, Hermes Degradation edge case).
+**API Client**: Orval-generated TypeScript stubs in `frontend/src/api/` — auto-generated from FastAPI OpenAPI spec via `npm run generate:api`. Includes typed fetch-based client functions and React Query hooks for all backend endpoints.
 
 ### QR Scanner
 **Primary Responsibility**: Handles QR code scanning using device camera APIs, emitting decoded plant IDs to requesting containers (PRD: FR2, FR5, FR12, FR43)  

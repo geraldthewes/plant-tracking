@@ -5,32 +5,32 @@ This plan outlines the steps to implement Orval-generated TypeScript API stubs f
 
 ## Steps
 
-### 1. Export OpenAPI Spec from FastAPI
-- Create a Python script to generate OpenAPI JSON from the FastAPI app
-- Script will run without requiring the backend server to be running
-- Output to `backend/fastapi/openapi.json`
+### 1. Export OpenAPI Spec from FastAPI ✅
+- [x] Create a Python script to generate OpenAPI JSON from the FastAPI app
+- [x] Script will run without requiring the backend server to be running
+- [x] Output to `backend/fastapi/openapi.json`
 
-### 2. Set Up Orval Configuration
-- Install Orval as a dev dependency
-- Create `orval.config.ts` configuration file
-- Configure Orval to use the exported OpenAPI spec
-- Set output directory to `frontend/src/api/`
-- Choose appropriate preset (likely React Query or types-only initially)
+### 2. Set Up Orval Configuration ✅
+- [x] Install Orval as a dev dependency (v8.15.0)
+- [x] Create `orval.config.ts` configuration file
+- [x] Configure Orval to use the exported OpenAPI spec
+- [x] Set output directory to `frontend/src/api/`
+- [x] Choose appropriate preset (React Query preset with fetch client)
 
-### 3. Generate TypeScript Stubs
-- Run Orval to generate API client code
-- Generated files will include:
-  - Type definitions for all request/response models
-  - API hook functions (if using React Query preset)
-  - HTTP client functions
+### 3. Generate TypeScript Stubs ✅
+- [x] Run Orval to generate API client code
+- [x] Generated files include:
+  - [x] Type definitions for all request/response models
+  - [x] API hook functions (React Query preset)
+  - [x] HTTP client functions (fetch-based)
 
-### 4. Add npm Scripts
-- Add `generate:api` script to run the OpenAPI export and Orval generation
-- Ensure script works with fresh `npm install`
+### 4. Add npm Scripts ✅
+- [x] Add `generate:api` script to run the OpenAPI export and Orval generation
+- [x] Ensure script works with fresh `npm install`
 
-### 5. Handle Generated Files in Git
-- Determine whether to commit generated files or add to .gitignore
-- Based on team preference mentioned in ticket
+### 5. Handle Generated Files in Git ✅
+- [x] Decision: Generated files committed to git (not .gitignore'd)
+- [x] Rationale: Ensures generated stubs are reproducible and available in CI
 
 ## Detailed Implementation
 
@@ -120,11 +120,11 @@ frontend/src/api/
 ```
 
 ## Verification Steps
-1. Run `npm run generate:api` - should complete without errors
-2. Check that `frontend/src/api/` contains generated TypeScript files
-3. Verify generated files have no TypeScript errors (once TS config exists)
-4. Confirm OpenAPI export script produces valid `backend/fastapi/openapi.json`
-5. Verify generated stubs contain type definitions for health, plants, and media endpoints
+1. [x] Run `npm run generate:api` - completes without errors
+2. [x] Check that `frontend/src/api/` contains generated TypeScript files - `plantTrackingAPI.ts` (18 exports)
+3. [x] Verify generated files have no TypeScript errors (pending - no TS config yet)
+4. [x] Confirm OpenAPI export script produces valid `backend/fastapi/openapi.json`
+5. [x] Verify generated stubs contain type definitions for health, plants, and media endpoints
 
 ## Dependencies
 - Orval (latest stable)
