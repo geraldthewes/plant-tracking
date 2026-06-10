@@ -265,7 +265,7 @@ Expected output with current data (~7 unique packets):
 
 6. **Update Database Directory Customization section** (no changes — `PLANT_DATABASE_DIR` still applies)
 
-### 7b. `docs/specs/database.md` — Database Specification
+### 7b. `knowledge/specs/database.md` — Database Specification
 
 **Updates required:**
 
@@ -305,7 +305,7 @@ Expected output with current data (~7 unique packets):
 8. **Update Backup and Recovery**:
    - Note that `database/seed_packets/` is part of the backup scope
 
-### 7c. `docs/specs/database.md` — New Seed Packet Example
+### 7c. `knowledge/specs/database.md` — New Seed Packet Example
 
 Add a complete seed packet file example alongside the existing plant example:
 
@@ -335,7 +335,7 @@ updated_at: '2026-04-25T00:00:00Z'
 **Verification**:
 - Docs build/render without errors (no broken links, valid markdown)
 - `docs/user.md` covers all 3 new CLI commands with examples
-- `docs/specs/database.md` contains both entity schemas and their relationship
+- `knowledge/specs/database.md` contains both entity schemas and their relationship
 - Example files match actual output format from code
 
 ---
@@ -351,7 +351,7 @@ updated_at: '2026-04-25T00:00:00Z'
 | `tests/test_seed_packet.py` | **New** | Seed packet model tests |
 | `tests/test_plant_tracking.py` | **Modify** | Plant reference tests, CLI flow tests |
 | `docs/user.md` | **Modify** | Document seed packets, 3 new CLI commands, updated `create-plant` flow |
-| `docs/specs/database.md` | **Modify** | Add seed packet schema, update plant schema, add relationship docs |
+| `knowledge/specs/database.md` | **Modify** | Add seed packet schema, update plant schema, add relationship docs |
 
 ## New CLI Commands Summary
 
@@ -381,4 +381,4 @@ updated_at: '2026-04-25T00:00:00Z'
 - [x] All automated tests pass
 - [x] No data loss — migration only adds fields, never removes
 - [x] `docs/user.md` updated with seed packet concepts, new CLI commands, revised `create-plant` flow
-- [x] `docs/specs/database.md` updated with seed packet schema, plant `seed_packet_id` field, relationship docs, examples
+- [x] `knowledge/specs/database.md` updated with seed packet schema, plant `seed_packet_id` field, relationship docs, examples

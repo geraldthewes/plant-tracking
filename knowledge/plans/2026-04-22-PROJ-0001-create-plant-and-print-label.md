@@ -7,7 +7,7 @@ This plan implements the core plant tracking functionality for the plant trackin
 2. `create-label`: Generates a 40x30mm PNG label with QR code encoding the plant ID
 3. `print-label`: Sends the label PNG to the Phomemo M120 Bluetooth printer
 
-Plant records are stored as markdown files in a `database/` directory with structured frontmatter containing all plant attributes, as specified in `docs/specs/database.md`.
+Plant records are stored as markdown files in a `database/` directory with structured frontmatter containing all plant attributes, as specified in `knowledge/specs/database.md`.
 
 ## Current State Analysis
 
@@ -155,7 +155,7 @@ build-backend = "hatchling.build"
 
 #### 2. Plant Data Model
 **File**: `plant_model.py`
-**Changes**: Define plant data structure and validation following the specification in `docs/specs/database.md`
+**Changes**: Define plant data structure and validation following the specification in `knowledge/specs/database.md`
 
 ```python
 """
@@ -1080,7 +1080,7 @@ plant-tracking = "plant_tracking_cli:main"
 ## Migration Notes
 
 - Database/ directory will be created automatically on first use
-- Plant records are stored as individual markdown files following the format in `docs/specs/database.md`
+- Plant records are stored as individual markdown files following the format in `knowledge/specs/database.md`
 - Future migration to Postgres would involve:
   1. Parsing existing markdown files
   2. Converting to database records

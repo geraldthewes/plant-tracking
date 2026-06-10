@@ -36,7 +36,7 @@ The seed packet database implementation provides the exact pattern to mimic for 
 - Files named `SPKT-NNN.md` with auto-incremented IDs
 - Example format seen in `database/seed_packets/SPKT-001.md`
 
-**Schema** (from `commands/seed_packet_model.py` and `docs/specs/database.md`):
+**Schema** (from `commands/seed_packet_model.py` and `knowledge/specs/database.md`):
 - Required fields: `variety_name`, `latin_name` (matching genus DB requirements)
 - Auto-generated fields: `id` (SPKT-NNN format), `created_at`, `updated_at`
 - Optional fields: `brand`, `days_to_maturity`, `germination_time`, etc.

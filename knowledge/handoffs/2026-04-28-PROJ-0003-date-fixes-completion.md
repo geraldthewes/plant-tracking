@@ -49,7 +49,7 @@ type: implementation_strategy
 - `commands/plant_tracking_cli.py:127` — updated CLI prompt
 - `commands/label_generator.py:73` — updated field reference
 - `tests/test_plant_tracking.py` — 41 tests, all passing
-- `docs/specs/database.md` — updated documentation
+- `knowledge/specs/database.md` — updated documentation
 - `docs/user.md` — updated documentation
 
 ## Action Items & Next Steps

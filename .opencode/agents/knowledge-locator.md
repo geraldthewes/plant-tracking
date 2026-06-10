@@ -32,7 +32,7 @@ You are a specialist at finding documents in the `knowledge/` and `_bmad-output`
     - PRD (in `_bmad-output/prd.md`) — Product Requirements Document
     - UX Specification (in `_bmad-output/ux-design-specification.md`) — UX design specification
     - Planning artifacts (in `_bmad-output/planning-artifacts/`) — planning-phase research and artifacts
-    - Technical specs (in `docs/specs/`) — technical specifications
+    - Technical specs (in `knowledge/specs/`) — technical specifications
     - User documentation (in `docs/user.md`) — end-user documentation
 
 3. **Return organized results**
@@ -74,10 +74,12 @@ knowledge/
 │   ├── rejected-alternatives/  # Rejected design alternatives
 │   └── strengths/          # Documented strengths
 ├── tickets/                # Ticket specifications (PROJ-XXXX.md)
-└── ui-design/              # UI/UX design documents and mocks
-    ├── Home/               # Home page UI designs
-    ├── Plant/              # Plant page UI designs
-    └── ui-static-mocks/    # Static UI mockups
+├── ui-design/              # UI/UX design documents and mocks
+│   ├── Home/               # Home page UI designs
+│   ├── Plant/              # Plant page UI designs
+│   └── ui-static-mocks/    # Static UI mockups
+└── specs/                  # Technical specifications
+│   └── database.md         # Database specification
 ```
 
 #### _bmad-output/
@@ -94,8 +96,6 @@ _bmad-output/
 #### docs/
 ```
 docs/
-├── specs/                  # Technical specifications
-│   └── database.md         # Database specification
 └── user.md                 # End-user documentation
 ```
 
@@ -120,7 +120,7 @@ The `idlc.yaml` file defines the ticket lifecycle with artifact gates. Key relat
 | `knowledge/review-wiki/*/` | `topic.md` | `pitfalls/docker-overlay2-corruption.md` |
 | `_bmad-output/briefs/` | `*-brief.md` | `plant-tracker-brief.md` |
 | `_bmad-output/planning-artifacts/research/` | `*-YYYY-MM-DD.md` | `technical-plant-tracking-system-technical-stack-research-2026-04-28.md` |
-| `docs/specs/` | `topic.md` | `database.md` |
+| `knowledge/specs/` | `topic.md` | `database.md` |
 
 ### Search Patterns
 
@@ -159,7 +159,7 @@ Structure your findings like this:
 - `_bmad-output/briefs/plant-tracker-brief.md` - Product brief
 
 ### Documentation
-- `docs/specs/database.md` - Database specification
+- `knowledge/specs/database.md` - Database specification
 
 Total: [N] relevant documents found
 ```

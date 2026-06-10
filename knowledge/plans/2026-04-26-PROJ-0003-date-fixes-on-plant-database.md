@@ -22,7 +22,7 @@ Rename `planned_planting_date` to `planting_date` across schema, CLI, model, lab
 2. **One ID generation bug** at `plant_model.py:88` — single line fix: extract year from `self.data['planting_date']` instead of `datetime.now().year`
 3. **15 database records** need migration — all contain `planned_planting_date` in YAML frontmatter (e.g., YEHA-2026-001 has `planned_planting_date: '2024-10-15'` but ID says 2026)
 4. **15 test references** all in `tests/test_plant_tracking.py` — both helper methods and individual test data dicts
-5. **Two doc files** need updates: `docs/specs/database.md` and `docs/user.md`
+5. **Two doc files** need updates: `knowledge/specs/database.md` and `docs/user.md`
 
 ## What We're NOT Doing
 
@@ -335,7 +335,7 @@ if __name__ == "__main__":
 
 **Goal**: Update documentation to reflect `planting_date` and corrected ID year behavior.
 
-### Step 6.1: `docs/specs/database.md`
+### Step 6.1: `knowledge/specs/database.md`
 
 | Line | Before | After |
 |------|--------|-------|

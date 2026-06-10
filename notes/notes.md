@@ -6,7 +6,7 @@ Phase	Status	Details
 4: Create-Plant Flow	Done	Three-phase prompt with packet lookup + 4 tests
 5: Migration Script	Done	scripts/migrate_seed_packets.py with --dry-run; 4 packets created, 15 plants updated
 6: Integration Tests	Done	TestEndToEnd class with 4 e2e tests
-7: Documentation	Done	Updated docs/user.md (seed packet concepts, 3 new commands, revised flow) and docs/specs/database.md (seed packet schema, relationship docs, examples)
+7: Documentation	Done	Updated docs/user.md (seed packet concepts, 3 new commands, revised flow) and knowledge/specs/database.md (seed packet schema, relationship docs, examples)
 
 
 

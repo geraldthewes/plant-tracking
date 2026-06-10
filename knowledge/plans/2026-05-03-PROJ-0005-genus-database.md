@@ -1103,8 +1103,8 @@ Update user-facing and technical documentation to reflect the new genus database
 **File**: `docs/user.md`
 **Changes**: Add genus database concepts and update command documentation
 
-#### 2. docs/specs/database.md
-**File**: `docs/specs/database.md`
+#### 2. knowledge/specs/database.md
+**File**: `knowledge/specs/database.md`
 **Changes**: Add genus storage schema and update plant schema
 
 ### Success Criteria:
