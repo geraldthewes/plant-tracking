@@ -1,6 +1,7 @@
 """SQLAlchemy implementation of Unit of Work"""
 from __future__ import annotations
 
+import types
 from contextlib import AbstractContextManager
 from typing import Optional
 
@@ -75,7 +76,12 @@ class SqlAlchemyUnitOfWork(AbstractContextManager):
         self._media_attachments = MediaAttachmentRepository(self.session)
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool | None:
         """Exit transaction context"""
         if exc_type is not None:
             self.rollback()

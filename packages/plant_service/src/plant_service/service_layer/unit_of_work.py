@@ -1,6 +1,7 @@
 """Unit of Work interface and SQLAlchemy implementation"""
 from __future__ import annotations
 
+import types
 from typing import Protocol
 
 from .plant_service import PlantService
@@ -21,7 +22,12 @@ class UnitOfWork(Protocol):
         """Enter transaction context"""
         ...
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool | None:
         """Exit transaction context - commit if no exception, rollback otherwise"""
         ...
 

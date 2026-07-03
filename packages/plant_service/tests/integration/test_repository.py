@@ -132,8 +132,16 @@ class TestSeedPacketRepository:
 class TestLogRepository:
     def test_create_log_entry(self, uow):
         with uow:
+            plant = uow.plants.create_plant({
+                "variety_name": "Test Plant",
+                "latin_name": "Test Latin",
+                "planting_date": "2026-01-01",
+            })
+            plant_id = plant.id
+
+        with uow:
             entry = uow.logs.create_log_entry({
-                "plant_id": "YEHA-2026-001",
+                "plant_id": plant_id,
                 "event_type": "humidity",
                 "level": 5,
             })
@@ -142,30 +150,46 @@ class TestLogRepository:
 
     def test_list_entries(self, uow):
         with uow:
+            plant = uow.plants.create_plant({
+                "variety_name": "Test Plant",
+                "latin_name": "Test Latin",
+                "planting_date": "2026-01-01",
+            })
+            plant_id = plant.id
+
+        with uow:
             uow.logs.create_log_entry({
-                "plant_id": "YEHA-2026-001",
+                "plant_id": plant_id,
                 "event_type": "humidity",
                 "level": 5,
             })
             uow.logs.create_log_entry({
-                "plant_id": "YEHA-2026-001",
+                "plant_id": plant_id,
                 "event_type": "water",
                 "amount_ml": 250,
             })
 
         with uow:
-            entries = list(uow.logs.list_entries(plant_id="YEHA-2026-001"))
+            entries = list(uow.logs.list_entries(plant_id=plant_id))
         assert len(entries) == 2
 
     def test_list_entries_filter_by_type(self, uow):
         with uow:
+            plant = uow.plants.create_plant({
+                "variety_name": "Test Plant",
+                "latin_name": "Test Latin",
+                "planting_date": "2026-01-01",
+            })
+            plant_id = plant.id
+
+        with uow:
             uow.logs.create_log_entry({
-                "plant_id": "YEHA-2026-001",
+                "plant_id": plant_id,
                 "event_type": "humidity",
                 "level": 5,
             })
             uow.logs.create_log_entry({
-                "plant_id": "YEHA-2026-001",
+                "plant_id": plant_id,
                 "event_type": "water",
                 "amount_ml": 250,
             })

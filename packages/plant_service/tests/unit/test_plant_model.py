@@ -17,7 +17,7 @@ class TestPlantMakeAbbrev:
 
     def test_numeric_name_fallback(self):
         result = Plant.make_abbrev("123 456")
-        assert result == "123 " or result == "123"  # edge case
+        assert result == "123 "
 
 
 class TestPlantGenerateId:
