@@ -5,11 +5,14 @@ from plant_service.domain import Genus
 
 
 class TestGenusGenerateId:
-    def test_basic_format(self):
+    """Tests for the Genus.generate_id method."""
+    def test_basic_format(self) -> None:
+        """Test that generate_id produces the correct format with sequence padding."""
         genus = Genus(id="", variety_name="Pepper", latin_name="Capsicum")
         assert genus.generate_id(seq=1) == "GENUS-001"
 
-    def test_sequence_padding(self):
+    def test_sequence_padding(self) -> None:
+        """Test that the sequence is zero-padded to three digits."""
         genus = Genus(id="", variety_name="Tomato", latin_name="Solanum")
         assert genus.generate_id(seq=99) == "GENUS-099"
 
