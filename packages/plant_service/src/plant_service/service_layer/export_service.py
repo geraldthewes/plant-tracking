@@ -5,6 +5,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator
 
+import yaml
+
 from plant_service.domain.exceptions import ExportError
 from plant_service.adapters.repository.uow import SqlAlchemyUnitOfWork
 
@@ -152,10 +154,6 @@ class ExportService:
     @staticmethod
     def _write_markdown_file(filepath: Path, data: dict) -> None:
         """Write a single record as a Markdown file with YAML frontmatter."""
-        lines = ["---"]
-        for key, value in data.items():
-            if value is not None:
-                lines.append(f"{key}: {value}")
-        lines.append("---")
-        lines.append("")
-        filepath.write_text("\n".join(lines))
+        cleaned = {k: v for k, v in data.items() if v is not None}
+        yaml_content = yaml.dump(cleaned, default_flow_style=False, sort_keys=False)
+        filepath.write_text("---\n" + yaml_content + "---\n")
