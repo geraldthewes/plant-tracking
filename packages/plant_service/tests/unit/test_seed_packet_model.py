@@ -39,3 +39,7 @@ class TestSeedPacketCreateFromDict:
     def test_missing_required_field(self):
         with pytest.raises(ValueError, match="Missing required field"):
             SeedPacket.create_from_dict({"variety_name": "Tomato"})
+
+    def test_missing_variety_name(self):
+        with pytest.raises(ValueError, match="Missing required field"):
+            SeedPacket.create_from_dict({"latin_name": "Solanum lycopersicum"})
