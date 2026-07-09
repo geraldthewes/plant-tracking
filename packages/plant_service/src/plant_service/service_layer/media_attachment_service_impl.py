@@ -6,9 +6,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from plant_service.adapters.repository.media_attachment_repository import (
-    MediaAttachmentRepository,
-)
 from plant_service.domain import MediaAttachment
 from plant_service.service_layer.media_attachment_service import MediaAttachmentService
 from plant_service.service_layer.s3_service import S3Service
@@ -18,7 +15,7 @@ class MediaAttachmentServiceImpl(MediaAttachmentService):
     """Concrete implementation of media attachment service."""
 
     def __init__(
-        self, repository: MediaAttachmentRepository, s3_service: S3Service
+        self, repository: MediaAttachmentService, s3_service: S3Service
     ):
         self.repository = repository
         self.s3_service = s3_service
@@ -48,7 +45,9 @@ class MediaAttachmentServiceImpl(MediaAttachmentService):
         """Create a new media attachment with S3 upload."""
         file_path = media_data.pop("file_path")
         filename = media_data.pop("filename")
-        media_type = media_data.get("media_type")
+        media_type = media_data.pop("media_type", None)
+        if media_type is None:
+            raise ValueError("media_type is required")
 
         if not self._is_valid_file_type(media_type, filename):
             raise ValueError(f"Invalid file type for {media_type}: {filename}")

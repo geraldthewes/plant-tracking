@@ -15,7 +15,7 @@ class BaseRepository(Generic[T]):
         self.session = session
         self.model_type = model_type
 
-    def get(self, id: str) -> Optional[T]:
+    def get(self, id: str | int) -> Optional[T]:
         """Get entity by ID"""
         return self.session.get(self.model_type, id)
 
@@ -37,7 +37,7 @@ class BaseRepository(Generic[T]):
         self.session.flush()
         return entity
 
-    def delete(self, id: str) -> bool:
+    def delete(self, id: str | int) -> bool:
         """Delete entity by ID. Returns True if deleted, False if not found."""
         entity = self.get(id)
         if entity:
@@ -48,6 +48,6 @@ class BaseRepository(Generic[T]):
 
     def get_all_ids(self) -> list[str]:
         """Get all entity IDs for sequence generation"""
-        stmt = select(self.model_type.id)
+        stmt = select(getattr(self.model_type, "id"))
         results = self.session.execute(stmt).scalars().all()
         return [str(r) for r in results]

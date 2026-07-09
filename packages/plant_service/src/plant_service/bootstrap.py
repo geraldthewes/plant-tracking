@@ -41,14 +41,14 @@ def create_export_service(database_url: str | None = None) -> ExportService:
 
 def create_s3_service() -> S3Service:
     """Create an S3 service instance"""
-    return S3Service()
+    return S3Service.from_config()
 
 
 def create_media_attachment_service(
     database_url: str | None = None,
 ) -> MediaAttachmentServiceImpl:
     """Create a media attachment service instance (S3 + DB)."""
-    s3_service = S3Service()
+    s3_service = S3Service.from_config()
 
     def _factory() -> MediaAttachmentServiceImpl:
         uow = create_unit_of_work(database_url)

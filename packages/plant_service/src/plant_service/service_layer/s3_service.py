@@ -4,6 +4,7 @@ S3 service wrapper for media attachment storage
 from __future__ import annotations
 
 import logging
+from typing import Protocol
 
 import boto3
 from botocore.exceptions import ClientError
@@ -11,14 +12,20 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 
+class ReadableBytes(Protocol):
+    """Minimal read-only binary stream protocol for boto3 upload_fileobj."""
+
+    def read(self, size: int = -1) -> bytes: ...
+
+
 class S3Service:
     """Service for handling S3 operations for media attachments."""
 
     def __init__(
         self,
-        endpoint_url: str,
-        access_key_id: str,
-        secret_access_key: str,
+        endpoint_url: str | None,
+        access_key_id: str | None,
+        secret_access_key: str | None,
         region_name: str,
         bucket: str,
     ) -> None:
@@ -31,6 +38,19 @@ class S3Service:
         )
         self.bucket = bucket
 
+    @classmethod
+    def from_config(cls) -> S3Service:
+        """Create an S3 service from environment configuration."""
+        from plant_service import config
+
+        return cls(
+            endpoint_url=config.get_s3_endpoint_url(),
+            access_key_id=config.get_s3_access_key_id(),
+            secret_access_key=config.get_s3_secret_access_key(),
+            region_name=config.get_s3_region(),
+            bucket=config.get_s3_bucket(),
+        )
+
     def upload_file(self, file_path: str, s3_key: str) -> bool:
         """Upload a file to S3."""
         try:
@@ -40,7 +60,7 @@ class S3Service:
             logger.error("Error uploading file to S3: %s", e)
             return False
 
-    def upload_fileobj(self, fileobj, s3_key: str) -> bool:
+    def upload_fileobj(self, fileobj: ReadableBytes, s3_key: str) -> bool:
         """Upload a file-like object to S3."""
         try:
             self.client.upload_fileobj(fileobj, self.bucket, s3_key)
