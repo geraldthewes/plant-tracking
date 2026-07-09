@@ -20,7 +20,10 @@ class BaseRepository(Generic[T]):
         return self.session.get(self.model_type, id)
 
     def list_all(self) -> Iterator[T]:
-        """List all entities (returns iterator for streaming)"""
+        """List all entities (returns iterator for streaming).
+
+        Note: The session must remain open during iteration.
+        """
         stmt = select(self.model_type)
         for obj in self.session.execute(stmt).scalars().yield_per(100):
             yield obj

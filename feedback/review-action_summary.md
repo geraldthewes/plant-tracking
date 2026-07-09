@@ -1,12 +1,12 @@
 # Review Action Summary
 
 Restored:   13
-Processed:  27
-Committed:  1
+Processed:  28
+Committed:  2
 Skipped:    24
 Errors:     2
 Interrupted: no
-Progress: 27 out of 69 findings processed
+Progress: 28 out of 69 findings processed
 
 ## Findings
 
@@ -52,7 +52,7 @@ Progress: 27 out of 69 findings processed
 | [c26a6622-129](./c26a6622-129.md) | packages/plant_service/src/plant_service/adapters/repository/media_attachment_repository.py | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
 | [c60317e7-18](./c60317e7-18.md) | (unparseable) | Rejected (REJECTED) | — | Verdict REJECTED — not actioned |
 | [c67eab30-123](./c67eab30-123.md) | packages/plant_service/src/plant_service/adapters/repository/base.py | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
-| [c67eab30-125](./c67eab30-125.md) | packages/plant_service/src/plant_service/adapters/repository/base.py | Not processed | — | — |
+| [c67eab30-125](./c67eab30-125.md) | packages/plant_service/src/plant_service/adapters/repository/base.py | Fixed | `8e5a54ce` | Fix applied and committed: fix: The update method uses session.add() which will in... [c67eab30-125] |
 | [c67eab30-126](./c67eab30-126.md) | packages/plant_service/src/plant_service/adapters/repository/base.py | Error | — | Quality checks failed after 3 iteration(s): Quality checks failed after 3 iteration(s) for packages/plant_service/src/plant_service/adapters/repository/base.py: ## Style rule violations |
 | [cbea0de4-131](./cbea0de4-131.md) | packages/plant_service/src/plant_service/adapters/repository/plant_repository.py | Fixed | `a0384964` | Fix applied and committed: fix: In create_plant method, direct access to plant_dat... [cbea0de4-131] |
 | [cbea0de4-132](./cbea0de4-132.md) | packages/plant_service/src/plant_service/adapters/repository/plant_repository.py | Not processed | — | — |
