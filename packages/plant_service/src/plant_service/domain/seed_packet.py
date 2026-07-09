@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import ClassVar
 
+SPKT_ID_PATTERN = re.compile(r'^SPKT-(\d{3})$')
+
 
 @dataclass(frozen=False)
 class SeedPacket:
@@ -41,10 +43,9 @@ class SeedPacket:
         Find next sequence number for seed packet ID.
         Takes existing IDs from the repository layer - no DB access here.
         """
-        regex_pattern = re.compile(r"^SPKT-(\d{3})$")
         max_seq = 0
         for packet_id in existing_ids:
-            match = regex_pattern.match(packet_id)
+            match = SPKT_ID_PATTERN.match(packet_id)
             if match:
                 seq = int(match.group(1))
                 max_seq = max(max_seq, seq)
