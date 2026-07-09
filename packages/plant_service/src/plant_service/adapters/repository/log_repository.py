@@ -51,7 +51,7 @@ class LogRepository(BaseRepository[PlantLogEntry], LogService):
             stmt = stmt.where(PlantLogEntry.plant_id == plant_id)
         if event_type:
             stmt = stmt.where(PlantLogEntry.event_type == event_type)
-        stmt = stmt.order_by(PlantLogEntry.timestamp)
+        stmt = stmt.order_by(PlantLogEntry.timestamp.desc())  # Most recent first
 
         for orm_entry in self.session.execute(stmt).scalars().yield_per(100):
             yield orm_entry.to_domain()
