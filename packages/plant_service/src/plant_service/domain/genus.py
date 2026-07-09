@@ -22,7 +22,8 @@ class Genus:
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
-    def generate_id(self, seq: int = 1) -> str:
+    @staticmethod
+    def generate_id(seq: int = 1) -> str:
         """
         Generate genus ID in GENUS-NNN format.
         Note: seq is passed in from the service layer which queries existing records.
