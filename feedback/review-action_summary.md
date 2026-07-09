@@ -1,12 +1,12 @@
 # Review Action Summary
 
-Restored:   7
-Processed:  14
-Committed:  0
-Skipped:    12
+Restored:   13
+Processed:  27
+Committed:  1
+Skipped:    24
 Errors:     2
 Interrupted: no
-Progress: 14 out of 69 findings processed
+Progress: 27 out of 69 findings processed
 
 ## Findings
 
@@ -33,25 +33,25 @@ Progress: 14 out of 69 findings processed
 | [79e7c26c-151](./79e7c26c-151.md) | packages/plant_service/src/plant_service/domain/utils.py | Fixed | `0e2360d1` | Fix applied and committed: fix: The unit string may contain multiple spaces (e.g.,... [79e7c26c-151] |
 | [79e7c26c-152](./79e7c26c-152.md) | packages/plant_service/src/plant_service/domain/utils.py | Fixed | `0e2360d1` | Duplicate of finding 79e7c26c-151 (same unit-whitespace-normalization bug) — already fixed by commit 0e2360d1. No separate action needed. |
 | [801ba076-20](./801ba076-20.md) | (unparseable) | Rejected (REJECTED) | — | Verdict REJECTED — not actioned |
-| [80dfb20a-148](./80dfb20a-148.md) | packages/plant_service/src/plant_service/domain/seed_packet.py | Error | — | Quality checks failed after 3 iteration(s): Quality checks failed after 3 iteration(s) for packages/plant_service/src/plant_service/domain/seed_packet.py: ## Programmatic check failures |
+| [80dfb20a-148](./80dfb20a-148.md) | packages/plant_service/src/plant_service/domain/seed_packet.py | Fixed | `1b09ad95` | Fix applied and committed: fix: The create_from_dict method validates required fie... [80dfb20a-148] |
 | [80dfb20a-149](./80dfb20a-149.md) | packages/plant_service/src/plant_service/domain/seed_packet.py | Fixed | `b654465b` | Fix applied and committed: fix: The regex pattern in find_next_sequence is compile... [80dfb20a-149] |
 | [80dfb20a-150](./80dfb20a-150.md) | packages/plant_service/src/plant_service/domain/seed_packet.py | Fixed | `725ce9cf` | Fix applied and committed: fix: The generate_id method uses format 'SPKT-{seq:03d}... [80dfb20a-150] |
 | [82214597-127](./82214597-127.md) | packages/plant_service/src/plant_service/adapters/repository/log_repository.py | Fixed | `503ac022` | Fix applied and committed: fix: The list_entries method orders log entries by time... [82214597-127] |
-| [8adf07ee-142](./8adf07ee-142.md) | (unparseable) | Not processed | — | — |
-| [8adf07ee-143](./8adf07ee-143.md) | packages/plant_service/src/plant_service/bootstrap.py | Not processed | — | — |
-| [8bff246e-130](./8bff246e-130.md) | packages/plant_service/src/plant_service/adapters/repository/models/media_attachment_model.py | Not processed | — | — |
+| [8adf07ee-142](./8adf07ee-142.md) | (unparseable) | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
+| [8adf07ee-143](./8adf07ee-143.md) | packages/plant_service/src/plant_service/bootstrap.py | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
+| [8bff246e-130](./8bff246e-130.md) | packages/plant_service/src/plant_service/adapters/repository/models/media_attachment_model.py | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
 | [9cefd6bc-141](./9cefd6bc-141.md) | (unparseable) | Skipped | — | Cannot parse action from 9cefd6bc-141.md (no code blocks) |
 | [9de7f0c6-181](./9de7f0c6-181.md) | packages/plant_service/tests/unit/test_utils.py | Fixed | `5dda62ce` | Fix applied and committed: fix: The test for liters only checks the value_ml field... [9de7f0c6-181] |
 | [9de7f0c6-182](./9de7f0c6-182.md) | packages/plant_service/tests/unit/test_utils.py | Fixed | `5dda62ce` | Duplicate of finding 9de7f0c6-181 (same test_utils.py display_value/display_unit assertion gap) — already fixed by commit 5dda62ce. No separate action needed. |
 | [9de7f0c6-183](./9de7f0c6-183.md) | packages/plant_service/tests/unit/test_utils.py | Fixed | `5dda62ce` | Same display_value/display_unit assertion gap as finding 9de7f0c6-181/182 (cups vs liters) — already fixed by commit 5dda62ce. No separate action needed. |
-| [a1d1cbba-170](./a1d1cbba-170.md) | (unparseable) | Not processed | — | — |
-| [a1d1cbba-172](./a1d1cbba-172.md) | (unparseable) | Not processed | — | — |
-| [a1d1cbba-173](./a1d1cbba-173.md) | (unparseable) | Not processed | — | — |
-| [a1d1cbba-174](./a1d1cbba-174.md) | (unparseable) | Not processed | — | — |
-| [c26a6622-128](./c26a6622-128.md) | packages/plant_service/src/plant_service/adapters/repository/media_attachment_repository.py | Not processed | — | — |
-| [c26a6622-129](./c26a6622-129.md) | packages/plant_service/src/plant_service/adapters/repository/media_attachment_repository.py | Not processed | — | — |
-| [c60317e7-18](./c60317e7-18.md) | (unparseable) | Not processed | — | — |
-| [c67eab30-123](./c67eab30-123.md) | packages/plant_service/src/plant_service/adapters/repository/base.py | Not processed | — | — |
+| [a1d1cbba-170](./a1d1cbba-170.md) | (unparseable) | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
+| [a1d1cbba-172](./a1d1cbba-172.md) | (unparseable) | Skipped | — | Cannot parse action from a1d1cbba-172.md (no code blocks) |
+| [a1d1cbba-173](./a1d1cbba-173.md) | (unparseable) | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
+| [a1d1cbba-174](./a1d1cbba-174.md) | (unparseable) | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
+| [c26a6622-128](./c26a6622-128.md) | packages/plant_service/src/plant_service/adapters/repository/media_attachment_repository.py | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
+| [c26a6622-129](./c26a6622-129.md) | packages/plant_service/src/plant_service/adapters/repository/media_attachment_repository.py | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
+| [c60317e7-18](./c60317e7-18.md) | (unparseable) | Rejected (REJECTED) | — | Verdict REJECTED — not actioned |
+| [c67eab30-123](./c67eab30-123.md) | packages/plant_service/src/plant_service/adapters/repository/base.py | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
 | [c67eab30-125](./c67eab30-125.md) | packages/plant_service/src/plant_service/adapters/repository/base.py | Not processed | — | — |
 | [c67eab30-126](./c67eab30-126.md) | packages/plant_service/src/plant_service/adapters/repository/base.py | Error | — | Quality checks failed after 3 iteration(s): Quality checks failed after 3 iteration(s) for packages/plant_service/src/plant_service/adapters/repository/base.py: ## Style rule violations |
 | [cbea0de4-131](./cbea0de4-131.md) | packages/plant_service/src/plant_service/adapters/repository/plant_repository.py | Fixed | `a0384964` | Fix applied and committed: fix: In create_plant method, direct access to plant_dat... [cbea0de4-131] |

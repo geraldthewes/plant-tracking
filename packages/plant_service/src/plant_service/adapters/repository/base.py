@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Generic, TypeVar, Iterator, Optional, Type
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import inspect, select
 
 T = TypeVar("T")
 
@@ -33,6 +33,9 @@ class BaseRepository(Generic[T]):
 
     def update(self, entity: T) -> T:
         """Update existing entity"""
+        state = inspect(entity)
+        if state is None or state.transient:
+            raise ValueError("Cannot update transient entity; fetch from session first")
         self.session.add(entity)
         self.session.flush()
         return entity
