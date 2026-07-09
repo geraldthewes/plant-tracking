@@ -14,10 +14,14 @@ class TestNormalizeWaterAmount:
     def test_liters(self):
         result = normalize_water_amount("1 L")
         assert result["value_ml"] == pytest.approx(1000.0)
+        assert result["display_value"] == 1.0
+        assert result["display_unit"] == "L"
 
     def test_cups(self):
         result = normalize_water_amount("2 cups")
         assert result["value_ml"] == pytest.approx(473.176)
+        assert result["display_value"] == 2.0
+        assert result["display_unit"] == "cups"
 
     def test_invalid_format(self):
         with pytest.raises(ValueError, match="Invalid water amount format"):
