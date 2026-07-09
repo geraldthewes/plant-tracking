@@ -26,3 +26,9 @@ class TestNormalizeWaterAmount:
     def test_unsupported_unit(self):
         with pytest.raises(ValueError, match="Unsupported water unit"):
             normalize_water_amount("1 gallon")
+
+    def test_multi_space_unit(self):
+        result = normalize_water_amount("5 fluid   ounce")
+        assert result["value_ml"] == pytest.approx(147.8675)
+        assert result["display_value"] == 5.0
+        assert result["display_unit"] == "fluid ounce"

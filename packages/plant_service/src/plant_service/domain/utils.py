@@ -15,7 +15,7 @@ def normalize_water_amount(amount_str: str) -> dict[str, float | str]:
         raise ValueError(f"Invalid water amount format: {amount_str}")
 
     value = float(match.group(1))
-    unit = match.group(2).strip().lower()
+    unit = ' '.join(match.group(2).strip().split()).lower()
 
     unit_conversion = {
         "ml": 1,
