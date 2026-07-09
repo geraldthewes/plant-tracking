@@ -48,7 +48,8 @@ class Genus:
     def create_from_dict(cls, data: dict) -> "Genus":
         """
         Create Genus instance from dictionary data.
-        Preserves validation logic from commands/models/genus.py:64-77
+        Preserves field validation from commands/models/genus.py:68-71.
+        ID generation is handled by the repository adapter layer.
         """
         for fld in cls.REQUIRED_FIELDS:
             if fld not in data or not data[fld]:
