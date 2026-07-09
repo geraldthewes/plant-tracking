@@ -13,6 +13,7 @@ from typing import ClassVar
 class Genus:
     """Genus entity matching existing SQLAlchemy model"""
 
+    _ID_REGEX = re.compile(r"^GENUS-(\d{3})$")
     REQUIRED_FIELDS: ClassVar[list[str]] = ["variety_name", "latin_name"]
 
     id: str = ""
@@ -34,10 +35,9 @@ class Genus:
         Find next sequence number for genus ID.
         Takes existing IDs from the repository layer - no DB access here.
         """
-        regex_pattern = re.compile(r"^GENUS-(\d{3})$")
         max_seq = 0
         for genus_id in existing_ids:
-            match = regex_pattern.match(genus_id)
+            match = Genus._ID_REGEX.match(genus_id)
             if match:
                 seq = int(match.group(1))
                 max_seq = max(max_seq, seq)
