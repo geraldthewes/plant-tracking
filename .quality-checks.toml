@@ -1,0 +1,33 @@
+[[profile]]
+name = "root-cli"
+paths = ["commands/**", "tests/**"]
+commands = [
+  "ruff check commands/ tests/",
+  "black --check commands/ tests/",
+  "mypy commands/",
+  "bandit -r commands/ -s B403,B404,B405,B406,B407,B408,B409",
+  "uv run pytest tests/ -v",
+]
+
+[[profile]]
+name = "backend-api"
+paths = ["backend/fastapi/**"]
+commands = [
+  "ruff check backend/fastapi/src/",
+  "black --check backend/fastapi/src/",
+  "mypy backend/fastapi/src/",
+  "uv run pytest backend/fastapi/tests/ -v",
+]
+
+[[profile]]
+name = "plant-service"
+paths = ["packages/plant_service/**"]
+commands = [
+  "ruff check packages/plant_service/src/ packages/plant_service/tests/",
+  "mypy packages/plant_service/src/",
+  "bandit -r packages/plant_service/src/",
+  "uv run pytest packages/plant_service/tests/ -v",
+]
+
+[llm_rules]
+source = ".opencodereview/rule.json"

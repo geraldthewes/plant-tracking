@@ -1,0 +1,30 @@
+Analyze this code review comment:
+
+**File**: test.py
+**Lines**: 1-3
+**Existing Code**:
+```
+def foo():
+    pass
+```
+
+**Suggested Code**:
+```
+def foo():
+    return 42
+```
+
+**Review Comment**: Test comment
+
+Please:
+1. Confirm the issue: Is this a real problem that needs fixing?
+2. Explain the issue: Why is this problematic?
+3. Critique the feedback: Is the suggestion appropriate? Any better alternatives?
+4. Suggest alternatives if appropriate
+5. Determine the appropriate testing strategy:
+   - Red/Green TDD
+   - New test only
+   - No new test
+6. Provide a verdict: VALID, REJECTED, or BACKLOG
+
+Respond in JSON: {\"verdict\": \"...\", \"analysis\": \"...\"}

@@ -81,7 +81,7 @@ class SqlAlchemyUnitOfWork(AbstractContextManager):
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
-    ) -> bool | None:
+    ) -> None:
         """Exit transaction context"""
         if exc_type is not None:
             self.rollback()

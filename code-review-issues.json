@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "message": "No comments generated. Looks good to me.",
+  "summary": {
+    "files_reviewed": 2,
+    "comments": 0,
+    "total_tokens": 6202,
+    "input_tokens": 5538,
+    "output_tokens": 664,
+    "elapsed": "19s"
+  },
+  "comments": []
+}
