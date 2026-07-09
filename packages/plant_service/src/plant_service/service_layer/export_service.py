@@ -114,6 +114,7 @@ class ExportService:
             (export_path / "seed_packets").mkdir(parents=True, exist_ok=True)
             (export_path / "genera").mkdir(parents=True, exist_ok=True)
             (export_path / "logs").mkdir(parents=True, exist_ok=True)
+            (export_path / "plants").mkdir(parents=True, exist_ok=True)
 
             # Export seed packets
             for packet_data in self.export_seed_packets_streaming():
@@ -127,6 +128,20 @@ class ExportService:
                 self._write_markdown_file(
                     export_path / "genera" / f"{genus_data['id']}.md",
                     genus_data,
+                )
+
+            # Export plants
+            for plant_data in self.export_plants_streaming():
+                self._write_markdown_file(
+                    export_path / "plants" / f"{plant_data['id']}.md",
+                    plant_data,
+                )
+
+            # Export logs
+            for log_data in self.export_logs_streaming():
+                self._write_markdown_file(
+                    export_path / "logs" / f"{log_data['id']}.md",
+                    log_data,
                 )
 
             return export_path
