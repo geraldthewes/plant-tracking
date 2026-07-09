@@ -8,29 +8,28 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 
-from plant_service.config import (
-    get_s3_access_key_id,
-    get_s3_bucket,
-    get_s3_endpoint_url,
-    get_s3_region,
-    get_s3_secret_access_key,
-)
-
 logger = logging.getLogger(__name__)
 
 
 class S3Service:
     """Service for handling S3 operations for media attachments."""
 
-    def __init__(self):
+    def __init__(
+        self,
+        endpoint_url: str,
+        access_key_id: str,
+        secret_access_key: str,
+        region_name: str,
+        bucket: str,
+    ) -> None:
         self.client = boto3.client(
             "s3",
-            endpoint_url=get_s3_endpoint_url(),
-            aws_access_key_id=get_s3_access_key_id(),
-            aws_secret_access_key=get_s3_secret_access_key(),
-            region_name=get_s3_region(),
+            endpoint_url=endpoint_url,
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region_name,
         )
-        self.bucket = get_s3_bucket()
+        self.bucket = bucket
 
     def upload_file(self, file_path: str, s3_key: str) -> bool:
         """Upload a file to S3."""
