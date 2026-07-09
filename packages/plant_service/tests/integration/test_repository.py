@@ -149,6 +149,7 @@ class TestLogRepository:
         assert entry.level == 5
 
     def test_list_entries(self, uow):
+        # First, create a plant to get a valid plant_id
         with uow:
             plant = uow.plants.create_plant({
                 "variety_name": "Test Plant",
