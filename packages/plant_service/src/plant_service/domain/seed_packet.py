@@ -61,7 +61,7 @@ class SeedPacket:
         Preserves validation logic from commands/models/seed_packet.py:71-84
         """
         for fld in cls.REQUIRED_FIELDS:
-            if fld not in data or not data[fld]:
+            if fld not in data or not isinstance(data[fld], str) or not data[fld].strip():
                 raise ValueError(f"Missing required field: {fld}")
 
         return cls(**data)
