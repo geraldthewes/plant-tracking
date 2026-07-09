@@ -13,6 +13,11 @@ class TestSeedPacketGenerateId:
         sp = SeedPacket(id="", variety_name="Tomato", latin_name="Solanum lycopersicum")
         assert sp.generate_id(seq=99) == "SPKT-099"
 
+    def test_generate_id_rejects_seq_ge_1000(self):
+        sp = SeedPacket(id="", variety_name="Tomato", latin_name="Solanum lycopersicum")
+        with pytest.raises(ValueError, match="exceeds maximum of 999"):
+            sp.generate_id(seq=1000)
+
 
 class TestSeedPacketFindNextSequence:
     def test_empty_list(self):

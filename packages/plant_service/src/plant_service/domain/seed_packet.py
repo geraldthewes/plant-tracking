@@ -34,7 +34,10 @@ class SeedPacket:
         """
         Generate seed packet ID in SPKT-NNN format.
         Note: seq is passed in from the service layer which queries existing records.
+        Limitation: seq must be < 1000 to maintain SPKT-NNN format.
         """
+        if seq >= 1000:
+            raise ValueError(f"Sequence number {seq} exceeds maximum of 999 for SPKT-NNN format")
         return f"SPKT-{seq:03d}"
 
     @staticmethod
