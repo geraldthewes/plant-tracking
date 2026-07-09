@@ -33,6 +33,7 @@ class TestSeedPacketCreateFromDict:
         data = {"variety_name": "Tomato", "latin_name": "Solanum lycopersicum"}
         sp = SeedPacket.create_from_dict(data)
         assert sp.variety_name == "Tomato"
+        assert sp.latin_name == "Solanum lycopersicum"
 
     def test_missing_required_field(self):
         with pytest.raises(ValueError, match="Missing required field"):
