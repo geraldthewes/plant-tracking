@@ -34,6 +34,7 @@ node_modules/
 .#*
 *.backup
 .opencode/plans/
+feedback/
 
 # IDE
 .vscode/
