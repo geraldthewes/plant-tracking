@@ -83,7 +83,7 @@ class Plant:
         """
         # Validate required fields
         for fld in cls.REQUIRED_FIELDS:
-            if fld not in data:
+            if fld not in data or not data[fld]:
                 raise ValueError(f"Missing required field: {fld}")
 
         # Validate genus_id format if present
