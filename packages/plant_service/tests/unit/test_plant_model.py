@@ -1,6 +1,8 @@
 """Unit tests for Plant domain model"""
-import pytest
 from datetime import datetime
+from unittest.mock import patch
+
+import pytest
 
 from plant_service.domain import Plant
 
@@ -32,10 +34,12 @@ class TestPlantGenerateId:
         assert result == "TO-2026-100"
 
     def test_no_planting_date_uses_current_year(self):
-        plant = Plant(variety_name="Pepper", latin_name="Capsicum annuum")
-        result = plant.generate_id("Pepper", "", seq=5)
-        current_year = datetime.now().year
-        assert result == f"PE-{current_year}-005"
+        with patch("plant_service.domain.plant.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2026, 6, 27)
+            mock_datetime.strptime = datetime.strptime
+            plant = Plant(variety_name="Pepper", latin_name="Capsicum annuum")
+            result = plant.generate_id("Pepper", "", seq=5)
+            assert result == "PE-2026-005"
 
 
 class TestPlantFindNextSequence:
