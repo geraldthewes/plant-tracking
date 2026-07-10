@@ -11,6 +11,7 @@ class TestPlantLogCreateFromDict:
             "event_type": "humidity",
             "level": 5,
         })
+        assert entry.plant_id == "YEHA-2026-001"
         assert entry.event_type == "humidity"
         assert entry.level == 5
 
