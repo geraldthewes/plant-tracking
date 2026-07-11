@@ -18,6 +18,7 @@ htmlcov/
 *.so
 .env
 .env.local
+.env.cluster
 venv/
 .venv/
 env/

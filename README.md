@@ -90,6 +90,19 @@ S3 credentials for local dev are in [`docker/seaweedfs-s3.json`](docker/seaweedf
 
 Convenience targets: `just dev-up`, `just dev-down`, `just dev-setup`.
 
+## Home cluster configuration
+
+When the home cluster is available (WireGuard `gpucluster` VPN, Consul DNS, Postgres, Ceph RGW):
+
+```bash
+cp -n .env.cluster.template .env.cluster
+cp -n .env.cluster .env
+# Fill in S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY in .env
+alembic upgrade head
+```
+
+See [`.env.cluster.template`](.env.cluster.template) for Consul Postgres and Ceph RGW endpoints. Do not set `S3_FORCE_PATH_STYLE` for Ceph.
+
 ## Usage
 
 ```bash
