@@ -606,8 +606,8 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                 plant_data["seed_packet_id"] = packet_id
             else:
                 # Markdown fallback
-                _prompt_record_fields(plant_data)
-                plant_data["seed_packet_id"] = "unknown"
+                packet_id = _create_packet_inline(plant_data, db, packets_dir)
+                plant_data["seed_packet_id"] = packet_id
         elif choice == "select":
             if db and SERVICE_AVAILABLE:
                 try:
