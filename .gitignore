@@ -16,6 +16,7 @@ build/
 .coverage
 htmlcov/
 *.so
+# Local env files (use .env.*.template as committed starting points)
 .env
 .env.local
 .env.cluster
