@@ -1,7 +1,9 @@
 from logging.config import fileConfig
 import os
 import sys
+from pathlib import Path
 
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
@@ -33,6 +35,8 @@ from plant_service.adapters.repository.models import (  # noqa: F401
 )
 
 target_metadata = Base.metadata
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 
 def get_url():

@@ -44,7 +44,11 @@ dev-down:
 	docker compose down
 
 dev-setup: dev-up
-	@test -f .env || (echo "Create .env manually from .env.local.template first" && exit 1)
+	@test -f .env || (echo "Create .env manually: cp .env.local.template .env.local && edit && cp .env.local .env" && exit 1)
+	@grep -qE '^DATABASE_URL=postgresql://' .env || (echo ".env missing DATABASE_URL" && exit 1)
+	@grep -qE '^LOCAL_POSTGRES_USER=.' .env || (echo ".env missing LOCAL_POSTGRES_USER (required by docker compose)" && exit 1)
+	@grep -qE '^LOCAL_POSTGRES_PASSWORD=.' .env || (echo ".env missing LOCAL_POSTGRES_PASSWORD (required by docker compose)" && exit 1)
+	@grep -q '<' .env && (echo ".env still has <placeholder> values — edit before running dev-setup" && exit 1) || true
 	uv run alembic upgrade head
 
 # FastAPI backend service
