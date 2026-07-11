@@ -36,6 +36,18 @@ security-scan:
 # Run all pre-commit checks
 check: lint format-check type-check security-scan test
 
+# Local Docker services (Postgres + SeaweedFS)
+dev-up:
+	docker compose up -d
+
+dev-down:
+	docker compose down
+
+dev-setup: dev-up
+	cp -n .env.local.template .env.local || true
+	cp -n .env.local .env || true
+	uv run alembic upgrade head
+
 # FastAPI backend service
 api-install:
 	uv pip install -e backend/fastapi

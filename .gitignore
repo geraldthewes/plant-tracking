@@ -17,6 +17,7 @@ build/
 htmlcov/
 *.so
 .env
+.env.local
 venv/
 .venv/
 env/

@@ -7,6 +7,7 @@ import logging
 from typing import Protocol
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
@@ -28,13 +29,18 @@ class S3Service:
         secret_access_key: str | None,
         region_name: str,
         bucket: str,
+        force_path_style: bool = False,
     ) -> None:
+        client_config = None
+        if force_path_style:
+            client_config = Config(s3={"addressing_style": "path"})
         self.client = boto3.client(
             "s3",
             endpoint_url=endpoint_url,
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
             region_name=region_name,
+            config=client_config,
         )
         self.bucket = bucket
 
@@ -49,6 +55,7 @@ class S3Service:
             secret_access_key=config.get_s3_secret_access_key(),
             region_name=config.get_s3_region(),
             bucket=config.get_s3_bucket(),
+            force_path_style=config.get_s3_force_path_style(),
         )
 
     def upload_file(self, file_path: str, s3_key: str) -> bool:

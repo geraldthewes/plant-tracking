@@ -38,3 +38,8 @@ def get_s3_secret_access_key() -> str | None:
 def get_s3_endpoint_url() -> str | None:
     """Get S3 endpoint URL from environment (for local testing with localstack etc.)"""
     return os.environ.get("S3_ENDPOINT_URL")
+
+
+def get_s3_force_path_style() -> bool:
+    """Use path-style S3 URLs (required for SeaweedFS on localhost)."""
+    return os.environ.get("S3_FORCE_PATH_STYLE", "false").lower() in ("1", "true", "yes")
