@@ -6,7 +6,7 @@ services:
       - "5433:5432"
     environment:
       POSTGRES_USER: ${LOCAL_POSTGRES_USER}
-      POSTGRES_PASSWORD: <password>
+      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD}
       POSTGRES_DB: ${LOCAL_POSTGRES_DB:-plant_tracking}
     volumes:
       - plant_pg_data:/var/lib/postgresql/data
