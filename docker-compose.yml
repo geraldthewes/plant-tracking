@@ -1,3 +1,4 @@
+# Postgres credentials below must match DATABASE_URL in your .env (set manually from template).
 services:
   postgres:
     image: postgres:16

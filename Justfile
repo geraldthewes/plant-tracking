@@ -44,8 +44,7 @@ dev-down:
 	docker compose down
 
 dev-setup: dev-up
-	cp -n .env.local.template .env.local || true
-	cp -n .env.local .env || true
+	@test -f .env || (echo "Create .env manually from .env.local.template first" && exit 1)
 	uv run alembic upgrade head
 
 # FastAPI backend service

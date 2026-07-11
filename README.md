@@ -42,14 +42,15 @@ When the home-cluster Postgres and S3 (Ceph RGW) endpoints are unavailable, run 
 **Note:** Compose Postgres listens on host port **5433** to avoid conflicting with a system PostgreSQL on 5432.
 
 ```bash
+# One-time manual config (templates contain placeholders only — fill in your values)
+cp .env.local.template .env.local    # edit <user>, <password>, S3 keys, etc.
+cp docker/seaweedfs-s3.json.template docker/seaweedfs-s3.json  # match S3 keys in .env.local
+cp .env.local .env
+
 # Start Postgres and SeaweedFS
 docker compose up -d
 
-# Use local endpoints (does not overwrite existing files)
-cp -n .env.local.template .env.local
-cp -n .env.local .env
-
-# Create database tables
+# Create database tables (DATABASE_URL in .env must match docker-compose Postgres)
 alembic upgrade head
 
 # Install CLI and API
@@ -86,22 +87,21 @@ docker compose down -v       # wipe Postgres and SeaweedFS data
 | 8888 | SeaweedFS filer |
 | 8080 | SeaweedFS volume |
 
-S3 credentials for local dev are in [`docker/seaweedfs-s3.json`](docker/seaweedfs-s3.json) and match [`.env.local.template`](.env.local.template). Set `S3_FORCE_PATH_STYLE=true` in `.env` when using SeaweedFS.
+Create [`docker/seaweedfs-s3.json`](docker/seaweedfs-s3.json) from [`docker/seaweedfs-s3.json.template`](docker/seaweedfs-s3.json.template); S3 keys must match `.env`. Set `S3_FORCE_PATH_STYLE=true` in `.env` when using SeaweedFS.
 
-Convenience targets: `just dev-up`, `just dev-down`, `just dev-setup`.
+Convenience targets: `just dev-up`, `just dev-down`, `just dev-setup` (requires `.env` already configured).
 
 ## Home cluster configuration
 
 When the home cluster is available (WireGuard `gpucluster` VPN, Consul DNS, Postgres, Ceph RGW):
 
 ```bash
-cp -n .env.cluster.template .env.cluster
-cp -n .env.cluster .env
-# Fill in S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY in .env
+cp .env.cluster.template .env.cluster   # edit all <placeholder> values
+cp .env.cluster .env
 alembic upgrade head
 ```
 
-See [`.env.cluster.template`](.env.cluster.template) for Consul Postgres and Ceph RGW endpoints. Do not set `S3_FORCE_PATH_STYLE` for Ceph.
+See [`.env.cluster.template`](.env.cluster.template). Do not set `S3_FORCE_PATH_STYLE` for Ceph RGW.
 
 ## Usage
 

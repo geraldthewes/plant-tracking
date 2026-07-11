@@ -19,6 +19,7 @@ htmlcov/
 .env
 .env.local
 .env.cluster
+docker/seaweedfs-s3.json
 venv/
 .venv/
 env/
