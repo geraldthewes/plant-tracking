@@ -39,6 +39,8 @@ When the home-cluster Postgres and S3 (Ceph RGW) endpoints are unavailable, run 
 
 **Prerequisites:** Docker or Podman with the compose plugin.
 
+**Note:** Compose Postgres listens on host port **5433** to avoid conflicting with a system PostgreSQL on 5432.
+
 ```bash
 # Start Postgres and SeaweedFS
 docker compose up -d
@@ -78,7 +80,7 @@ docker compose down -v       # wipe Postgres and SeaweedFS data
 
 | Port | Service |
 |------|---------|
-| 5432 | PostgreSQL |
+| 5433 | PostgreSQL (Docker; maps to 5432 in container) |
 | 8333 | SeaweedFS S3 API |
 | 9333 | SeaweedFS master |
 | 8888 | SeaweedFS filer |
