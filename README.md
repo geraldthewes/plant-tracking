@@ -43,7 +43,7 @@ When the home-cluster Postgres and S3 (Ceph RGW) endpoints are unavailable, run 
 
 ```bash
 # One-time manual config (templates contain placeholders only — fill in your values)
-cp .env.local.template .env.local    # edit <user>, <password>, S3 keys, etc.
+cp .env.local.template .env.local    # edit <user>, <password>, S3 keys, LOCAL_POSTGRES_*, etc.
 cp docker/seaweedfs-s3.json.template docker/seaweedfs-s3.json  # match S3 keys in .env.local
 cp .env.local .env
 
