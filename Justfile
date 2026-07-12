@@ -1,13 +1,21 @@
 # Justfile for plant-tracking-cli
 
+# Symlink CLI into ~/.local/bin (already on PATH)
+_link-cli:
+	@mkdir -p "${HOME}/.local/bin"
+	@ln -sfn "{{justfile_directory()}}/.venv/bin/plant-tracking" "${HOME}/.local/bin/plant-tracking"
+
 # Install the package in editable mode in the uv environment
 install:
 	uv pip install -e packages/plant_service
 	uv pip install -e .
+	just _link-cli
 
 # Install with test dependencies
 install-test:
+	uv pip install -e packages/plant_service
 	uv pip install -e ".[test]"
+	just _link-cli
 
 # Run all tests
 test:
@@ -80,3 +88,4 @@ clean:
 	rm -rf .mypy_cache .pytest_cache
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name '*.pyc' -delete 2>/dev/null || true
+	@rm -f "${HOME}/.local/bin/plant-tracking"
