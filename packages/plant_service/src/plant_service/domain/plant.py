@@ -30,6 +30,27 @@ class Plant:
     genus_id: str | None = None
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
+    death_date: str = ""
+    death_reason: str = ""
+    death_comment: str = ""
+
+    DEATH_REASONS: ClassVar[list[str]] = [
+        "Pest infestation",
+        "Disease",
+        "Overwatering",
+        "Underwatering",
+        "Frost/cold damage",
+        "Heat stress",
+        "Transplant shock",
+        "Drought",
+        "Unknown",
+        "Other",
+    ]
+
+    @property
+    def is_dead(self) -> bool:
+        """Return True if the plant has been marked as dead."""
+        return bool(self.death_date)
 
     @staticmethod
     def make_abbrev(variety_name: str) -> str:
@@ -102,5 +123,29 @@ class Plant:
                 datetime.strptime(data["planting_date"], "%Y-%m-%d")
             except ValueError:
                 raise ValueError("planting_date must be in YYYY-MM-DD format")
+
+        # Validate death_date format if present
+        if "death_date" in data and data["death_date"]:
+            try:
+                datetime.strptime(data["death_date"], "%Y-%m-%d")
+            except ValueError:
+                raise ValueError("death_date must be in YYYY-MM-DD format")
+
+        # Validate death_reason if present
+        if "death_reason" in data and data["death_reason"]:
+            if data["death_reason"] not in cls.DEATH_REASONS:
+                raise ValueError(
+                    f"death_reason must be one of: {', '.join(cls.DEATH_REASONS)}"
+                )
+
+        # "Other" reason requires a comment
+        if (
+            "death_reason" in data
+            and data["death_reason"] == "Other"
+            and not data.get("death_comment")
+        ):
+            raise ValueError(
+                'death_comment is required when death_reason is "Other"'
+            )
 
         return cls(**data)

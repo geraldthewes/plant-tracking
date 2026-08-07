@@ -135,14 +135,28 @@ def main():
     )
     show_genus_parser.add_argument("genus_id", help="Genus ID")
 
-    # list-plants subcommand
-    subparsers.add_parser("list-plants", help="List all plants")
-
     # show-plant subcommand
     show_plant_parser = subparsers.add_parser(
         "show-plant", help="Show plant details"
     )
     show_plant_parser.add_argument("plant_id", help="Plant ID")
+
+    # mark-dead subcommand
+    mark_dead_parser = subparsers.add_parser(
+        "mark-dead", help="Mark a plant as dead"
+    )
+    mark_dead_parser.add_argument("plant_id", help="Plant ID")
+
+    # list-plants subcommand
+    list_parser = subparsers.add_parser(
+        "list-plants", help="List all plants"
+    )
+    list_parser.add_argument(
+        "--alive-only", action="store_true", help="Show only living plants"
+    )
+    list_parser.add_argument(
+        "--dead-only", action="store_true", help="Show only dead plants"
+    )
 
     # log subcommand
     log_parser = subparsers.add_parser("log", help="Log plant observations")
@@ -300,6 +314,8 @@ def main():
         list_plants(args, db)
     elif args.command == "show-plant":
         show_plant(args, db)
+    elif args.command == "mark-dead":
+        mark_dead(args, db)
     elif args.command == "log":
         if args.log_command == "humidity":
             log_humidity(args, db)
@@ -708,6 +724,110 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
 
     except Exception as e:
         print(f"\n✗ Error creating plant record: {e}")
+        sys.exit(1)
+
+
+def mark_dead(args, db=None):
+    """Mark a plant as dead with date, reason, and optional comment."""
+    if db is None:
+        db = _get_db()
+
+    plant_id = args.plant_id
+
+    if not db or not SERVICE_AVAILABLE:
+        print("Error: mark-dead requires database service")
+        sys.exit(1)
+
+    try:
+        with create_unit_of_work() as uow:
+            plant = uow.plants.get_plant(plant_id)
+            if not plant:
+                print(f"✗ Plant not found: {plant_id}")
+                sys.exit(1)
+
+            if plant.is_dead:
+                print(f"✗ Plant {plant_id} is already marked as dead")
+                print(f"  Death date: {plant.death_date}")
+                print(f"  Death reason: {plant.death_reason}")
+                sys.exit(1)
+
+            from plant_service.domain import Plant as PlantDomain
+
+            print("=== Mark Plant as Dead ===")
+            print(f"Plant: {plant.id} - {plant.variety_name} ({plant.latin_name})")
+            print()
+
+            # Prompt for death date
+            while True:
+                death_date = input("Death date (YYYY-MM-DD): ").strip()
+                try:
+                    from datetime import datetime
+                    datetime.strptime(death_date, "%Y-%m-%d")
+                    break
+                except ValueError:
+                    print("Invalid date format. Please use YYYY-MM-DD.")
+
+            # Prompt for death reason
+            print("\nDeath reasons:")
+            reasons = PlantDomain.DEATH_REASONS
+            for i, reason in enumerate(reasons, 1):
+                print(f"  {i}. {reason}")
+            print()
+
+            while True:
+                reason_input = input("Death reason (number or name): ").strip()
+                if reason_input.isdigit():
+                    idx = int(reason_input) - 1
+                    if 0 <= idx < len(reasons):
+                        death_reason = reasons[idx]
+                        break
+                    else:
+                        print(f"Please enter a number between 1 and {len(reasons)}")
+                else:
+                    matching = [
+                        r for r in reasons
+                        if r.lower() == reason_input.lower()
+                    ]
+                    if matching:
+                        death_reason = matching[0]
+                        break
+                    else:
+                        print("Invalid reason. Please enter a number or exact name.")
+
+            # Prompt for comment if "Other"
+            death_comment = ""
+            if death_reason == "Other":
+                while not death_comment:
+                    death_comment = input(
+                        "Comment (required for 'Other'): "
+                    ).strip()
+
+            death_comment = input("Additional comment (optional): ").strip()
+
+            updated = uow.plants.update_plant(plant_id, {
+                "death_date": death_date,
+                "death_reason": death_reason,
+                "death_comment": death_comment,
+            })
+
+            print()
+            print("✓ Plant marked as dead successfully!")
+            print(f"  Death date: {updated.death_date}")
+            print(f"  Death reason: {updated.death_reason}")
+            if updated.death_comment:
+                print(f"  Comment: {updated.death_comment}")
+
+    except PlantNotFoundException:
+        print(f"✗ Plant not found: {plant_id}")
+        sys.exit(1)
+    except ValidationException as e:
+        print(f"✗ Validation error: {e}")
+        sys.exit(1)
+    except PlantTrackingServiceException as e:
+        print(f"✗ Service error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"✗ Error marking plant as dead: {e}")
         sys.exit(1)
 
 
@@ -1647,6 +1767,9 @@ def list_plants(args, db=None):
     if db is None:
         db = _get_db()
 
+    alive_only = getattr(args, "alive_only", False)
+    dead_only = getattr(args, "dead_only", False)
+
     if db and SERVICE_AVAILABLE:
         try:
             with create_unit_of_work() as uow:
@@ -1668,12 +1791,18 @@ def list_plants(args, db=None):
         # Markdown fallback
         plants = _list_plants_from_files()
 
+    # Filter by alive/dead status
+    if alive_only:
+        plants = [p for p in plants if not getattr(p, "is_dead", False)]
+    elif dead_only:
+        plants = [p for p in plants if getattr(p, "is_dead", False)]
+
     if not plants:
         print("No plants found.")
         return
 
-    header = f"{'ID':<12} {'Variety':<25} {'Latin Name':<25} {'Planting Date':<15}"
-    separator = f"{'-' * 12}  {'-' * 25}  {'-' * 25}  {'-' * 15}"
+    header = f"{'ID':<12} {'Variety':<25} {'Latin Name':<25} {'Planting Date':<15} {'Status':<10}"
+    separator = f"{'-' * 12}  {'-' * 25}  {'-' * 25}  {'-' * 15}  {'-' * 10}"
     print(header)
     print(separator)
     for p in plants:
@@ -1682,20 +1811,23 @@ def list_plants(args, db=None):
             variety = p.variety_name
             latin = p.latin_name
             planting_date = p.planting_date
+            status = "dead" if p.is_dead else "alive"
         elif db:
             # Fallback to original models
             pid = p.id
             variety = p.variety_name
             latin = p.latin_name
             planting_date = p.planting_date
+            status = "dead" if p.is_dead else "alive"
         else:
             # Markdown fallback
             pid = p.data["id"]
             variety = p.data["variety_name"]
             latin = p.data["latin_name"]
             planting_date = p.data["planting_date"]
+            status = "dead" if p.data.get("death_date") else "alive"
         print(
-            f"{pid:<12} {variety:<25} {latin:<25} {planting_date:<15}"
+            f"{pid:<12} {variety:<25} {latin:<25} {planting_date:<15} {status:<10}"
         )
 
 
@@ -1733,6 +1865,13 @@ def show_plant(args, db=None):
                     val = getattr(plant, field, None)
                     if val:
                         print(f"  {label:<22} {val}")
+                if plant.is_dead:
+                    print()
+                    print("  *** DEAD ***")
+                    print(f"  Death Date:<22    {plant.death_date}")
+                    print(f"  Death Reason:<22   {plant.death_reason}")
+                    if plant.death_comment:
+                        print(f"  Death Comment:<22  {plant.death_comment}")
                 print()
                 if plant.created_at:
                     print(f"  Created: {plant.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")

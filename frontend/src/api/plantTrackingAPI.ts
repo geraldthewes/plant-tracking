@@ -32,6 +32,47 @@ export interface HTTPValidationError {
   detail?: ValidationError[];
 }
 
+export interface Plant {
+  id: string;
+  variety_name: string;
+  latin_name: string;
+  brand?: string | null;
+  days_to_maturity?: string | null;
+  germination_time?: string | null;
+  planting_depth?: string | null;
+  spacing?: string | null;
+  sun_requirements?: string | null;
+  indoor_start_time?: string | null;
+  planting_date: string;
+  seed_packet_id?: string | null;
+  genus_id?: string | null;
+  death_date?: string | null;
+  death_reason?: string | null;
+  death_comment?: string | null;
+  is_dead: boolean;
+}
+
+export interface PlantSummary {
+  id: string;
+  variety_name: string;
+  latin_name: string;
+  planting_date: string;
+  death_date?: string | null;
+  death_reason?: string | null;
+  is_dead: boolean;
+}
+
+export interface PlantsListResponse {
+  plants: PlantSummary[];
+  count: number;
+}
+
+export interface BodyMarkPlantDeadApiPlantsPlantIdDeadPatch {
+  death_date: string;
+  death_reason: string;
+  death_comment?: string;
+}
+
 export type healthCheckHealthGetResponse200 = {
   data: unknown
   status: 200
@@ -491,4 +532,152 @@ if(bodyGetMediaAttachmentUrlApiMediaMediaAttachmentsMediaIdUrlGet?.expiration !=
 
   const data: getMediaAttachmentUrlApiMediaMediaAttachmentsMediaIdUrlGetResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as getMediaAttachmentUrlApiMediaMediaAttachmentsMediaIdUrlGetResponse
+}
+
+/* ─── Plant CRUD Endpoints ─────────────────────────────────────── */
+
+export type listPlantsApiPlantsGetResponse200 = {
+  data: PlantsListResponse
+  status: 200
+}
+
+export type listPlantsApiPlantsGetResponseSuccess = (listPlantsApiPlantsGetResponse200) & {
+  headers: Headers;
+};
+
+export type listPlantsApiPlantsGetResponse = (listPlantsApiPlantsGetResponseSuccess)
+
+export const getListPlantsApiPlantsGetUrl = (
+  aliveOnly?: boolean,
+  deadOnly?: boolean,
+) => {
+  const params = new URLSearchParams();
+  if (aliveOnly) params.append('alive_only', 'true');
+  if (deadOnly) params.append('dead_only', 'true');
+  const query = params.toString();
+  return `/api/plants/${query ? '?' + query : ''}`
+}
+
+/**
+ * List all plants with optional alive/dead filtering.
+ * @summary List Plants
+ */
+export const listPlantsApiPlantsGet = async (
+  aliveOnly?: boolean,
+  deadOnly?: boolean,
+  options?: RequestInit,
+): Promise<listPlantsApiPlantsGetResponse> => {
+  const res = await fetch(getListPlantsApiPlantsGetUrl(aliveOnly, deadOnly), {
+    ...options,
+    method: 'GET',
+  })
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listPlantsApiPlantsGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as listPlantsApiPlantsGetResponse
+}
+
+export type getPlantApiPlantsPlantIdGetResponse200 = {
+  data: Plant
+  status: 200
+}
+
+export type getPlantApiPlantsPlantIdGetResponse404 = {
+  data: { detail: string }
+  status: 404
+}
+
+export type getPlantApiPlantsPlantIdGetResponseSuccess = (getPlantApiPlantsPlantIdGetResponse200) & {
+  headers: Headers;
+};
+export type getPlantApiPlantsPlantIdGetResponseError = (getPlantApiPlantsPlantIdGetResponse404) & {
+  headers: Headers;
+};
+
+export type getPlantApiPlantsPlantIdGetResponse = (getPlantApiPlantsPlantIdGetResponseSuccess | getPlantApiPlantsPlantIdGetResponseError)
+
+export const getGetPlantApiPlantsPlantIdGetUrl = (plantId: string) => {
+  return `/api/plants/${plantId}`
+}
+
+/**
+ * Get a specific plant by ID.
+ * @summary Get Plant
+ */
+export const getPlantApiPlantsPlantIdGet = async (
+  plantId: string,
+  options?: RequestInit,
+): Promise<getPlantApiPlantsPlantIdGetResponse> => {
+  const res = await fetch(getGetPlantApiPlantsPlantIdGetUrl(plantId), {
+    ...options,
+    method: 'GET',
+  })
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getPlantApiPlantsPlantIdGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getPlantApiPlantsPlantIdGetResponse
+}
+
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponse200 = {
+  data: Plant
+  status: 200
+}
+
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponse400 = {
+  data: { detail: string }
+  status: 400
+}
+
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponse404 = {
+  data: { detail: string }
+  status: 404
+}
+
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponseSuccess = (markPlantDeadApiPlantsPlantIdDeadPatchResponse200) & {
+  headers: Headers;
+};
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponseError = (markPlantDeadApiPlantsPlantIdDeadPatchResponse400 | markPlantDeadApiPlantsPlantIdDeadPatchResponse404 | markPlantDeadApiPlantsPlantIdDeadPatchResponse422) & {
+  headers: Headers;
+};
+
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponse = (markPlantDeadApiPlantsPlantIdDeadPatchResponseSuccess | markPlantDeadApiPlantsPlantIdDeadPatchResponseError)
+
+export const getMarkPlantDeadApiPlantsPlantIdDeadPatchUrl = (plantId: string) => {
+  return `/api/plants/${plantId}/dead`
+}
+
+/**
+ * Mark a plant as dead.
+ * @summary Mark Plant Dead
+ */
+export const markPlantDeadApiPlantsPlantIdDeadPatch = async (
+  plantId: string,
+  body: BodyMarkPlantDeadApiPlantsPlantIdDeadPatch,
+  options?: RequestInit,
+): Promise<markPlantDeadApiPlantsPlantIdDeadPatchResponse> => {
+  const formUrlEncoded = new URLSearchParams();
+  formUrlEncoded.append('death_date', body.death_date);
+  formUrlEncoded.append('death_reason', body.death_reason);
+  if (body.death_comment !== undefined && body.death_comment !== null) {
+    formUrlEncoded.append('death_comment', body.death_comment);
+  }
+
+  const res = await fetch(getMarkPlantDeadApiPlantsPlantIdDeadPatchUrl(plantId), {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...options?.headers },
+    body: formUrlEncoded,
+  })
+
+  const bodyText = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: markPlantDeadApiPlantsPlantIdDeadPatchResponse['data'] = bodyText ? JSON.parse(bodyText) : {}
+  return { data, status: res.status, headers: res.headers } as markPlantDeadApiPlantsPlantIdDeadPatchResponse
 }

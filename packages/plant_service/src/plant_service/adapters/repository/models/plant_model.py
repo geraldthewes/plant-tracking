@@ -36,6 +36,10 @@ class Plant(Base, TimestampMixin):
         String(10), ForeignKey("genera.id"), nullable=True
     )
 
+    death_date: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    death_reason: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    death_comment: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
     seed_packet: Mapped[Optional["SeedPacket"]] = relationship(
         "SeedPacket", lazy="selectin", back_populates="plants"
     )
@@ -61,4 +65,9 @@ class Plant(Base, TimestampMixin):
             planting_date=self.planting_date,
             seed_packet_id=self.seed_packet_id,
             genus_id=self.genus_id,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            death_date=self.death_date or "",
+            death_reason=self.death_reason or "",
+            death_comment=self.death_comment or "",
         )

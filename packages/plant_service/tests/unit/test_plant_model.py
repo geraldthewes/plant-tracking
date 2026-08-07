@@ -125,3 +125,118 @@ class TestPlantCreateFromDict:
                 "planting_date": "2026-01-01",
                 "seed_packet_id": "INVALID",
             })
+
+
+class TestPlantDeathFields:
+    def test_default_alive(self):
+        plant = Plant(
+            variety_name="Tomato",
+            latin_name="Solanum lycopersicum",
+            planting_date="2026-01-01",
+        )
+        assert plant.death_date == ""
+        assert plant.death_reason == ""
+        assert plant.death_comment == ""
+        assert plant.is_dead is False
+
+    def test_dead_plant(self):
+        plant = Plant(
+            variety_name="Tomato",
+            latin_name="Solanum lycopersicum",
+            planting_date="2026-01-01",
+            death_date="2026-08-07",
+            death_reason="Disease",
+            death_comment="Fungal infection",
+        )
+        assert plant.death_date == "2026-08-07"
+        assert plant.death_reason == "Disease"
+        assert plant.death_comment == "Fungal infection"
+        assert plant.is_dead is True
+
+    def test_create_from_dict_with_death_fields(self):
+        plant = Plant.create_from_dict({
+            "variety_name": "Tomato",
+            "latin_name": "Solanum lycopersicum",
+            "planting_date": "2026-01-01",
+            "death_date": "2026-08-07",
+            "death_reason": "Disease",
+            "death_comment": "Fungal infection",
+        })
+        assert plant.is_dead is True
+        assert plant.death_reason == "Disease"
+
+    def test_valid_death_reasons(self):
+        for reason in Plant.DEATH_REASONS:
+            plant = Plant.create_from_dict({
+                "variety_name": "Tomato",
+                "latin_name": "Solanum lycopersicum",
+                "planting_date": "2026-01-01",
+                "death_date": "2026-08-07",
+                "death_reason": reason,
+                "death_comment": "comment" if reason == "Other" else "",
+            })
+            assert plant.death_reason == reason
+
+    def test_invalid_death_reason(self):
+        with pytest.raises(ValueError, match="death_reason must be one of"):
+            Plant.create_from_dict({
+                "variety_name": "Tomato",
+                "latin_name": "Solanum lycopersicum",
+                "planting_date": "2026-01-01",
+                "death_date": "2026-08-07",
+                "death_reason": "Not a valid reason",
+            })
+
+    def test_other_reason_requires_comment(self):
+        with pytest.raises(ValueError, match='death_comment is required when death_reason is "Other"'):
+            Plant.create_from_dict({
+                "variety_name": "Tomato",
+                "latin_name": "Solanum lycopersicum",
+                "planting_date": "2026-01-01",
+                "death_date": "2026-08-07",
+                "death_reason": "Other",
+            })
+
+    def test_other_reason_with_comment(self):
+        plant = Plant.create_from_dict({
+            "variety_name": "Tomato",
+            "latin_name": "Solanum lycopersicum",
+            "planting_date": "2026-01-01",
+            "death_date": "2026-08-07",
+            "death_reason": "Other",
+            "death_comment": "Custom reason here",
+        })
+        assert plant.death_reason == "Other"
+        assert plant.death_comment == "Custom reason here"
+
+    def test_invalid_death_date_format(self):
+        with pytest.raises(ValueError, match="death_date must be in YYYY-MM-DD format"):
+            Plant.create_from_dict({
+                "variety_name": "Tomato",
+                "latin_name": "Solanum lycopersicum",
+                "planting_date": "2026-01-01",
+                "death_date": "01-01-2026",
+            })
+
+    def test_death_date_empty_means_alive(self):
+        plant = Plant.create_from_dict({
+            "variety_name": "Tomato",
+            "latin_name": "Solanum lycopersicum",
+            "planting_date": "2026-01-01",
+        })
+        assert plant.is_dead is False
+
+    def test_death_reasons_list(self):
+        expected = [
+            "Pest infestation",
+            "Disease",
+            "Overwatering",
+            "Underwatering",
+            "Frost/cold damage",
+            "Heat stress",
+            "Transplant shock",
+            "Drought",
+            "Unknown",
+            "Other",
+        ]
+        assert Plant.DEATH_REASONS == expected

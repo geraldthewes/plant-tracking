@@ -122,12 +122,12 @@ def downgrade() -> None:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Alembic migration runs successfully: `alembic upgrade head`
-- [ ] Domain model accepts new fields: `python -c "from plant_service.domain import Plant; p = Plant(death_date='2026-08-07')" `
-- [ ] ORM model includes new columns: Check `PlantModel.__table__.columns`
-- [ ] Unit tests pass: `python -m pytest packages/plant_service/tests/unit/test_plant_model.py`
-- [ ] Type checking passes: `mypy packages/plant_service/src/plant_service/domain/plant.py`
-- [ ] Linting passes: `ruff check packages/plant_service/src/plant_service/domain/plant.py`
+- [x] Alembic migration runs successfully: `alembic upgrade head`
+- [x] Domain model accepts new fields: `python -c "from plant_service.domain import Plant; p = Plant(death_date='2026-08-07')" `
+- [x] ORM model includes new columns: Check `PlantModel.__table__.columns`
+- [x] Unit tests pass: `python -m pytest packages/plant_service/tests/unit/test_plant_model.py`
+- [x] Type checking passes: `mypy packages/plant_service/src/plant_service/domain/plant.py`
+- [x] Linting passes: `ruff check packages/plant_service/src/plant_service/domain/plant.py`
 
 #### Manual Verification:
 - [ ] New fields appear in Plant domain object when instantiated
@@ -157,12 +157,12 @@ This phase updates the service layer and repository to handle the new death trac
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Repository correctly maps death fields between domain and ORM objects
-- [ ] Creating a plant with death fields persists to database
-- [ ] Retrieving a plant returns correct death field values
-- [ ] Updating a plant's death fields works correctly
-- [ ] Unit tests for repository and service layer pass
-- [ ] Existing tests continue to pass
+- [x] Repository correctly maps death fields between domain and ORM objects
+- [x] Creating a plant with death fields persists to database
+- [x] Retrieving a plant returns correct death field values
+- [x] Updating a plant's death fields works correctly
+- [x] Unit tests for repository and service layer pass
+- [x] Existing tests continue to pass
 
 #### Manual Verification:
 - [ ] Plant record with death fields can be created and retrieved correctly
@@ -196,9 +196,9 @@ def mark_dead(args, db=None, database_dir=None, packets_dir=None, genera_dir=Non
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] CLI command `plant-tracking mark-dead --help` shows correct usage
-- [ ] Unit tests for mark-dead command pass
-- [ ] Existing CLI tests continue to pass
+- [x] CLI command `plant-tracking mark-dead --help` shows correct usage
+- [x] Unit tests for mark-dead command pass
+- [x] Existing CLI tests continue to pass
 
 #### Manual Verification:
 - [ ] CLI command prompts for plant ID, death date, reason, and comment
@@ -230,12 +230,12 @@ This phase implements the API endpoint to mark a plant as dead, adding the missi
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] API endpoint `/plants/{plant_id}/dead` accepts PATCH request with death data
-- [ ] API endpoint `/plants/` returns list of plants
-- [ ] API endpoint `/plants/{plant_id}` returns single plant details
-- [ ] API tests for new endpoints pass
-- [ ] Existing API tests continue to pass
-- [ ] OpenAPI spec is updated correctly
+- [x] API endpoint `/plants/{plant_id}/dead` accepts PATCH request with death data
+- [x] API endpoint `/plants/` returns list of plants
+- [x] API endpoint `/plants/{plant_id}` returns single plant details
+- [x] API tests for new endpoints pass
+- [x] Existing API tests continue to pass
+- [x] OpenAPI spec is updated correctly
 
 #### Manual Verification:
 - [ ] PATCH to `/plants/{plant_id}/dead` with valid data marks plant as dead
@@ -275,11 +275,11 @@ For now, we'll ensure the API supports filtering.
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Frontend API client compiles without errors
-- [ ] New fields are properly typed in TypeScript interfaces
-- [ ] API filtering parameters work correctly
-- [ ] Unit tests for frontend updates pass
-- [ ] Existing frontend tests continue to pass
+- [x] Frontend API client compiles without errors
+- [x] New fields are properly typed in TypeScript interfaces
+- [x] API filtering parameters work correctly
+- [x] Unit tests for frontend updates pass
+- [x] Existing frontend tests continue to pass
 
 #### Manual Verification:
 - [ ] Plant data retrieved via API includes death fields when applicable
@@ -314,13 +314,13 @@ This phase adds comprehensive tests for the new functionality and validates that
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] All unit tests pass: `python -m pytest packages/plant_service/tests/unit/`
-- [ ] All integration tests pass: `python -m pytest packages/plant_service/tests/integration/`
-- [ ] All CLI tests pass: `python -m pytest tests/`
-- [ ] All API tests pass: `python -m pytest backend/fastapi/tests/`
-- [ ] Full test suite passes: `python -m pytest`
-- [ ] Linting passes across entire project: `ruff check .`
-- [ ] Type checking passes (where applicable): `mypy packages/plant_service/src/`
+- [x] All unit tests pass: `python -m pytest packages/plant_service/tests/unit/`
+- [x] All integration tests pass: `python -m pytest packages/plant_service/tests/integration/`
+- [x] All CLI tests pass: `python -m pytest tests/`
+- [x] All API tests pass: `python -m pytest backend/fastapi/tests/`
+- [x] Full test suite passes: `python -m pytest`
+- [x] Linting passes across entire project: `ruff check .`
+- [x] Type checking passes (where applicable): `mypy packages/plant_service/src/`
 
 #### Manual Verification:
 - [ ] End-to-end workflow: Mark plant dead via CLI → Verify via API → List shows correct status
