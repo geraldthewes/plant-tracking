@@ -22,7 +22,7 @@ def upgrade() -> None:
     """Add death tracking fields to plants table."""
     op.add_column(
         'plants',
-        sa.Column('death_date', sa.String(length=10), nullable=True)
+        sa.Column('death_date', sa.Date(), nullable=True)
     )
     op.add_column(
         'plants',
