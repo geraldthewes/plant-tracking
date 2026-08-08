@@ -212,6 +212,15 @@ class TestPlantDeathFields:
         assert plant.death_reason == "Other"
         assert plant.death_comment == "Custom reason here"
 
+    def test_death_date_without_reason_raises(self):
+        with pytest.raises(ValueError, match="death_reason is required when death_date is provided"):
+            Plant.create_from_dict({
+                "variety_name": "Tomato",
+                "latin_name": "Solanum lycopersicum",
+                "planting_date": "2026-01-01",
+                "death_date": "2026-08-07",
+            })
+
     def test_invalid_death_date_format(self):
         with pytest.raises(ValueError, match="death_date must be in YYYY-MM-DD format"):
             Plant.create_from_dict({
@@ -301,6 +310,10 @@ class TestValidateDeathFields:
 
     def test_other_reason_with_comment(self):
         Plant.validate_death_fields("2026-08-07", "Other", "Custom explanation")
+
+    def test_death_date_without_reason_raises(self):
+        with pytest.raises(ValueError, match="death_reason is required when death_date is provided"):
+            Plant.validate_death_fields("2026-08-07", "")
 
     def test_all_death_reasons_valid(self):
         for reason in Plant.DEATH_REASONS:
