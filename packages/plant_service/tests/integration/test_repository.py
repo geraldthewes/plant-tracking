@@ -29,6 +29,24 @@ def uow(session_factory):
     return SqlAlchemyUnitOfWork(session_factory)
 
 
+@pytest.fixture
+def sample_plant_dict():
+    """Default plant creation dict for test setup"""
+    return {
+        "variety_name": "Test Plant",
+        "latin_name": "Test Latin",
+        "planting_date": "2026-01-01",
+    }
+
+
+@pytest.fixture
+def sample_plant(uow, sample_plant_dict):
+    """Create and return a committed plant for testing"""
+    with uow:
+        plant = uow.plants.create_plant(sample_plant_dict)
+    return plant
+
+
 class TestPlantRepository:
     def test_create_plant(self, uow):
         with uow:
@@ -238,19 +256,11 @@ class TestUnitOfWork:
 
 
 class TestPlantDeathFields:
-    def test_update_plant_death_fields(self, uow):
-        with uow:
-            plant = uow.plants.create_plant({
-                "variety_name": "Test Plant",
-                "latin_name": "Test Latin",
-                "planting_date": "2026-01-01",
-            })
-            plant_id = plant.id
-
-        assert plant.is_dead is False
+    def test_update_plant_death_fields(self, uow, sample_plant):
+        assert sample_plant.is_dead is False
 
         with uow:
-            updated = uow.plants.update_plant(plant_id, {
+            updated = uow.plants.update_plant(sample_plant.id, {
                 "death_date": "2026-08-07",
                 "death_reason": "Disease",
                 "death_comment": "Fungal infection",
@@ -262,13 +272,9 @@ class TestPlantDeathFields:
         assert updated.death_comment == "Fungal infection"
         assert updated.is_dead is True
 
-    def test_retrieve_dead_plant(self, uow):
+    def test_retrieve_dead_plant(self, uow, sample_plant_dict):
         with uow:
-            plant = uow.plants.create_plant({
-                "variety_name": "Dead Plant",
-                "latin_name": "Dead Latin",
-                "planting_date": "2026-01-01",
-            })
+            plant = uow.plants.create_plant({**sample_plant_dict, "variety_name": "Dead Plant", "latin_name": "Dead Latin"})
             plant_id = plant.id
 
         with uow:
@@ -285,18 +291,10 @@ class TestPlantDeathFields:
         assert retrieved.death_date == "2026-08-01"
         assert retrieved.death_reason == "Drought"
 
-    def test_list_plants_includes_death_fields(self, uow):
+    def test_list_plants_includes_death_fields(self, uow, sample_plant_dict):
         with uow:
-            uow.plants.create_plant({
-                "variety_name": "Alive Plant",
-                "latin_name": "Alive Latin",
-                "planting_date": "2026-01-01",
-            })
-            dead_plant = uow.plants.create_plant({
-                "variety_name": "Dead Plant",
-                "latin_name": "Dead Latin",
-                "planting_date": "2026-01-01",
-            })
+            uow.plants.create_plant({**sample_plant_dict, "variety_name": "Alive Plant", "latin_name": "Alive Latin"})
+            dead_plant = uow.plants.create_plant({**sample_plant_dict, "variety_name": "Dead Plant", "latin_name": "Dead Latin"})
             dead_plant_id = dead_plant.id
 
         with uow:
@@ -315,18 +313,10 @@ class TestPlantDeathFields:
         assert len(dead_plants) == 1
         assert dead_plants[0].death_date == "2026-08-01"
 
-    def test_list_plants_identifies_alive(self, uow):
+    def test_list_plants_identifies_alive(self, uow, sample_plant_dict):
         with uow:
-            uow.plants.create_plant({
-                "variety_name": "Alive Plant",
-                "latin_name": "Alive Latin",
-                "planting_date": "2026-01-01",
-            })
-            dead_plant = uow.plants.create_plant({
-                "variety_name": "Dead Plant",
-                "latin_name": "Dead Latin",
-                "planting_date": "2026-01-01",
-            })
+            uow.plants.create_plant({**sample_plant_dict, "variety_name": "Alive Plant", "latin_name": "Alive Latin"})
+            dead_plant = uow.plants.create_plant({**sample_plant_dict, "variety_name": "Dead Plant", "latin_name": "Dead Latin"})
             dead_plant_id = dead_plant.id
 
         with uow:
@@ -342,18 +332,10 @@ class TestPlantDeathFields:
         assert len(alive_only) == 1
         assert alive_only[0].variety_name == "Alive Plant"
 
-    def test_list_plants_identifies_dead(self, uow):
+    def test_list_plants_identifies_dead(self, uow, sample_plant_dict):
         with uow:
-            uow.plants.create_plant({
-                "variety_name": "Alive Plant",
-                "latin_name": "Alive Latin",
-                "planting_date": "2026-01-01",
-            })
-            dead_plant = uow.plants.create_plant({
-                "variety_name": "Dead Plant",
-                "latin_name": "Dead Latin",
-                "planting_date": "2026-01-01",
-            })
+            uow.plants.create_plant({**sample_plant_dict, "variety_name": "Alive Plant", "latin_name": "Alive Latin"})
+            dead_plant = uow.plants.create_plant({**sample_plant_dict, "variety_name": "Dead Plant", "latin_name": "Dead Latin"})
             dead_plant_id = dead_plant.id
 
         with uow:
@@ -369,23 +351,15 @@ class TestPlantDeathFields:
         assert len(dead_only) == 1
         assert dead_only[0].variety_name == "Dead Plant"
 
-    def test_clear_death_fields(self, uow):
+    def test_clear_death_fields(self, uow, sample_plant):
         with uow:
-            plant = uow.plants.create_plant({
-                "variety_name": "Test Plant",
-                "latin_name": "Test Latin",
-                "planting_date": "2026-01-01",
-            })
-            plant_id = plant.id
-
-        with uow:
-            uow.plants.update_plant(plant_id, {
+            uow.plants.update_plant(sample_plant.id, {
                 "death_date": "2026-08-01",
                 "death_reason": "Disease",
             })
 
         with uow:
-            cleared = uow.plants.update_plant(plant_id, {
+            cleared = uow.plants.update_plant(sample_plant.id, {
                 "death_date": None,
                 "death_reason": None,
                 "death_comment": None,
