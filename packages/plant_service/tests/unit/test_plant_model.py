@@ -275,3 +275,34 @@ class TestPlantDeathFields:
                 planting_date="2026-01-01",
                 death_date="01-01-2026",
             )
+
+
+class TestValidateDeathFields:
+    def test_valid_death_fields_passes(self):
+        Plant.validate_death_fields("2026-08-07", "Disease", "Fungal infection")
+
+    def test_valid_death_fields_no_comment(self):
+        Plant.validate_death_fields("2026-08-07", "Drought")
+
+    def test_invalid_death_date_format(self):
+        with pytest.raises(ValueError, match="death_date must be in YYYY-MM-DD format"):
+            Plant.validate_death_fields("01-01-2026", "Disease")
+
+    def test_invalid_death_reason(self):
+        with pytest.raises(ValueError, match="death_reason must be one of"):
+            Plant.validate_death_fields("2026-08-07", "InvalidReason")
+
+    def test_other_reason_no_comment(self):
+        with pytest.raises(
+            ValueError,
+            match='death_comment is required when death_reason is "Other"',
+        ):
+            Plant.validate_death_fields("2026-08-07", "Other", "")
+
+    def test_other_reason_with_comment(self):
+        Plant.validate_death_fields("2026-08-07", "Other", "Custom explanation")
+
+    def test_all_death_reasons_valid(self):
+        for reason in Plant.DEATH_REASONS:
+            comment = "detail" if reason == "Other" else ""
+            Plant.validate_death_fields("2026-08-07", reason, comment)
