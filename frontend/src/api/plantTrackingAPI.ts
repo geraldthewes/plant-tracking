@@ -555,7 +555,7 @@ export const getListPlantsApiPlantsGetUrl = (
   if (aliveOnly) params.append('alive_only', 'true');
   if (deadOnly) params.append('dead_only', 'true');
   const query = params.toString();
-  return `/api/plants/${query ? '?' + query : ''}`
+  return `/api/plants${query ? '?' + query : ''}`
 }
 
 /**
