@@ -3,11 +3,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from plant_service.adapters.repository.uow import SqlAlchemyUnitOfWork
 from plant_service.domain import Plant as PlantDomain
 from plant_tracking_api.dependencies import get_uow
+from plant_tracking_api.schemas import (
+    PlantDeadResponse,
+    PlantListResponse,
+    PlantResponse,
+    PlantSummary,
+)
 
 router = APIRouter()
 
 
-@router.get("/care-needed")
+@router.get("/care-needed", response_model=PlantListResponse)
 async def get_plants_needing_care(
     uow: SqlAlchemyUnitOfWork = Depends(get_uow),
 ):
@@ -19,10 +25,10 @@ async def get_plants_needing_care(
     # TODO: Implement actual care logic once thresholds are defined
     # For now, return empty response as specified
 
-    return {"count": 0, "plants": []}
+    return PlantListResponse(count=0, plants=[])
 
 
-@router.get("/")
+@router.get("/", response_model=PlantListResponse)
 async def list_plants(
     alive_only: bool = False,
     dead_only: bool = False,
@@ -33,24 +39,24 @@ async def list_plants(
     """
     plants = list(uow.plants.list_plants(alive_only=alive_only, dead_only=dead_only))
 
-    return {
-        "plants": [
-            {
-                "id": p.id,
-                "variety_name": p.variety_name,
-                "latin_name": p.latin_name,
-                "planting_date": p.planting_date,
-                "death_date": p.death_date or None,
-                "death_reason": p.death_reason or None,
-                "is_dead": p.is_dead,
-            }
+    return PlantListResponse(
+        plants=[
+            PlantSummary(
+                id=p.id,
+                variety_name=p.variety_name,
+                latin_name=p.latin_name,
+                planting_date=p.planting_date,
+                death_date=p.death_date or None,
+                death_reason=p.death_reason or None,
+                is_dead=p.is_dead,
+            )
             for p in plants
         ],
-        "count": len(plants),
-    }
+        count=len(plants),
+    )
 
 
-@router.get("/{plant_id}")
+@router.get("/{plant_id}", response_model=PlantResponse)
 async def get_plant(
     plant_id: str,
     uow: SqlAlchemyUnitOfWork = Depends(get_uow),
@@ -62,28 +68,28 @@ async def get_plant(
     if not plant:
         raise HTTPException(status_code=404, detail=f"Plant not found: {plant_id}")
 
-    return {
-        "id": plant.id,
-        "variety_name": plant.variety_name,
-        "latin_name": plant.latin_name,
-        "brand": plant.brand,
-        "days_to_maturity": plant.days_to_maturity,
-        "germination_time": plant.germination_time,
-        "planting_depth": plant.planting_depth,
-        "spacing": plant.spacing,
-        "sun_requirements": plant.sun_requirements,
-        "indoor_start_time": plant.indoor_start_time,
-        "planting_date": plant.planting_date,
-        "seed_packet_id": plant.seed_packet_id,
-        "genus_id": plant.genus_id,
-        "death_date": plant.death_date or None,
-        "death_reason": plant.death_reason or None,
-        "death_comment": plant.death_comment or None,
-        "is_dead": plant.is_dead,
-    }
+    return PlantResponse(
+        id=plant.id,
+        variety_name=plant.variety_name,
+        latin_name=plant.latin_name,
+        brand=plant.brand,
+        days_to_maturity=plant.days_to_maturity,
+        germination_time=plant.germination_time,
+        planting_depth=plant.planting_depth,
+        spacing=plant.spacing,
+        sun_requirements=plant.sun_requirements,
+        indoor_start_time=plant.indoor_start_time,
+        planting_date=plant.planting_date,
+        seed_packet_id=plant.seed_packet_id,
+        genus_id=plant.genus_id,
+        death_date=plant.death_date or None,
+        death_reason=plant.death_reason or None,
+        death_comment=plant.death_comment or None,
+        is_dead=plant.is_dead,
+    )
 
 
-@router.patch("/{plant_id}/dead")
+@router.patch("/{plant_id}/dead", response_model=PlantDeadResponse)
 async def mark_plant_dead(
     plant_id: str,
     death_date: str,
@@ -119,11 +125,11 @@ async def mark_plant_dead(
     if not updated:
         raise HTTPException(status_code=404, detail=f"Plant not found: {plant_id}")
 
-    return {
-        "id": updated.id,
-        "variety_name": updated.variety_name,
-        "death_date": updated.death_date,
-        "death_reason": updated.death_reason,
-        "death_comment": updated.death_comment,
-        "is_dead": updated.is_dead,
-    }
+    return PlantDeadResponse(
+        id=updated.id,
+        variety_name=updated.variety_name,
+        death_date=updated.death_date,
+        death_reason=updated.death_reason,
+        death_comment=updated.death_comment,
+        is_dead=updated.is_dead,
+    )
