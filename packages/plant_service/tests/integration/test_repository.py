@@ -315,7 +315,7 @@ class TestPlantDeathFields:
         assert len(dead_plants) == 1
         assert dead_plants[0].death_date == "2026-08-01"
 
-    def test_filter_alive_plants(self, uow):
+    def test_list_plants_identifies_alive(self, uow):
         with uow:
             uow.plants.create_plant({
                 "variety_name": "Alive Plant",
@@ -342,7 +342,7 @@ class TestPlantDeathFields:
         assert len(alive_only) == 1
         assert alive_only[0].variety_name == "Alive Plant"
 
-    def test_filter_dead_plants(self, uow):
+    def test_list_plants_identifies_dead(self, uow):
         with uow:
             uow.plants.create_plant({
                 "variety_name": "Alive Plant",
