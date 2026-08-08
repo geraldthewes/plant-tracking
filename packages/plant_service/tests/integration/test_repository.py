@@ -398,3 +398,82 @@ class TestPlantDeathFields:
         assert cleared.death_date == ""
         assert cleared.death_reason == ""
         assert cleared.death_comment == ""
+
+    def test_list_plants_alive_only_filter(self, uow, sample_plant_dict):
+        with uow:
+            uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Alive Plant",
+                "latin_name": "Alive Latin",
+            })
+            dead_plant = uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Dead Plant",
+                "latin_name": "Dead Latin",
+            })
+            dead_plant_id = dead_plant.id
+
+        with uow:
+            uow.plants.update_plant(dead_plant_id, {
+                "death_date": "2026-08-01",
+                "death_reason": "Drought",
+            })
+
+        with uow:
+            plants = list(uow.plants.list_plants(alive_only=True))
+
+        assert len(plants) == 1
+        assert plants[0].variety_name == "Alive Plant"
+        assert plants[0].is_dead is False
+
+    def test_list_plants_dead_only_filter(self, uow, sample_plant_dict):
+        with uow:
+            uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Alive Plant",
+                "latin_name": "Alive Latin",
+            })
+            dead_plant = uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Dead Plant",
+                "latin_name": "Dead Latin",
+            })
+            dead_plant_id = dead_plant.id
+
+        with uow:
+            uow.plants.update_plant(dead_plant_id, {
+                "death_date": "2026-08-01",
+                "death_reason": "Drought",
+            })
+
+        with uow:
+            plants = list(uow.plants.list_plants(dead_only=True))
+
+        assert len(plants) == 1
+        assert plants[0].variety_name == "Dead Plant"
+        assert plants[0].is_dead is True
+
+    def test_list_plants_no_filter_returns_all(self, uow, sample_plant_dict):
+        with uow:
+            uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Alive Plant",
+                "latin_name": "Alive Latin",
+            })
+            dead_plant = uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Dead Plant",
+                "latin_name": "Dead Latin",
+            })
+            dead_plant_id = dead_plant.id
+
+        with uow:
+            uow.plants.update_plant(dead_plant_id, {
+                "death_date": "2026-08-01",
+                "death_reason": "Drought",
+            })
+
+        with uow:
+            plants = list(uow.plants.list_plants())
+
+        assert len(plants) == 2

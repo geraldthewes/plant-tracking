@@ -73,9 +73,16 @@ class PlantRepository(BaseRepository[Plant], PlantService):
             return result.to_domain()
         return None
 
-    def list_plants(self) -> Iterator[PlantDomain]:
-        """List all plants (returns iterator for streaming)"""
-        for orm_plant in self.list_all():
+    def list_plants(self, alive_only: bool = False, dead_only: bool = False) -> Iterator[PlantDomain]:
+        """List plants with optional alive/dead filtering at DB level"""
+        stmt = select(Plant)
+
+        if alive_only:
+            stmt = stmt.where(Plant.death_date.is_(None))
+        elif dead_only:
+            stmt = stmt.where(Plant.death_date.isnot(None))
+
+        for orm_plant in self.session.execute(stmt).scalars().yield_per(100):
             yield orm_plant.to_domain()
 
     def update_plant(self, plant_id: str, plant_data: dict) -> PlantDomain | None:

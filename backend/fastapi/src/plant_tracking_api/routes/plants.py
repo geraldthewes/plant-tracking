@@ -31,12 +31,7 @@ async def list_plants(
     """
     List all plants with optional alive/dead filtering.
     """
-    plants = list(uow.plants.list_plants())
-
-    if alive_only:
-        plants = [p for p in plants if not p.is_dead]
-    elif dead_only:
-        plants = [p for p in plants if p.is_dead]
+    plants = list(uow.plants.list_plants(alive_only=alive_only, dead_only=dead_only))
 
     return {
         "plants": [

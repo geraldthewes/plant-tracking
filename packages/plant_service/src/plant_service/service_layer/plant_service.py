@@ -18,8 +18,8 @@ class PlantService(Protocol):
         """Retrieve a plant by ID"""
         ...
 
-    def list_plants(self) -> Iterator[Plant]:
-        """List all plants (returns iterator for streaming)"""
+    def list_plants(self, alive_only: bool = False, dead_only: bool = False) -> Iterator[Plant]:
+        """List plants with optional alive/dead filtering (returns iterator for streaming)"""
         ...
 
     def update_plant(self, plant_id: str, plant_data: dict) -> Plant | None:
