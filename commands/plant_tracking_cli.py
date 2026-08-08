@@ -5,6 +5,7 @@ Plant Tracking CLI - Main entry point for plant tracking commands
 import argparse
 import os
 import sys
+from datetime import datetime
 import traceback
 
 # Markdown model imports (for backup/export during transition)
@@ -32,6 +33,7 @@ except ImportError:
 # Service package imports
 try:
     from plant_service.bootstrap import create_unit_of_work
+    from plant_service.domain import Plant as PlantDomain
     from plant_service.domain.exceptions import (
         PlantTrackingServiceException,
         ValidationException,
@@ -752,8 +754,6 @@ def mark_dead(args, db=None):
                 print(f"  Death reason: {plant.death_reason}")
                 sys.exit(1)
 
-            from plant_service.domain import Plant as PlantDomain
-
             print("=== Mark Plant as Dead ===")
             print(f"Plant: {plant.id} - {plant.variety_name} ({plant.latin_name})")
             print()
@@ -762,7 +762,6 @@ def mark_dead(args, db=None):
             while True:
                 death_date = input("Death date (YYYY-MM-DD): ").strip()
                 try:
-                    from datetime import datetime
                     datetime.strptime(death_date, "%Y-%m-%d")
                     break
                 except ValueError:
