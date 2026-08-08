@@ -393,3 +393,6 @@ class TestPlantDeathFields:
 
         assert cleared is not None
         assert cleared.is_dead is False
+        assert cleared.death_date == ""
+        assert cleared.death_reason == ""
+        assert cleared.death_comment == ""
