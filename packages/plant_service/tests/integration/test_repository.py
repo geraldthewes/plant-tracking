@@ -274,7 +274,11 @@ class TestPlantDeathFields:
 
     def test_retrieve_dead_plant(self, uow, sample_plant_dict):
         with uow:
-            plant = uow.plants.create_plant({**sample_plant_dict, "variety_name": "Dead Plant", "latin_name": "Dead Latin"})
+            plant = uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Dead Plant",
+                "latin_name": "Dead Latin",
+            })
             plant_id = plant.id
 
         with uow:
@@ -293,8 +297,16 @@ class TestPlantDeathFields:
 
     def test_list_plants_includes_death_fields(self, uow, sample_plant_dict):
         with uow:
-            uow.plants.create_plant({**sample_plant_dict, "variety_name": "Alive Plant", "latin_name": "Alive Latin"})
-            dead_plant = uow.plants.create_plant({**sample_plant_dict, "variety_name": "Dead Plant", "latin_name": "Dead Latin"})
+            uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Alive Plant",
+                "latin_name": "Alive Latin",
+            })
+            dead_plant = uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Dead Plant",
+                "latin_name": "Dead Latin",
+            })
             dead_plant_id = dead_plant.id
 
         with uow:
@@ -315,8 +327,16 @@ class TestPlantDeathFields:
 
     def test_list_plants_identifies_alive(self, uow, sample_plant_dict):
         with uow:
-            uow.plants.create_plant({**sample_plant_dict, "variety_name": "Alive Plant", "latin_name": "Alive Latin"})
-            dead_plant = uow.plants.create_plant({**sample_plant_dict, "variety_name": "Dead Plant", "latin_name": "Dead Latin"})
+            uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Alive Plant",
+                "latin_name": "Alive Latin",
+            })
+            dead_plant = uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Dead Plant",
+                "latin_name": "Dead Latin",
+            })
             dead_plant_id = dead_plant.id
 
         with uow:
@@ -334,8 +354,16 @@ class TestPlantDeathFields:
 
     def test_list_plants_identifies_dead(self, uow, sample_plant_dict):
         with uow:
-            uow.plants.create_plant({**sample_plant_dict, "variety_name": "Alive Plant", "latin_name": "Alive Latin"})
-            dead_plant = uow.plants.create_plant({**sample_plant_dict, "variety_name": "Dead Plant", "latin_name": "Dead Latin"})
+            uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Alive Plant",
+                "latin_name": "Alive Latin",
+            })
+            dead_plant = uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Dead Plant",
+                "latin_name": "Dead Latin",
+            })
             dead_plant_id = dead_plant.id
 
         with uow:

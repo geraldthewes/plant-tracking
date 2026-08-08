@@ -188,7 +188,10 @@ class TestPlantDeathFields:
             })
 
     def test_other_reason_requires_comment(self):
-        with pytest.raises(ValueError, match='death_comment is required when death_reason is "Other"'):
+        with pytest.raises(
+            ValueError,
+            match='death_comment is required when death_reason is "Other"',
+        ):
             Plant.create_from_dict({
                 "variety_name": "Tomato",
                 "latin_name": "Solanum lycopersicum",
@@ -240,3 +243,35 @@ class TestPlantDeathFields:
             "Other",
         ]
         assert Plant.DEATH_REASONS == expected
+
+    def test_invalid_death_reason_direct_ctor(self):
+        with pytest.raises(ValueError, match="death_reason must be one of"):
+            Plant(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date="2026-01-01",
+                death_date="2026-08-07",
+                death_reason="Not a valid reason",
+            )
+
+    def test_other_reason_requires_comment_direct_ctor(self):
+        with pytest.raises(
+            ValueError,
+            match='death_comment is required when death_reason is "Other"',
+        ):
+            Plant(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date="2026-01-01",
+                death_date="2026-08-07",
+                death_reason="Other",
+            )
+
+    def test_invalid_death_date_format_direct_ctor(self):
+        with pytest.raises(ValueError, match="death_date must be in YYYY-MM-DD format"):
+            Plant(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date="2026-01-01",
+                death_date="01-01-2026",
+            )
