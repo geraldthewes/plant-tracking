@@ -5,6 +5,7 @@ Plant Tracking CLI - Main entry point for plant tracking commands
 import argparse
 import os
 import sys
+import traceback
 
 # Markdown model imports (for backup/export during transition)
 from .genus_model import get_genera_dir
@@ -828,6 +829,7 @@ def mark_dead(args, db=None):
         sys.exit(1)
     except Exception as e:
         print(f"✗ Error marking plant as dead: {e}")
+        traceback.print_exc()
         sys.exit(1)
 
 
