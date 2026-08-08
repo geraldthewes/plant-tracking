@@ -801,8 +801,8 @@ def mark_dead(args, db=None):
                     death_comment = input(
                         "Comment (required for 'Other'): "
                     ).strip()
-
-            death_comment = input("Additional comment (optional): ").strip()
+            else:
+                death_comment = input("Additional comment (optional): ").strip()
 
             updated = uow.plants.update_plant(plant_id, {
                 "death_date": death_date,
