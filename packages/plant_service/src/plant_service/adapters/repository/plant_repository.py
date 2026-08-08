@@ -73,7 +73,9 @@ class PlantRepository(BaseRepository[Plant], PlantService):
             return result.to_domain()
         return None
 
-    def list_plants(self, alive_only: bool = False, dead_only: bool = False) -> Iterator[PlantDomain]:
+    def list_plants(
+        self, alive_only: bool = False, dead_only: bool = False
+    ) -> Iterator[PlantDomain]:
         """List plants with optional alive/dead filtering at DB level"""
         stmt = select(Plant)
 

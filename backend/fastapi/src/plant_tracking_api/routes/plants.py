@@ -104,16 +104,9 @@ async def mark_plant_dead(
             detail=f"Plant {plant_id} is already marked as dead on {plant.death_date}",
         )
 
-    # Validate using domain model
+    # Validate death fields
     try:
-        PlantDomain.create_from_dict({
-            "variety_name": plant.variety_name,
-            "latin_name": plant.latin_name,
-            "planting_date": plant.planting_date,
-            "death_date": death_date,
-            "death_reason": death_reason,
-            "death_comment": death_comment,
-        })
+        PlantDomain.validate_death_fields(death_date, death_reason, death_comment)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
@@ -122,6 +115,9 @@ async def mark_plant_dead(
         "death_reason": death_reason,
         "death_comment": death_comment,
     })
+
+    if not updated:
+        raise HTTPException(status_code=404, detail=f"Plant not found: {plant_id}")
 
     return {
         "id": updated.id,

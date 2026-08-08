@@ -47,6 +47,11 @@ class Plant:
         "Other",
     ]
 
+    def __post_init__(self) -> None:
+        """Validate death fields on construction."""
+        Plant.validate_death_fields(self.death_date, self.death_reason, self.death_comment)
+
+
     @property
     def is_dead(self) -> bool:
         """Return True if the plant has been marked as dead."""
@@ -149,3 +154,27 @@ class Plant:
             )
 
         return cls(**data)
+
+    @staticmethod
+    def validate_death_fields(
+        death_date: str,
+        death_reason: str,
+        death_comment: str = "",
+    ) -> None:
+        """Validate death-related fields only."""
+        if death_date:
+            try:
+                datetime.strptime(death_date, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError("death_date must be in YYYY-MM-DD format")
+
+        if death_reason:
+            if death_reason not in Plant.DEATH_REASONS:
+                raise ValueError(
+                    f"death_reason must be one of: {', '.join(Plant.DEATH_REASONS)}"
+                )
+
+        if death_reason == "Other" and not death_comment:
+            raise ValueError(
+                'death_comment is required when death_reason is "Other"'
+            )
