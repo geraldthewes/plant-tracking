@@ -153,13 +153,19 @@ class Plant:
                 'death_comment is required when death_reason is "Other"'
             )
 
-        # Ensure consistency: death_date requires a death_reason
+        # Ensure consistency: death fields must be provided together
         if (
             "death_date" in data
             and data["death_date"]
             and not data.get("death_reason")
         ):
             raise ValueError("death_reason is required when death_date is provided")
+        if (
+            "death_reason" in data
+            and data["death_reason"]
+            and not data.get("death_date")
+        ):
+            raise ValueError("death_date is required when death_reason is provided")
 
         return cls(**data)
 
@@ -189,3 +195,5 @@ class Plant:
 
         if death_date and not death_reason:
             raise ValueError("death_reason is required when death_date is provided")
+        if death_reason and not death_date:
+            raise ValueError("death_date is required when death_reason is provided")
