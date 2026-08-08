@@ -1869,10 +1869,10 @@ def show_plant(args, db=None):
                 if plant.is_dead:
                     print()
                     print("  *** DEAD ***")
-                    print(f"  Death Date:<22    {plant.death_date}")
-                    print(f"  Death Reason:<22   {plant.death_reason}")
+                    print(f"  {'Death Date':<22} {plant.death_date}")
+                    print(f"  {'Death Reason':<22} {plant.death_reason}")
                     if plant.death_comment:
-                        print(f"  Death Comment:<22  {plant.death_comment}")
+                        print(f"  {'Death Comment':<22} {plant.death_comment}")
                 print()
                 if plant.created_at:
                     print(f"  Created: {plant.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
