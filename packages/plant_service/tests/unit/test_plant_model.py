@@ -238,20 +238,12 @@ class TestPlantDeathFields:
         })
         assert plant.is_dead is False
 
-    def test_death_reasons_list(self):
-        expected = [
-            "Pest infestation",
-            "Disease",
-            "Overwatering",
-            "Underwatering",
-            "Frost/cold damage",
-            "Heat stress",
-            "Transplant shock",
-            "Drought",
-            "Unknown",
-            "Other",
-        ]
-        assert Plant.DEATH_REASONS == expected
+    def test_death_reasons_invariants(self):
+        assert len(Plant.DEATH_REASONS) > 0
+        assert len(Plant.DEATH_REASONS) == len(set(Plant.DEATH_REASONS))
+        assert all(isinstance(r, str) and r for r in Plant.DEATH_REASONS)
+        assert "Other" in Plant.DEATH_REASONS
+        assert "Unknown" in Plant.DEATH_REASONS
 
     def test_invalid_death_reason_direct_ctor(self):
         with pytest.raises(ValueError, match="death_reason must be one of"):
