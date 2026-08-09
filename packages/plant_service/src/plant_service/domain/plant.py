@@ -147,13 +147,13 @@ class Plant:
         death_comment: str | None = None,
     ) -> None:
         """Validate death-related fields only."""
-        if death_date:
+        if death_date is not None:
             try:
                 datetime.strptime(death_date, "%Y-%m-%d")
             except ValueError:
                 raise ValueError("death_date must be in YYYY-MM-DD format")
 
-        if death_reason:
+        if death_reason is not None:
             if death_reason not in cls.DEATH_REASONS:
                 raise ValueError(
                     f"death_reason must be one of: {', '.join(cls.DEATH_REASONS)}"
@@ -164,7 +164,7 @@ class Plant:
                 'death_comment is required when death_reason is "Other"'
             )
 
-        if death_date and not death_reason:
+        if death_date is not None and not death_reason:
             raise ValueError("death_reason is required when death_date is provided")
-        if death_reason and not death_date:
+        if death_reason is not None and not death_date:
             raise ValueError("death_date is required when death_reason is provided")

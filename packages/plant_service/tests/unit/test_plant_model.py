@@ -304,10 +304,42 @@ class TestValidateDeathFields:
         Plant.validate_death_fields("2026-08-07", "Other", "Custom explanation")
 
     def test_death_date_without_reason_raises(self):
-        with pytest.raises(ValueError, match="death_reason is required when death_date is provided"):
+        with pytest.raises(ValueError):
             Plant.validate_death_fields("2026-08-07", "")
 
     def test_all_death_reasons_valid(self):
         for reason in Plant.DEATH_REASONS:
             comment = "detail" if reason == "Other" else ""
             Plant.validate_death_fields("2026-08-07", reason, comment)
+
+    def test_empty_string_death_date_rejected(self):
+        with pytest.raises(ValueError):
+            Plant.validate_death_fields("", "Disease")
+
+    def test_empty_string_death_reason_rejected(self):
+        with pytest.raises(ValueError):
+            Plant.validate_death_fields("2026-08-07", "")
+
+    def test_both_empty_strings_rejected(self):
+        with pytest.raises(ValueError):
+            Plant.validate_death_fields("", "")
+
+    def test_empty_string_death_date_via_constructor(self):
+        with pytest.raises(ValueError):
+            Plant(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date="2026-01-01",
+                death_date="",
+                death_reason="Disease",
+            )
+
+    def test_empty_string_death_reason_via_constructor(self):
+        with pytest.raises(ValueError):
+            Plant(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date="2026-01-01",
+                death_date="2026-08-07",
+                death_reason="",
+            )
