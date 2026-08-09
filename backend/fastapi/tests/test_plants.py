@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_get_plants_needing_care_returns_empty(client):
     """Test that care-needed endpoint returns empty response."""
     response = client.get("/api/plants/care-needed")
@@ -64,32 +67,25 @@ def test_get_plant_not_found(plants_client):
     assert response.status_code == 404
 
 
-def test_mark_plant_dead(plants_client):
+@pytest.mark.parametrize(
+    "plant_id,death_date,death_reason,death_comment,expected_reason",
+    [
+        ("TO-2026-001", "2026-08-07", "Drought", "Too hot", "Drought"),
+        ("TO-2026-001", "2026-08-07", "Other", "Pest infestation", "Other"),
+    ],
+)
+def test_mark_plant_dead(plants_client, plant_id, death_date, death_reason, death_comment, expected_reason):
     """Test that mark plant dead works."""
     response = plants_client.patch(
-        "/api/plants/TO-2026-001/dead",
-        params={"death_date": "2026-08-07", "death_reason": "Drought", "death_comment": "Too hot"}
+        f"/api/plants/{plant_id}/dead",
+        params={"death_date": death_date, "death_reason": death_reason, "death_comment": death_comment}
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == "TO-2026-001"
-    assert data["death_date"] == "2026-08-07"
-    assert data["death_reason"] == "Drought"
-    assert data["death_comment"] == "Too hot"
-    assert data["is_dead"] is True
-
-
-def test_mark_plant_other_with_comment(plants_client):
-    """Test that 'Other' reason with valid comment succeeds."""
-    response = plants_client.patch(
-        "/api/plants/TO-2026-001/dead",
-        params={"death_date": "2026-08-07", "death_reason": "Other", "death_comment": "Pest infestation"}
-    )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["id"] == "TO-2026-001"
-    assert data["death_reason"] == "Other"
-    assert data["death_comment"] == "Pest infestation"
+    assert data["id"] == plant_id
+    assert data["death_date"] == death_date
+    assert data["death_reason"] == expected_reason
+    assert data["death_comment"] == death_comment
     assert data["is_dead"] is True
 
 
