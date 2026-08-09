@@ -74,6 +74,20 @@ def test_mark_plant_dead(plants_client):
     assert data["id"] == "TO-2026-001"
     assert data["death_date"] == "2026-08-07"
     assert data["death_reason"] == "Drought"
+    assert data["death_comment"] == "Too hot"
+    assert data["is_dead"] is True
+
+
+def test_mark_plant_other_with_comment(plants_client):
+    """Test that 'Other' reason with valid comment succeeds."""
+    response = plants_client.patch(
+        "/api/plants/TO-2026-001/dead?death_date=2026-08-07&death_reason=Other&death_comment=Pest+infestation"
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == "TO-2026-001"
+    assert data["death_reason"] == "Other"
+    assert data["death_comment"] == "Pest infestation"
     assert data["is_dead"] is True
 
 
