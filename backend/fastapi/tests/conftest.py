@@ -27,7 +27,12 @@ def _mock_uow_with_plants():
         death_comment="Fungal infection",
     )
 
-    mock_uow.plants.list_plants.return_value = iter([alive_plant, dead_plant])
+    mock_uow.plants.list_plants.side_effect = lambda alive_only=False, dead_only=False: iter(
+        [p for p in [alive_plant, dead_plant]
+         if (alive_only and not p.is_dead) or
+             (dead_only and p.is_dead) or
+             (not alive_only and not dead_only)]
+    )
 
     def get_plant(plant_id):
         if plant_id == "TO-2026-001":
