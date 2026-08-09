@@ -47,6 +47,12 @@ async def list_plants(
     Raises:
         HTTPException: 400 if both filters specified.
     """
+    if alive_only and dead_only:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot specify both alive_only and dead_only",
+        )
+
     plants = list(uow.plants.list_plants(alive_only=alive_only, dead_only=dead_only))
 
     return PlantListResponse(
@@ -56,8 +62,8 @@ async def list_plants(
                 variety_name=p.variety_name,
                 latin_name=p.latin_name,
                 planting_date=p.planting_date,
-                death_date=p.death_date or None,
-                death_reason=p.death_reason or None,
+                death_date=p.death_date,
+                death_reason=p.death_reason,
                 is_dead=p.is_dead,
             )
             for p in plants
