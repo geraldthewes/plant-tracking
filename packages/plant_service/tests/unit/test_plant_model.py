@@ -128,6 +128,14 @@ class TestPlantCreateFromDict:
 
 
 class TestPlantDeathFields:
+    @pytest.fixture
+    def base_plant_dict(self):
+        return {
+            "variety_name": "Tomato",
+            "latin_name": "Solanum lycopersicum",
+            "planting_date": "2026-01-01",
+        }
+
     def test_default_alive(self):
         plant = Plant(
             variety_name="Tomato",
@@ -153,28 +161,26 @@ class TestPlantDeathFields:
         assert plant.death_comment == "Fungal infection"
         assert plant.is_dead is True
 
-    def test_create_from_dict_with_death_fields(self):
-        plant = Plant.create_from_dict({
-            "variety_name": "Tomato",
-            "latin_name": "Solanum lycopersicum",
-            "planting_date": "2026-01-01",
+    def test_create_from_dict_with_death_fields(self, base_plant_dict):
+        data = {
+            **base_plant_dict,
             "death_date": "2026-08-07",
             "death_reason": "Disease",
             "death_comment": "Fungal infection",
-        })
+        }
+        plant = Plant.create_from_dict(data)
         assert plant.is_dead is True
         assert plant.death_reason == "Disease"
 
-    def test_valid_death_reasons(self):
+    def test_valid_death_reasons(self, base_plant_dict):
         for reason in Plant.DEATH_REASONS:
-            plant = Plant.create_from_dict({
-                "variety_name": "Tomato",
-                "latin_name": "Solanum lycopersicum",
-                "planting_date": "2026-01-01",
+            data = {
+                **base_plant_dict,
                 "death_date": "2026-08-07",
                 "death_reason": reason,
                 "death_comment": "comment" if reason == "Other" else "",
-            })
+            }
+            plant = Plant.create_from_dict(data)
             assert plant.death_reason == reason
 
     @pytest.mark.parametrize(
