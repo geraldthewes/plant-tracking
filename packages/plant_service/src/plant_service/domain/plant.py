@@ -146,7 +146,13 @@ class Plant:
         death_reason: str | None,
         death_comment: str | None = None,
     ) -> None:
-        """Validate death-related fields only."""
+        """Validate death-related fields only.
+
+        - death_date (if provided) must be in YYYY-MM-DD format.
+        - death_reason (if provided) must be in DEATH_REASONS.
+        - If death_reason == 'Other', death_comment is required.
+        - death_date and death_reason must both be present or both absent.
+        """
         if death_date is not None:
             try:
                 datetime.strptime(death_date, "%Y-%m-%d")
