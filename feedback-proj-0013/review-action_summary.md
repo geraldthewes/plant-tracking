@@ -54,12 +54,13 @@ Run started:  2026-08-08 19:53:57 UTC
 Coding agent: opencode (opus)
 
 Restored:   1
-Processed:  26
+Processed:  28
 Committed:  8
-Skipped:    12
+Skipped:    14
 Errors:     6
+Total cost: $0.0000 across 0 agent call(s)
 Interrupted: no
-Progress: 26 out of 29 findings processed
+Progress: 28 out of 29 findings processed
 
 ## Findings
 
@@ -92,5 +93,5 @@ Progress: 26 out of 29 findings processed
 | [cf9314f8-7](./cf9314f8-7.md) | commands/plant_tracking_cli.py | Fixed | `5f2554f0` | Fix applied and committed: fix: death_comment is initialized and set for 'Other' r... [cf9314f8-7] |
 | [cf9314f8-8](./cf9314f8-8.md) | commands/plant_tracking_cli.py | Fixed | `1013ece0` | Fix applied and committed: fix: Malformed f-strings for dead plant details: litera... [cf9314f8-8] |
 | [cf9314f8-9](./cf9314f8-9.md) | commands/plant_tracking_cli.py | Rejected (BACKLOG) | — | Verdict BACKLOG — not actioned |
-| [d30f3ff2-22](./d30f3ff2-22.md) | packages/plant_service/src/plant_service/domain/plant.py | Not processed | — | — |
-| [d30f3ff2-23](./d30f3ff2-23.md) | packages/plant_service/src/plant_service/domain/plant.py | Not processed | — | — |
+| [d30f3ff2-22](./d30f3ff2-22.md) | packages/plant_service/src/plant_service/domain/plant.py | Skipped | — | File already contained expected changes |
+| [d30f3ff2-23](./d30f3ff2-23.md) | packages/plant_service/src/plant_service/domain/plant.py | Skipped | — | File already contained expected changes |
