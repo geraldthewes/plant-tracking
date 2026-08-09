@@ -27,7 +27,7 @@ def test_list_plants_returns_all(plants_client):
 
 def test_list_plants_alive_only(plants_client):
     """Test that alive_only filter works."""
-    response = plants_client.get("/api/plants/?alive_only=true")
+    response = plants_client.get("/api/plants/", params={"alive_only": "true"})
     assert response.status_code == 200
     data = response.json()
     assert data["count"] == 1
@@ -37,7 +37,7 @@ def test_list_plants_alive_only(plants_client):
 
 def test_list_plants_dead_only(plants_client):
     """Test that dead_only filter works."""
-    response = plants_client.get("/api/plants/?dead_only=true")
+    response = plants_client.get("/api/plants/", params={"dead_only": "true"})
     assert response.status_code == 200
     data = response.json()
     assert data["count"] == 1
@@ -67,7 +67,8 @@ def test_get_plant_not_found(plants_client):
 def test_mark_plant_dead(plants_client):
     """Test that mark plant dead works."""
     response = plants_client.patch(
-        "/api/plants/TO-2026-001/dead?death_date=2026-08-07&death_reason=Drought&death_comment=Too+hot"
+        "/api/plants/TO-2026-001/dead",
+        params={"death_date": "2026-08-07", "death_reason": "Drought", "death_comment": "Too hot"}
     )
     assert response.status_code == 200
     data = response.json()
@@ -81,7 +82,8 @@ def test_mark_plant_dead(plants_client):
 def test_mark_plant_other_with_comment(plants_client):
     """Test that 'Other' reason with valid comment succeeds."""
     response = plants_client.patch(
-        "/api/plants/TO-2026-001/dead?death_date=2026-08-07&death_reason=Other&death_comment=Pest+infestation"
+        "/api/plants/TO-2026-001/dead",
+        params={"death_date": "2026-08-07", "death_reason": "Other", "death_comment": "Pest infestation"}
     )
     assert response.status_code == 200
     data = response.json()
@@ -94,7 +96,8 @@ def test_mark_plant_other_with_comment(plants_client):
 def test_mark_plant_already_dead(plants_client):
     """Test that marking already dead plant returns 400."""
     response = plants_client.patch(
-        "/api/plants/PE-2026-001/dead?death_date=2026-08-07&death_reason=Disease"
+        "/api/plants/PE-2026-001/dead",
+        params={"death_date": "2026-08-07", "death_reason": "Disease"}
     )
     assert response.status_code == 400
 
@@ -102,7 +105,8 @@ def test_mark_plant_already_dead(plants_client):
 def test_mark_plant_invalid_reason(plants_client):
     """Test that invalid death reason returns 422."""
     response = plants_client.patch(
-        "/api/plants/TO-2026-001/dead?death_date=2026-08-07&death_reason=InvalidReason"
+        "/api/plants/TO-2026-001/dead",
+        params={"death_date": "2026-08-07", "death_reason": "InvalidReason"}
     )
     assert response.status_code == 422
 
@@ -110,7 +114,8 @@ def test_mark_plant_invalid_reason(plants_client):
 def test_mark_plant_other_requires_comment(plants_client):
     """Test that 'Other' reason requires comment."""
     response = plants_client.patch(
-        "/api/plants/TO-2026-001/dead?death_date=2026-08-07&death_reason=Other&death_comment="
+        "/api/plants/TO-2026-001/dead",
+        params={"death_date": "2026-08-07", "death_reason": "Other", "death_comment": ""}
     )
     assert response.status_code == 422
 
@@ -118,6 +123,7 @@ def test_mark_plant_other_requires_comment(plants_client):
 def test_mark_plant_not_found(plants_client):
     """Test that marking non-existent plant returns 404."""
     response = plants_client.patch(
-        "/api/plants/NONEXISTENT/dead?death_date=2026-08-07&death_reason=Disease"
+        "/api/plants/NONEXISTENT/dead",
+        params={"death_date": "2026-08-07", "death_reason": "Disease"}
     )
     assert response.status_code == 404
