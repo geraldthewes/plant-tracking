@@ -131,7 +131,7 @@ class Plant:
 
         # Validate death fields (delegates to shared validator)
         if any(k in data for k in ("death_date", "death_reason", "death_comment")):
-            Plant.validate_death_fields(
+            cls.validate_death_fields(
                 data.get("death_date", ""),
                 data.get("death_reason", ""),
                 data.get("death_comment", ""),
@@ -139,8 +139,9 @@ class Plant:
 
         return cls(**data)
 
-    @staticmethod
+    @classmethod
     def validate_death_fields(
+        cls,
         death_date: str,
         death_reason: str,
         death_comment: str = "",
@@ -153,9 +154,9 @@ class Plant:
                 raise ValueError("death_date must be in YYYY-MM-DD format")
 
         if death_reason:
-            if death_reason not in Plant.DEATH_REASONS:
+            if death_reason not in cls.DEATH_REASONS:
                 raise ValueError(
-                    f"death_reason must be one of: {', '.join(Plant.DEATH_REASONS)}"
+                    f"death_reason must be one of: {', '.join(cls.DEATH_REASONS)}"
                 )
 
         if death_reason == "Other" and not death_comment:
