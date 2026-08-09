@@ -663,7 +663,7 @@ export const markPlantDeadApiPlantsPlantIdDeadPatch = async (
   options?: RequestInit,
 ): Promise<markPlantDeadApiPlantsPlantIdDeadPatchResponse> => {
   const formUrlEncoded = new URLSearchParams();
-  if (body.death_date == null || body.death_reason == null) {
+  if (body.death_date === undefined || body.death_date === null || body.death_reason === undefined || body.death_reason === null) {
     throw new Error('death_date and death_reason are required');
   }
   formUrlEncoded.append('death_date', body.death_date);
