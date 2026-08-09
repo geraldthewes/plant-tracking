@@ -49,14 +49,6 @@ def _mock_uow_with_plants():
     return mock_uow
 
 
-def test_get_uow_mock():
-    """Mock UoW dependency for tests."""
-    return None
-
-
-app.dependency_overrides[get_uow] = test_get_uow_mock
-
-
 @pytest.fixture
 def client():
     """Create test client."""
