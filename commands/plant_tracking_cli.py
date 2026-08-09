@@ -154,10 +154,11 @@ def main():
     list_parser = subparsers.add_parser(
         "list-plants", help="List all plants"
     )
-    list_parser.add_argument(
+    status_group = list_parser.add_mutually_exclusive_group()
+    status_group.add_argument(
         "--alive-only", action="store_true", help="Show only living plants"
     )
-    list_parser.add_argument(
+    status_group.add_argument(
         "--dead-only", action="store_true", help="Show only dead plants"
     )
 
