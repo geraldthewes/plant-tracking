@@ -663,13 +663,15 @@ export const markPlantDeadApiPlantsPlantIdDeadPatch = async (
   options?: RequestInit,
 ): Promise<markPlantDeadApiPlantsPlantIdDeadPatchResponse> => {
   const formUrlEncoded = new URLSearchParams();
-  if (body.death_date === undefined || body.death_date === null || body.death_reason === undefined || body.death_reason === null) {
-    throw new Error('death_date and death_reason are required');
+  const date = body.death_date?.trim();
+  const reason = body.death_reason?.trim();
+  if (!date || !reason) {
+    throw new Error('death_date and death_reason are required and non-empty');
   }
-  formUrlEncoded.append('death_date', body.death_date);
-  formUrlEncoded.append('death_reason', body.death_reason);
-  if (body.death_comment !== undefined && body.death_comment !== null) {
-    formUrlEncoded.append('death_comment', body.death_comment);
+  formUrlEncoded.append('death_date', date);
+  formUrlEncoded.append('death_reason', reason);
+  if (body.death_comment?.trim()) {
+    formUrlEncoded.append('death_comment', body.death_comment.trim());
   }
 
   const res = await fetch(getMarkPlantDeadApiPlantsPlantIdDeadPatchUrl(plantId), {
