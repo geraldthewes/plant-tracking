@@ -36,6 +36,16 @@ async def list_plants(
 ):
     """
     List all plants with optional alive/dead filtering.
+
+    Args:
+        alive_only: If True, return only plants without death_date.
+        dead_only: If True, return only plants with death_date.
+
+    Returns:
+        PlantListResponse: List of matching plants and count.
+
+    Raises:
+        HTTPException: 400 if both filters specified.
     """
     plants = list(uow.plants.list_plants(alive_only=alive_only, dead_only=dead_only))
 
