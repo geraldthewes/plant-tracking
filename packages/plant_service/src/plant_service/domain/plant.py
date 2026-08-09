@@ -129,43 +129,13 @@ class Plant:
             except ValueError:
                 raise ValueError("planting_date must be in YYYY-MM-DD format")
 
-        # Validate death_date format if present
-        if "death_date" in data and data["death_date"]:
-            try:
-                datetime.strptime(data["death_date"], "%Y-%m-%d")
-            except ValueError:
-                raise ValueError("death_date must be in YYYY-MM-DD format")
-
-        # Validate death_reason if present
-        if "death_reason" in data and data["death_reason"]:
-            if data["death_reason"] not in cls.DEATH_REASONS:
-                raise ValueError(
-                    f"death_reason must be one of: {', '.join(cls.DEATH_REASONS)}"
-                )
-
-        # "Other" reason requires a comment
-        if (
-            "death_reason" in data
-            and data["death_reason"] == "Other"
-            and not data.get("death_comment")
-        ):
-            raise ValueError(
-                'death_comment is required when death_reason is "Other"'
+        # Validate death fields (delegates to shared validator)
+        if any(k in data for k in ("death_date", "death_reason", "death_comment")):
+            Plant.validate_death_fields(
+                data.get("death_date", ""),
+                data.get("death_reason", ""),
+                data.get("death_comment", ""),
             )
-
-        # Ensure consistency: death fields must be provided together
-        if (
-            "death_date" in data
-            and data["death_date"]
-            and not data.get("death_reason")
-        ):
-            raise ValueError("death_reason is required when death_date is provided")
-        if (
-            "death_reason" in data
-            and data["death_reason"]
-            and not data.get("death_date")
-        ):
-            raise ValueError("death_date is required when death_reason is provided")
 
         return cls(**data)
 
