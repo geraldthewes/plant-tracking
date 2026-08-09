@@ -730,6 +730,57 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
         sys.exit(1)
 
 
+def _prompt_death_details() -> tuple[str, str, str]:
+    """Prompt user for death date, reason, and comment. No DB access."""
+    # Prompt for death date
+    while True:
+        death_date = input("Death date (YYYY-MM-DD): ").strip()
+        try:
+            datetime.strptime(death_date, "%Y-%m-%d")
+            break
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+
+    # Prompt for death reason
+    print("\nDeath reasons:")
+    reasons = PlantDomain.DEATH_REASONS
+    for i, reason in enumerate(reasons, 1):
+        print(f"  {i}. {reason}")
+    print()
+
+    while True:
+        reason_input = input("Death reason (number or name): ").strip()
+        if reason_input.isdigit():
+            idx = int(reason_input) - 1
+            if 0 <= idx < len(reasons):
+                death_reason = reasons[idx]
+                break
+            else:
+                print(f"Please enter a number between 1 and {len(reasons)}")
+        else:
+            matching = [
+                r for r in reasons
+                if r.lower() == reason_input.lower()
+            ]
+            if matching:
+                death_reason = matching[0]
+                break
+            else:
+                print("Invalid reason. Please enter a number or exact name.")
+
+    # Prompt for comment if "Other"
+    death_comment = ""
+    if death_reason == "Other":
+        while not death_comment:
+            death_comment = input(
+                "Comment (required for 'Other'): "
+            ).strip()
+    else:
+        death_comment = input("Additional comment (optional): ").strip()
+
+    return death_date, death_reason, death_comment
+
+
 def mark_dead(args, db=None):
     """Mark a plant as dead with date, reason, and optional comment."""
     if db is None:
@@ -741,6 +792,7 @@ def mark_dead(args, db=None):
         print("Error: mark-dead requires database service")
         sys.exit(1)
 
+    # Phase 1: validate plant exists and is not already dead
     try:
         with create_unit_of_work() as uow:
             plant = uow.plants.get_plant(plant_id)
@@ -754,72 +806,33 @@ def mark_dead(args, db=None):
                 print(f"  Death reason: {plant.death_reason}")
                 sys.exit(1)
 
-            print("=== Mark Plant as Dead ===")
-            print(f"Plant: {plant.id} - {plant.variety_name} ({plant.latin_name})")
-            print()
+    except PlantNotFoundException:
+        print(f"✗ Plant not found: {plant_id}")
+        sys.exit(1)
 
-            # Prompt for death date
-            while True:
-                death_date = input("Death date (YYYY-MM-DD): ").strip()
-                try:
-                    datetime.strptime(death_date, "%Y-%m-%d")
-                    break
-                except ValueError:
-                    print("Invalid date format. Please use YYYY-MM-DD.")
+    print("=== Mark Plant as Dead ===")
+    print(f"Plant: {plant.id} - {plant.variety_name} ({plant.latin_name})")
+    print()
 
-            # Prompt for death reason
-            print("\nDeath reasons:")
-            reasons = PlantDomain.DEATH_REASONS
-            for i, reason in enumerate(reasons, 1):
-                print(f"  {i}. {reason}")
-            print()
+    # Phase 2: user interaction (no DB)
+    death_date, death_reason, death_comment = _prompt_death_details()
 
-            while True:
-                reason_input = input("Death reason (number or name): ").strip()
-                if reason_input.isdigit():
-                    idx = int(reason_input) - 1
-                    if 0 <= idx < len(reasons):
-                        death_reason = reasons[idx]
-                        break
-                    else:
-                        print(f"Please enter a number between 1 and {len(reasons)}")
-                else:
-                    matching = [
-                        r for r in reasons
-                        if r.lower() == reason_input.lower()
-                    ]
-                    if matching:
-                        death_reason = matching[0]
-                        break
-                    else:
-                        print("Invalid reason. Please enter a number or exact name.")
-
-            # Prompt for comment if "Other"
-            death_comment = ""
-            if death_reason == "Other":
-                while not death_comment:
-                    death_comment = input(
-                        "Comment (required for 'Other'): "
-                    ).strip()
-            else:
-                death_comment = input("Additional comment (optional): ").strip()
-
+    # Phase 3: short write transaction
+    try:
+        with create_unit_of_work() as uow:
             updated = uow.plants.update_plant(plant_id, {
                 "death_date": death_date,
                 "death_reason": death_reason,
                 "death_comment": death_comment,
             })
 
-            print()
-            print("✓ Plant marked as dead successfully!")
-            print(f"  Death date: {updated.death_date}")
-            print(f"  Death reason: {updated.death_reason}")
-            if updated.death_comment:
-                print(f"  Comment: {updated.death_comment}")
+        print()
+        print("✓ Plant marked as dead successfully!")
+        print(f"  Death date: {updated.death_date}")
+        print(f"  Death reason: {updated.death_reason}")
+        if updated.death_comment:
+            print(f"  Comment: {updated.death_comment}")
 
-    except PlantNotFoundException:
-        print(f"✗ Plant not found: {plant_id}")
-        sys.exit(1)
     except ValidationException as e:
         print(f"✗ Validation error: {e}")
         sys.exit(1)
