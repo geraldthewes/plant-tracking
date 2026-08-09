@@ -16,7 +16,7 @@ router = APIRouter()
 @router.get("/care-needed", response_model=PlantListResponse)
 async def get_plants_needing_care(
     uow: SqlAlchemyUnitOfWork = Depends(get_uow),
-):
+) -> PlantListResponse:
     """
     Get plants needing care attention today.
 
@@ -33,7 +33,7 @@ async def list_plants(
     alive_only: bool = False,
     dead_only: bool = False,
     uow: SqlAlchemyUnitOfWork = Depends(get_uow),
-):
+) -> PlantListResponse:
     """
     List all plants with optional alive/dead filtering.
 
@@ -76,7 +76,7 @@ async def list_plants(
 async def get_plant(
     plant_id: str,
     uow: SqlAlchemyUnitOfWork = Depends(get_uow),
-):
+) -> PlantResponse:
     """
     Get a specific plant by ID.
     """
@@ -112,7 +112,7 @@ async def mark_plant_dead(
     death_reason: str,
     death_comment: str = "",
     uow: SqlAlchemyUnitOfWork = Depends(get_uow),
-):
+) -> PlantDeadResponse:
     """
     Mark a plant as dead.
     """
