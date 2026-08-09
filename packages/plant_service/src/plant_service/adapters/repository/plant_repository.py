@@ -59,9 +59,9 @@ class PlantRepository(BaseRepository[Plant], PlantService):
             planting_date=domain_obj.planting_date,
             seed_packet_id=domain_obj.seed_packet_id,
             genus_id=domain_obj.genus_id,
-            death_date=domain_obj.death_date or None,
-            death_reason=domain_obj.death_reason or None,
-            death_comment=domain_obj.death_comment or None,
+            death_date=domain_obj.death_date,
+            death_reason=domain_obj.death_reason,
+            death_comment=domain_obj.death_comment,
         )
         self.add(orm_obj)
         return domain_obj
