@@ -30,9 +30,9 @@ class Plant:
     genus_id: str | None = None
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
-    death_date: str = ""
-    death_reason: str = ""
-    death_comment: str = ""
+    death_date: str | None = None
+    death_reason: str | None = None
+    death_comment: str | None = None
 
     DEATH_REASONS: ClassVar[list[str]] = [
         "Pest infestation",
@@ -132,9 +132,9 @@ class Plant:
         # Validate death fields (delegates to shared validator)
         if any(k in data for k in ("death_date", "death_reason", "death_comment")):
             cls.validate_death_fields(
-                data.get("death_date", ""),
-                data.get("death_reason", ""),
-                data.get("death_comment", ""),
+                data.get("death_date"),
+                data.get("death_reason"),
+                data.get("death_comment"),
             )
 
         return cls(**data)
@@ -142,9 +142,9 @@ class Plant:
     @classmethod
     def validate_death_fields(
         cls,
-        death_date: str,
-        death_reason: str,
-        death_comment: str = "",
+        death_date: str | None,
+        death_reason: str | None,
+        death_comment: str | None = None,
     ) -> None:
         """Validate death-related fields only."""
         if death_date:

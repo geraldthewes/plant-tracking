@@ -360,9 +360,9 @@ class TestPlantDeathFields:
 
         assert cleared is not None
         assert cleared.is_dead is False
-        assert cleared.death_date == ""
-        assert cleared.death_reason == ""
-        assert cleared.death_comment == ""
+        assert cleared.death_date is None
+        assert cleared.death_reason is None
+        assert cleared.death_comment is None
 
     def test_list_plants_alive_only_filter(self, uow, alive_and_dead_plants):
         with uow:

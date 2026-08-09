@@ -134,9 +134,9 @@ class TestPlantDeathFields:
             latin_name="Solanum lycopersicum",
             planting_date="2026-01-01",
         )
-        assert plant.death_date == ""
-        assert plant.death_reason == ""
-        assert plant.death_comment == ""
+        assert plant.death_date is None
+        assert plant.death_reason is None
+        assert plant.death_comment is None
         assert plant.is_dead is False
 
     def test_dead_plant(self):

@@ -67,7 +67,7 @@ class Plant(Base, TimestampMixin):
             genus_id=self.genus_id,
             created_at=self.created_at,
             updated_at=self.updated_at,
-            death_date=self.death_date or "",
-            death_reason=self.death_reason or "",
-            death_comment=self.death_comment or "",
+            death_date=self.death_date,
+            death_reason=self.death_reason,
+            death_comment=self.death_comment,
         )
