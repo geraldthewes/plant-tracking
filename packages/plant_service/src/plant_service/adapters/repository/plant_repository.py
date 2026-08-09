@@ -77,8 +77,9 @@ class PlantRepository(BaseRepository[Plant], PlantService):
         self, alive_only: bool = False, dead_only: bool = False
     ) -> Iterator[PlantDomain]:
         """List plants with optional alive/dead filtering at DB level"""
+        if alive_only and dead_only:
+            raise ValueError("Cannot specify both alive_only and dead_only")
         stmt = select(Plant)
-
         if alive_only:
             stmt = stmt.where(Plant.death_date.is_(None))
         elif dead_only:
