@@ -385,3 +385,60 @@ class TestPlantDeathFields:
             plants = list(uow.plants.list_plants())
 
         assert len(plants) == 2
+
+    def test_list_plants_both_filters_raises(self, uow, alive_and_dead_plants):
+        with uow:
+            with pytest.raises(ValueError, match="Cannot specify both alive_only and dead_only"):
+                list(uow.plants.list_plants(alive_only=True, dead_only=True))
+
+    def test_list_plants_alive_only_all_dead_db(self, uow, sample_plant_dict):
+        with uow:
+            plant1 = uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Dead One",
+                "latin_name": "Dead Latin",
+            })
+            plant2 = uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Dead Two",
+                "latin_name": "Dead Latin 2",
+            })
+
+        with uow:
+            uow.plants.update_plant(plant1.id, {
+                "death_date": "2026-08-01",
+                "death_reason": "Drought",
+            })
+            uow.plants.update_plant(plant2.id, {
+                "death_date": "2026-08-02",
+                "death_reason": "Pest infestation",
+            })
+
+        with uow:
+            plants = list(uow.plants.list_plants(alive_only=True))
+
+        assert len(plants) == 0
+
+    def test_list_plants_dead_only_all_alive_db(self, uow, sample_plant_dict):
+        with uow:
+            uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Alive One",
+                "latin_name": "Alive Latin",
+            })
+            uow.plants.create_plant({
+                **sample_plant_dict,
+                "variety_name": "Alive Two",
+                "latin_name": "Alive Latin 2",
+            })
+
+        with uow:
+            plants = list(uow.plants.list_plants(dead_only=True))
+
+        assert len(plants) == 0
+
+    def test_list_plants_empty_db(self, uow):
+        with uow:
+            plants = list(uow.plants.list_plants())
+
+        assert len(plants) == 0
