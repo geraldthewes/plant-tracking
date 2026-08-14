@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 
 from plant_service.adapters.repository.uow import SqlAlchemyUnitOfWork
 from plant_service.domain import Plant as PlantDomain
 from plant_tracking_api.dependencies import get_uow
 from plant_tracking_api.schemas import (
     PlantDeadResponse,
+    PlantDeathRequest,
     PlantListResponse,
     PlantResponse,
     PlantSummary,
@@ -108,9 +109,7 @@ async def get_plant(
 @router.patch("/{plant_id}/dead", response_model=PlantDeadResponse)
 async def mark_plant_dead(
     plant_id: str,
-    death_date: str,
-    death_reason: str,
-    death_comment: str = "",
+    death_data: PlantDeathRequest = Body(...),
     uow: SqlAlchemyUnitOfWork = Depends(get_uow),
 ) -> PlantDeadResponse:
     """
@@ -128,14 +127,16 @@ async def mark_plant_dead(
 
     # Validate death fields
     try:
-        PlantDomain.validate_death_fields(death_date, death_reason, death_comment)
+        PlantDomain.validate_death_fields(
+            death_data.death_date, death_data.death_reason, death_data.death_comment
+        )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
     updated = uow.plants.update_plant(plant_id, {
-        "death_date": death_date,
-        "death_reason": death_reason,
-        "death_comment": death_comment,
+        "death_date": death_data.death_date,
+        "death_reason": death_data.death_reason,
+        "death_comment": death_data.death_comment,
     })
 
     if not updated:
