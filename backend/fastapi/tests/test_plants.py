@@ -24,8 +24,8 @@ def test_list_plants_returns_all(plants_client):
     response = plants_client.get("/api/plants/")
     assert response.status_code == 200
     data = response.json()
-    assert data["count"] == 2
-    assert len(data["plants"]) == 2
+    assert data["count"] == 3
+    assert len(data["plants"]) == 3
 
 
 def test_list_plants_alive_only(plants_client):
@@ -33,9 +33,10 @@ def test_list_plants_alive_only(plants_client):
     response = plants_client.get("/api/plants/", params={"alive_only": "true"})
     assert response.status_code == 200
     data = response.json()
-    assert data["count"] == 1
-    assert data["plants"][0]["id"] == "TO-2026-001"
-    assert data["plants"][0]["is_dead"] is False
+    assert data["count"] == 2
+    plant_ids = [p["id"] for p in data["plants"]]
+    assert "TO-2026-001" in plant_ids
+    assert "PE-2026-002" in plant_ids
 
 
 def test_list_plants_dead_only(plants_client):
@@ -71,7 +72,7 @@ def test_get_plant_not_found(plants_client):
     "plant_id,death_date,death_reason,death_comment,expected_reason",
     [
         ("TO-2026-001", "2026-08-07", "Drought", "Too hot", "Drought"),
-        ("TO-2026-001", "2026-08-07", "Other", "Pest infestation", "Other"),
+        ("PE-2026-002", "2026-08-07", "Other", "Pest infestation", "Other"),
     ],
 )
 def test_mark_plant_dead(plants_client, plant_id, death_date, death_reason, death_comment, expected_reason):

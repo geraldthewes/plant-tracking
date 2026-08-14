@@ -17,6 +17,13 @@ def _mock_uow_with_plants():
         planting_date="2026-01-01",
     )
 
+    alive_plant_2 = plant_service.domain.Plant(
+        id="PE-2026-002",
+        variety_name="Pepper",
+        latin_name="Capsicum annuum",
+        planting_date="2026-03-01",
+    )
+
     dead_plant = plant_service.domain.Plant(
         id="PE-2026-001",
         variety_name="Pepper",
@@ -28,7 +35,7 @@ def _mock_uow_with_plants():
     )
 
     mock_uow.plants.list_plants.side_effect = lambda alive_only=False, dead_only=False: iter(
-        [p for p in [alive_plant, dead_plant]
+        [p for p in [alive_plant, alive_plant_2, dead_plant]
          if (alive_only and not p.is_dead) or
              (dead_only and p.is_dead) or
              (not alive_only and not dead_only)]
@@ -37,6 +44,8 @@ def _mock_uow_with_plants():
     def get_plant(plant_id):
         if plant_id == "TO-2026-001":
             return alive_plant
+        if plant_id == "PE-2026-002":
+            return alive_plant_2
         if plant_id == "PE-2026-001":
             return dead_plant
         return None
