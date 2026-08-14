@@ -34,7 +34,7 @@ class Plant:
     death_reason: str | None = None
     death_comment: str | None = None
 
-    DEATH_REASONS: ClassVar[list[str]] = [
+    DEATH_REASONS: ClassVar[tuple[str, ...]] = (
         "Pest infestation",
         "Disease",
         "Overwatering",
@@ -45,7 +45,7 @@ class Plant:
         "Drought",
         "Unknown",
         "Other",
-    ]
+    )
 
     def __post_init__(self) -> None:
         """Validate death fields on construction."""
