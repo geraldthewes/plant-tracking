@@ -1,12 +1,13 @@
-import pytest
 import unittest.mock
+
+import pytest
 
 import plant_service.domain
 from plant_tracking_api.dependencies import get_uow
 from plant_tracking_api.main import app
 
 
-def _mock_uow_with_plants():
+def _mock_uow_with_plants() -> unittest.mock.MagicMock:
     """Create a mock UoW with test plants for API tests."""
     mock_uow = unittest.mock.MagicMock()
 
