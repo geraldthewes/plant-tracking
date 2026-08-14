@@ -174,3 +174,5 @@ class Plant:
             raise ValueError("death_reason is required when death_date is provided")
         if death_reason is not None and not death_date:
             raise ValueError("death_date is required when death_reason is provided")
+        if death_comment and (not death_date or not death_reason):
+            raise ValueError("death_comment requires both death_date and death_reason")

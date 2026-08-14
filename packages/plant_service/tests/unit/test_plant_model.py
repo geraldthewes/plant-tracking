@@ -384,3 +384,7 @@ class TestValidateDeathFields:
                 death_date="2026-08-07",
                 death_reason="",
             )
+
+    def test_isolated_death_comment_rejected(self):
+        with pytest.raises(ValueError, match="death_comment requires"):
+            Plant.validate_death_fields(None, None, "orphan comment")
