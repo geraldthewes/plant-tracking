@@ -855,8 +855,7 @@ def mark_dead(args, db=None):
         print(f"✗ Service error: {e}")
         sys.exit(1)
     except Exception as e:
-        print(f"✗ Error marking plant as dead: {e}")
-        traceback.print_exc()
+        print(f"✗ Unexpected error marking plant as dead: {e}")
         sys.exit(1)
 
 
