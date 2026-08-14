@@ -80,9 +80,10 @@ def plants_client():
     def mock_uow_gen():
         yield mock_uow
 
+    original_overrides = app.dependency_overrides.copy()
     app.dependency_overrides[get_uow] = mock_uow_gen
-
     try:
         yield TestClient(app)
     finally:
         app.dependency_overrides.clear()
+        app.dependency_overrides.update(original_overrides)
