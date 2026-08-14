@@ -319,7 +319,7 @@ class TestValidateDeathFields:
         Plant.validate_death_fields("2026-08-07", "Other", "Custom explanation")
 
     def test_death_date_without_reason_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="death_reason must be one of"):
             Plant.validate_death_fields("2026-08-07", "")
 
     def test_death_reason_without_date_raises(self):
@@ -333,19 +333,19 @@ class TestValidateDeathFields:
             Plant.validate_death_fields("2026-08-07", reason, comment)
 
     def test_empty_string_death_date_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="death_date must be in YYYY-MM-DD format"):
             Plant.validate_death_fields("", "Disease")
 
     def test_empty_string_death_reason_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="death_reason must be one of"):
             Plant.validate_death_fields("2026-08-07", "")
 
     def test_both_empty_strings_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="death_date must be in YYYY-MM-DD format"):
             Plant.validate_death_fields("", "")
 
     def test_empty_string_death_date_via_constructor(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="death_date must be in YYYY-MM-DD format"):
             Plant(
                 variety_name="Tomato",
                 latin_name="Solanum lycopersicum",
@@ -355,7 +355,7 @@ class TestValidateDeathFields:
             )
 
     def test_empty_string_death_reason_via_constructor(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="death_reason must be one of"):
             Plant(
                 variety_name="Tomato",
                 latin_name="Solanum lycopersicum",
