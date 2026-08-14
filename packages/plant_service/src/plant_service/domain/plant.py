@@ -165,7 +165,7 @@ class Plant:
                     f"death_reason must be one of: {', '.join(cls.DEATH_REASONS)}"
                 )
 
-        if death_reason == "Other" and not death_comment:
+        if death_reason == "Other" and (not death_comment or not str(death_comment).strip()):
             raise ValueError(
                 'death_comment is required when death_reason is "Other"'
             )
