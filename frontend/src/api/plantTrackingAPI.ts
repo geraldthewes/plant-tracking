@@ -663,15 +663,13 @@ export const markPlantDeadApiPlantsPlantIdDeadPatch = async (
   options?: RequestInit,
 ): Promise<markPlantDeadApiPlantsPlantIdDeadPatchResponse> => {
   const formUrlEncoded = new URLSearchParams();
-  const date = body.death_date?.trim();
-  const reason = body.death_reason?.trim();
-  if (!date || !reason) {
-    throw new Error('death_date and death_reason are required and non-empty');
-  }
-  formUrlEncoded.append('death_date', date);
-  formUrlEncoded.append('death_reason', reason);
-  if (body.death_comment?.trim()) {
-    formUrlEncoded.append('death_comment', body.death_comment.trim());
+  // Delegate validation to backend; it returns 422/400 responses that
+  // are surfaced via the structured { data, status, headers } return shape,
+  // consistent with every other API function in this module.
+  formUrlEncoded.append('death_date', body.death_date ?? '');
+  formUrlEncoded.append('death_reason', body.death_reason ?? '');
+  if (body.death_comment) {
+    formUrlEncoded.append('death_comment', body.death_comment);
   }
 
   const res = await fetch(getMarkPlantDeadApiPlantsPlantIdDeadPatchUrl(plantId), {
