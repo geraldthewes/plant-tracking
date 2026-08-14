@@ -1845,26 +1845,28 @@ def list_plants(args, db=None):
     print(header)
     print(separator)
     for p in plants:
+        if hasattr(p, "is_dead"):
+            status = "dead" if p.is_dead else "alive"
+        elif hasattr(p, "data"):
+            status = "dead" if p.data.get("death_date") else "alive"
+        else:
+            status = "alive"
+
         if db and SERVICE_AVAILABLE:
             pid = p.id
             variety = p.variety_name
             latin = p.latin_name
             planting_date = p.planting_date
-            status = "dead" if p.is_dead else "alive"
         elif db:
-            # Fallback to original models
             pid = p.id
             variety = p.variety_name
             latin = p.latin_name
             planting_date = p.planting_date
-            status = "dead" if p.is_dead else "alive"
         else:
-            # Markdown fallback
             pid = p.data["id"]
             variety = p.data["variety_name"]
             latin = p.data["latin_name"]
             planting_date = p.data["planting_date"]
-            status = "dead" if p.data.get("death_date") else "alive"
         print(
             f"{pid:<12} {variety:<25} {latin:<25} {planting_date:<15} {status:<10}"
         )
