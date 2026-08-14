@@ -249,6 +249,21 @@ class TestPlantDeathFields:
         "constructor",
         [Plant, lambda **kw: Plant.create_from_dict(kw)],
     )
+    def test_death_reason_without_date_raises(self, constructor):
+        with pytest.raises(
+            ValueError, match="death_date is required when death_reason is provided"
+        ):
+            constructor(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date="2026-01-01",
+                death_reason="Disease",
+            )
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
     def test_invalid_death_date_format(self, constructor):
         with pytest.raises(ValueError, match="death_date must be in YYYY-MM-DD format"):
             constructor(
@@ -306,6 +321,11 @@ class TestValidateDeathFields:
     def test_death_date_without_reason_raises(self):
         with pytest.raises(ValueError):
             Plant.validate_death_fields("2026-08-07", "")
+
+    def test_death_reason_without_date_raises(self):
+        with pytest.raises(ValueError,
+                             match="death_date is required when death_reason is provided"):
+            Plant.validate_death_fields(None, "Disease")
 
     def test_all_death_reasons_valid(self):
         for reason in Plant.DEATH_REASONS:
