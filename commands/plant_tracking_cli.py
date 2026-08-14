@@ -735,9 +735,16 @@ def _prompt_death_details() -> tuple[str, str, str]:
     """Prompt user for death date, reason, and comment. No DB access."""
     # Prompt for death date
     while True:
-        death_date = input("Death date (YYYY-MM-DD): ").strip()
         try:
-            datetime.strptime(death_date, "%Y-%m-%d")
+            death_date = input("Death date (YYYY-MM-DD): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nCancelled.")
+            sys.exit(0)
+        try:
+            d = datetime.strptime(death_date, "%Y-%m-%d")
+            if d > datetime.now():
+                print("Date cannot be in the future.")
+                continue
             break
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
