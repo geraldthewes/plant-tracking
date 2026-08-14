@@ -541,11 +541,19 @@ export type listPlantsApiPlantsGetResponse200 = {
   status: 200
 }
 
+export type listPlantsApiPlantsGetResponse400 = {
+  data: { detail: string }
+  status: 400
+}
+
 export type listPlantsApiPlantsGetResponseSuccess = (listPlantsApiPlantsGetResponse200) & {
   headers: Headers;
 };
+export type listPlantsApiPlantsGetResponseError = (listPlantsApiPlantsGetResponse400) & {
+  headers: Headers;
+};
 
-export type listPlantsApiPlantsGetResponse = (listPlantsApiPlantsGetResponseSuccess)
+export type listPlantsApiPlantsGetResponse = (listPlantsApiPlantsGetResponseSuccess | listPlantsApiPlantsGetResponseError)
 
 export const getListPlantsApiPlantsGetUrl = (
   aliveOnly?: boolean,
