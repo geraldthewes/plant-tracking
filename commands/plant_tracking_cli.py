@@ -1808,9 +1808,19 @@ def list_plants(args, db=None):
 
     # Filter by alive/dead status
     if alive_only:
-        plants = [p for p in plants if not getattr(p, "is_dead", False)]
+        plants = [
+            p for p in plants
+            if not (
+                getattr(p, "is_dead", False)
+                or (hasattr(p, "data") and p.data.get("death_date"))
+            )
+        ]
     elif dead_only:
-        plants = [p for p in plants if getattr(p, "is_dead", False)]
+        plants = [
+            p for p in plants
+            if getattr(p, "is_dead", False)
+            or (hasattr(p, "data") and p.data.get("death_date"))
+        ]
 
     if not plants:
         print("No plants found.")
