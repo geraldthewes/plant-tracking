@@ -810,6 +810,13 @@ def mark_dead(args, db=None):
     except PlantNotFoundException:
         print(f"✗ Plant not found: {plant_id}")
         sys.exit(1)
+    except PlantTrackingServiceException as e:
+        print(f"✗ Error checking plant: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"✗ Unexpected error: {e}")
+        traceback.print_exc()
+        sys.exit(1)
 
     print("=== Mark Plant as Dead ===")
     print(f"Plant: {plant.id} - {plant.variety_name} ({plant.latin_name})")
