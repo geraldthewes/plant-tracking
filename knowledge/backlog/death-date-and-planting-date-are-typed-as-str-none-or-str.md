@@ -3,13 +3,17 @@ title: "death_date (and planting_date) are typed as str | None (or str) and vali
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:43:05Z
-updated_at: 2026-08-13T02:43:05Z
+updated_at: 2026-08-18T22:14:40Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/d30f3ff2-29.md
     file: packages/plant_service/src/plant_service/domain/plant.py
     lines: 33-35
     date: 2026-08-13
+  - feedback: .review-runs/feedback-r1/c0c9fd17-0.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 8-8
+    date: 2026-08-18
 ---
 
 # death_date (and planting_date) are typed as str | None (or str) and validated wi…
@@ -31,3 +35,6 @@ Revisit this deferred review finding when capacity allows.
 - **2026-08-13** — `feedback-proj-0013-r4/d30f3ff2-29.md` (`packages/plant_service/src/plant_service/domain/plant.py`) lines 33-35
   Could not parse structured JSON from LLM response: **Verdict: BACKLOG**  **1. Confirmed**: Yes, `death_date` and `planting_date` are `str | None` with manual `strptime` (`plant.py:156-160`), while `cr…
 
+
+- **2026-08-18** — `.review-runs/feedback-r1/c0c9fd17-0.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-8
+  The finding correctly identifies a type inconsistency: `PlantDeathRequest.death_date: str` (schemas.py:8) vs `date | None` in all response models. However, this is NOT an auto-fixable one-line defect.…
