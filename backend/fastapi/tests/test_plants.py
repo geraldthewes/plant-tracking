@@ -79,7 +79,7 @@ def test_mark_plant_dead(plants_client, plant_id, death_date, death_reason, deat
     """Test that mark plant dead works."""
     response = plants_client.patch(
         f"/api/plants/{plant_id}/dead",
-        params={"death_date": death_date, "death_reason": death_reason, "death_comment": death_comment}
+        json={"death_date": death_date, "death_reason": death_reason, "death_comment": death_comment}
     )
     assert response.status_code == 200
     data = response.json()
@@ -94,7 +94,7 @@ def test_mark_plant_already_dead(plants_client):
     """Test that marking already dead plant returns 400."""
     response = plants_client.patch(
         "/api/plants/PE-2026-001/dead",
-        params={"death_date": "2026-08-07", "death_reason": "Disease"}
+        json={"death_date": "2026-08-07", "death_reason": "Disease"}
     )
     assert response.status_code == 400
 
@@ -103,7 +103,7 @@ def test_mark_plant_invalid_reason(plants_client):
     """Test that invalid death reason returns 422."""
     response = plants_client.patch(
         "/api/plants/TO-2026-001/dead",
-        params={"death_date": "2026-08-07", "death_reason": "InvalidReason"}
+        json={"death_date": "2026-08-07", "death_reason": "InvalidReason"}
     )
     assert response.status_code == 422
 
@@ -112,7 +112,7 @@ def test_mark_plant_other_requires_comment(plants_client):
     """Test that 'Other' reason requires comment."""
     response = plants_client.patch(
         "/api/plants/TO-2026-001/dead",
-        params={"death_date": "2026-08-07", "death_reason": "Other", "death_comment": ""}
+        json={"death_date": "2026-08-07", "death_reason": "Other", "death_comment": ""}
     )
     assert response.status_code == 422
 
@@ -121,6 +121,6 @@ def test_mark_plant_not_found(plants_client):
     """Test that marking non-existent plant returns 404."""
     response = plants_client.patch(
         "/api/plants/NONEXISTENT/dead",
-        params={"death_date": "2026-08-07", "death_reason": "Disease"}
+        json={"death_date": "2026-08-07", "death_reason": "Disease"}
     )
     assert response.status_code == 404
