@@ -37,6 +37,7 @@ def test_list_plants_alive_only(plants_client):
     plant_ids = [p["id"] for p in data["plants"]]
     assert "TO-2026-001" in plant_ids
     assert "PE-2026-002" in plant_ids
+    assert "PE-2026-001" not in plant_ids
 
 
 def test_list_plants_dead_only(plants_client):
