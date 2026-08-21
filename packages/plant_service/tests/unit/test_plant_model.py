@@ -227,6 +227,7 @@ class TestPlantDeathFields:
             death_reason="Frost/cold damage",
         )
         assert plant.is_dead is True
+        assert plant.death_date == "2026-02-01"
 
     @pytest.mark.parametrize(
         "constructor",
