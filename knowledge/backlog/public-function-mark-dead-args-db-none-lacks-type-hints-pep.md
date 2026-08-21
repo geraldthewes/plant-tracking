@@ -3,7 +3,7 @@ title: Public function mark_dead(args, db=None) lacks type hints (PEP 484/PEP 8)
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:42:08Z
-updated_at: 2026-08-21T06:25:04Z
+updated_at: 2026-08-21T12:51:57Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/cf9314f8-22.md
@@ -21,6 +21,10 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r4/cf9314f8-17.md
     file: commands/plant_tracking_cli.py
     lines: 792-793
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r1/e76ef807-16.md
+    file: backend/fastapi/tests/conftest.py
+    lines: 67-68
     date: 2026-08-21
 ---
 
@@ -48,3 +52,6 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r4/cf9314f8-17.md` (`commands/plant_tracking_cli.py`) lines 792-793
   Confirmed: mark_dead (line 792) lacks type hints, but this is not an isolated defect. Of the 21+ public command handler functions in this 2661-line file, all lack parameter type hints (create_plant:38…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r1/e76ef807-16.md` (`backend/fastapi/tests/conftest.py`) lines 67-68
+  This is the same deferred type-hint style campaign already tracked in the catalog. The fixture at conftest.py:67 lacks a return type annotation, which is a trivial PEP 484 style item, not a concrete d…

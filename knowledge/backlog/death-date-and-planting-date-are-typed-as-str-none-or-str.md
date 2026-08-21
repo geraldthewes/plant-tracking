@@ -3,7 +3,7 @@ title: "death_date (and planting_date) are typed as str | None (or str) and vali
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:43:05Z
-updated_at: 2026-08-21T07:27:25Z
+updated_at: 2026-08-21T12:51:57Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/d30f3ff2-29.md
@@ -41,6 +41,10 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r5/82911b41-4.md
     file: backend/fastapi/src/plant_tracking_api/routes/plants.py
     lines: 128-140
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r1/c0c9fd17-8.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 6-10
     date: 2026-08-21
 ---
 
@@ -87,3 +91,6 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r5/82911b41-4.md` (`backend/fastapi/src/plant_tracking_api/routes/plants.py`) lines 128-140
   The future-date check is a valid concern but the suggested fix is in the wrong layer. It should be added to Plant.validate_death_fields (domain) rather than the route handler, so all callers (API, CLI…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r1/c0c9fd17-8.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 6-10
+  1. Confirmed: Yes — PlantDeathRequest.death_date is `str` (schemas.py:8) while PlantSummary, PlantResponse, and PlantDeadResponse all use `date | None`, so the request/response contract is inconsisten…

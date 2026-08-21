@@ -3,7 +3,7 @@ title: There is a potential race condition where after checking the plant is not
 source_report: .review-runs/PROJ-0013/20260821T021224Z/code-review-r2.json
 source_severity: n/a
 created_at: 2026-08-21T04:12:09Z
-updated_at: 2026-08-21T07:27:25Z
+updated_at: 2026-08-21T12:51:57Z
 source: review-analyzer
 occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r2/cf9314f8-11.md
@@ -17,6 +17,10 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r5/cf9314f8-2.md
     file: commands/plant_tracking_cli.py
     lines: 792-859
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r1/82911b41-4.md
+    file: backend/fastapi/src/plant_tracking_api/routes/plants.py
+    lines: 122-140
     date: 2026-08-21
 ---
 
@@ -41,3 +45,6 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r5/cf9314f8-2.md` (`commands/plant_tracking_cli.py`) lines 792-859
   The TOCTOU observation is technically valid — there is a gap between Phase 1 (check) and Phase 3 (update) where a concurrent process could modify the plant. However, this is a CLI tool where two concu…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r1/82911b41-4.md` (`backend/fastapi/src/plant_tracking_api/routes/plants.py`) lines 122-140
+  Real TOCTOU pattern but same deferred theme as the existing backlog entry (race condition on death check). The original triage noted near-zero probability and minimal impact for a personal plant-track…
