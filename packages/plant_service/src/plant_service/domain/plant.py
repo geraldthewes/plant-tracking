@@ -129,14 +129,6 @@ class Plant:
             except ValueError:
                 raise ValueError("planting_date must be in YYYY-MM-DD format")
 
-        # Validate death fields (delegates to shared validator)
-        if any(k in data for k in ("death_date", "death_reason", "death_comment")):
-            cls.validate_death_fields(
-                data.get("death_date"),
-                data.get("death_reason"),
-                data.get("death_comment"),
-            )
-
         return cls(**data)
 
     @classmethod
