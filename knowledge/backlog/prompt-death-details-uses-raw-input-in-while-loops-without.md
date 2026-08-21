@@ -3,7 +3,7 @@ title: _prompt_death_details uses raw input() in while loops without catching EO
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:42:45Z
-updated_at: 2026-08-21T13:48:44Z
+updated_at: 2026-08-21T15:48:49Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/cf9314f8-24.md
@@ -17,6 +17,10 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r2/cf9314f8-10.md
     file: commands/plant_tracking_cli.py
     lines: 740-742
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r4/cf9314f8-10.md
+    file: commands/plant_tracking_cli.py
+    lines: 734-789
     date: 2026-08-21
 ---
 
@@ -45,3 +49,6 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r2/cf9314f8-10.md` (`commands/plant_tracking_cli.py`) lines 740-742
   Design preference, not a defect: Phase 2 has no DB access or open transaction, so sys.exit(0) on EOFError/KeyboardInterrupt has no side effects and the caller (mark_dead:833) has nothing to do but exi…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r4/cf9314f8-10.md` (`commands/plant_tracking_cli.py`) lines 734-789
+  The observation is factually correct: in `_prompt_death_details()` (commands/plant_tracking_cli.py:734-789), only the death-date loop wraps `input()` in `try/except (EOFError, KeyboardInterrupt)`. The…

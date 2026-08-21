@@ -3,7 +3,7 @@ title: The list_plants side_effect uses a complex inline boolean condition that 
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:09:07Z
-updated_at: 2026-08-21T03:09:07Z
+updated_at: 2026-08-21T15:48:49Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/e76ef807-0.md
@@ -23,6 +23,10 @@ occurrences:
     lines: 785-786
     date: 2026-08-13
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r1/e76ef807-11.md
+    file: backend/fastapi/tests/conftest.py
+    lines: 38-43
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r4/e76ef807-7.md
     file: backend/fastapi/tests/conftest.py
     lines: 38-43
     date: 2026-08-21
@@ -57,3 +61,6 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r1/e76ef807-11.md` (`backend/fastapi/tests/conftest.py`) lines 38-43
   The finding is technically correct — the mock at conftest.py:38-43 doesn't replicate the ValueError raised by the real repository (plant_repository.py:91-92) when both alive_only and dead_only are Tru…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r4/e76ef807-7.md` (`backend/fastapi/tests/conftest.py`) lines 38-43
+  The factual observation is correct: the real repository (plant_repository.py:91-92) raises ValueError when both alive_only and dead_only are True, while the mock's inline boolean degenerates to `not p…

@@ -3,7 +3,7 @@ title: "death_date (and planting_date) are typed as str | None (or str) and vali
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:43:05Z
-updated_at: 2026-08-21T14:53:50Z
+updated_at: 2026-08-21T16:41:10Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/d30f3ff2-29.md
@@ -51,6 +51,14 @@ occurrences:
     lines: 6-10
     date: 2026-08-21
   - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r3/c0c9fd17-11.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 8-8
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r4/c0c9fd17-5.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 8-8
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r5/c0c9fd17-10.md
     file: backend/fastapi/src/plant_tracking_api/schemas.py
     lines: 8-8
     date: 2026-08-21
@@ -108,3 +116,9 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r3/c0c9fd17-11.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-8
   The finding is real but is the same deferred theme already tracked with 11 prior occurrences on this exact file:line. `PlantDeathRequest.death_date: str` (schemas.py:8) is inconsistent with all respon…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r4/c0c9fd17-5.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-8
+  The finding is real: PlantDeathRequest.death_date is `str` (schemas.py:8) while all response models use `date | None`. However, this is not a concrete auto-fixable one-line defect — changing the type …
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r5/c0c9fd17-10.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-8
+  The type inconsistency is real and confirmed: PlantDeathRequest.death_date is str (schemas.py:8) while PlantSummary, PlantResponse, and PlantDeadResponse all use date | None. However, this is the same…

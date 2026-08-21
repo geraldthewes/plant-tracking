@@ -3,7 +3,7 @@ title: Public function mark_dead(args, db=None) lacks type hints (PEP 484/PEP 8)
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:42:08Z
-updated_at: 2026-08-21T13:48:44Z
+updated_at: 2026-08-21T15:48:49Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/cf9314f8-22.md
@@ -29,6 +29,14 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r2/cf9314f8-8.md
     file: commands/plant_tracking_cli.py
     lines: 792-792
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r4/cf9314f8-11.md
+    file: commands/plant_tracking_cli.py
+    lines: 1793-1797
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r4/01205db9-12.md
+    file: packages/plant_service/tests/unit/test_plant_model.py
+    lines: 132-149
     date: 2026-08-21
 ---
 
@@ -62,3 +70,9 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r2/cf9314f8-8.md` (`commands/plant_tracking_cli.py`) lines 792-792
   This finding is already tracked as a deferred style campaign in the knowledge catalog. The backlog entry confirms that all 21 public command handler functions in this 2600+ line file lack parameter ty…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r4/cf9314f8-11.md` (`commands/plant_tracking_cli.py`) lines 1793-1797
+  This is the same deferred type-hint style campaign already tracked in the catalog. The backlog entry knowledge/backlog/public-function-mark-dead-args-db-none-lacks-type-hints-pep.md documents that all…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r4/01205db9-12.md` (`packages/plant_service/tests/unit/test_plant_model.py`) lines 132-149
+  Real but trivial style finding: the base_plant_dict fixture (test_plant_model.py:133) lacks a return annotation and test methods lack -> None. Not a concrete defect — missing annotations on pytest fix…

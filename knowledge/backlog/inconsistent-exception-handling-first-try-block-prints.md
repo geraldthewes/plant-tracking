@@ -3,7 +3,7 @@ title: "Inconsistent exception handling: first try block prints traceback for un
 source_report: .review-runs/PROJ-0013/20260821T021224Z/code-review-r1.json
 source_severity: n/a
 created_at: 2026-08-21T03:09:07Z
-updated_at: 2026-08-21T14:53:50Z
+updated_at: 2026-08-21T16:41:10Z
 source: review-analyzer
 occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r1/cf9314f8-0.md
@@ -23,6 +23,10 @@ occurrences:
     lines: 823-826
     date: 2026-08-21
   - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r3/cf9314f8-19.md
+    file: commands/plant_tracking_cli.py
+    lines: 823-826
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r5/cf9314f8-8.md
     file: commands/plant_tracking_cli.py
     lines: 823-826
     date: 2026-08-21
@@ -57,3 +61,6 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r3/cf9314f8-19.md` (`commands/plant_tracking_cli.py`) lines 823-826
   Confirmed real but deferred. At commands/plant_tracking_cli.py:823-826 the read transaction's generic `except Exception` calls traceback.print_exc(), dumping a raw stack trace to stdout, while the wri…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r5/cf9314f8-8.md` (`commands/plant_tracking_cli.py`) lines 823-826
+  Same deferred theme previously BACKLOGed 5+ times at these exact lines (823-826). The 'sensitive info leak' framing is weak for a local CLI tool where the operator IS the developer. The real concern i…
