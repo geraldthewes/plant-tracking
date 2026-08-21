@@ -3,7 +3,7 @@ title: The list_plants side_effect uses a complex inline boolean condition that 
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:09:07Z
-updated_at: 2026-08-13T02:41:41Z
+updated_at: 2026-08-21T03:09:07Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/e76ef807-0.md
@@ -22,6 +22,10 @@ occurrences:
     file: commands/plant_tracking_cli.py
     lines: 785-786
     date: 2026-08-13
+  - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r1/e76ef807-11.md
+    file: backend/fastapi/tests/conftest.py
+    lines: 38-43
+    date: 2026-08-21
 ---
 
 # The list_plants side_effect uses a complex inline boolean condition that is hard…
@@ -50,3 +54,6 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-13** — `feedback-proj-0013-r4/cf9314f8-14.md` (`commands/plant_tracking_cli.py`) lines 785-786
   The review correctly identifies an inconsistency: `_prompt_death_details` at line 734 has a return type hint (`-> tuple[str, str, str]`) while `mark_dead` at line 785 and `list_plants` at line 1780 la…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r1/e76ef807-11.md` (`backend/fastapi/tests/conftest.py`) lines 38-43
+  The finding is technically correct — the mock at conftest.py:38-43 doesn't replicate the ValueError raised by the real repository (plant_repository.py:91-92) when both alive_only and dead_only are Tru…

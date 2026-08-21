@@ -1,0 +1,31 @@
+---
+title: "Inconsistent exception handling: first try block prints traceback for unexpected…"
+source_report: .review-runs/PROJ-0013/20260821T021224Z/code-review-r1.json
+source_severity: n/a
+created_at: 2026-08-21T03:09:07Z
+updated_at: 2026-08-21T03:09:07Z
+source: review-analyzer
+occurrences:
+  - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r1/cf9314f8-0.md
+    file: commands/plant_tracking_cli.py
+    lines: 823-826
+    date: 2026-08-21
+---
+
+# Inconsistent exception handling: first try block prints traceback for unexpected…
+
+## Problem
+
+opencode exited with code 1: [91m[1mError: [0mUnexpected error
+
+database is locked
+
+## Recommendation
+
+Revisit this deferred review finding when capacity allows.
+
+## Occurrences
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r1/cf9314f8-0.md` (`commands/plant_tracking_cli.py`) lines 823-826
+  opencode exited with code 1: [91m[1mError: [0mUnexpected error  database is locked
+

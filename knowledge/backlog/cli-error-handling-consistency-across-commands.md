@@ -16,3 +16,8 @@ Standardize error handling across all CLI commands: remove `traceback.print_exc(
 
 - commands/plant_tracking_cli.py:843-846 (mark_dead)
 - commands/plant_tracking_cli.py:658-670 (plant creation handler)
+
+## Occurrences
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r1/cf9314f8-2.md` (`commands/plant_tracking_cli.py`) lines 740-742
+  The finding is partially valid but overstated. `sys.exit(0)` on user cancellation is a defensible convention — many CLIs (less, vim, top) treat Ctrl+C/EOF as a graceful user-initiated stop, not an err…
