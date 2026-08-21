@@ -3,7 +3,7 @@ title: There is a potential race condition where after checking the plant is not
 source_report: .review-runs/PROJ-0013/20260821T021224Z/code-review-r2.json
 source_severity: n/a
 created_at: 2026-08-21T04:12:09Z
-updated_at: 2026-08-21T12:51:57Z
+updated_at: 2026-08-21T14:53:50Z
 source: review-analyzer
 occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r2/cf9314f8-11.md
@@ -21,6 +21,14 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r1/82911b41-4.md
     file: backend/fastapi/src/plant_tracking_api/routes/plants.py
     lines: 122-140
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r3/82911b41-2.md
+    file: backend/fastapi/src/plant_tracking_api/routes/plants.py
+    lines: 145-146
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r3/cf9314f8-16.md
+    file: commands/plant_tracking_cli.py
+    lines: 803-849
     date: 2026-08-21
 ---
 
@@ -48,3 +56,9 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r1/82911b41-4.md` (`backend/fastapi/src/plant_tracking_api/routes/plants.py`) lines 122-140
   Real TOCTOU pattern but same deferred theme as the existing backlog entry (race condition on death check). The original triage noted near-zero probability and minimal impact for a personal plant-track…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r3/82911b41-2.md` (`backend/fastapi/src/plant_tracking_api/routes/plants.py`) lines 145-146
+  Confirmed against the code: in mark_plant_dead (backend/fastapi/src/plant_tracking_api/routes/plants.py:118-146), the plant is fetched at line 118 and update_plant (packages/plant_service/src/plant_se…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r3/cf9314f8-16.md` (`commands/plant_tracking_cli.py`) lines 803-849
+  The TOCTOU race condition is technically real: Phase 1 commits and closes before Phase 2 (user input), and Phase 3 performs no re-check. However, this is the exact same issue already tracked in the ba…

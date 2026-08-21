@@ -3,7 +3,7 @@ title: "death_date (and planting_date) are typed as str | None (or str) and vali
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:43:05Z
-updated_at: 2026-08-21T13:47:41Z
+updated_at: 2026-08-21T14:53:50Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/d30f3ff2-29.md
@@ -49,6 +49,10 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r2/c0c9fd17-0.md
     file: backend/fastapi/src/plant_tracking_api/schemas.py
     lines: 6-10
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r3/c0c9fd17-11.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 8-8
     date: 2026-08-21
 ---
 
@@ -101,3 +105,6 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r2/c0c9fd17-0.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 6-10
   1. Confirmed: Yes — the inconsistency is real and present in the current code. PlantDeathRequest.death_date is `str` (schemas.py:8) while PlantSummary, PlantResponse, and PlantDeadResponse all use `da…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r3/c0c9fd17-11.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-8
+  The finding is real but is the same deferred theme already tracked with 11 prior occurrences on this exact file:line. `PlantDeathRequest.death_date: str` (schemas.py:8) is inconsistent with all respon…

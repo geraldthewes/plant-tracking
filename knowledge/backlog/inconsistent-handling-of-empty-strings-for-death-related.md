@@ -3,7 +3,7 @@ title: Inconsistent handling of empty strings for death-related fields across en
 source_report: .review-runs/PROJ-0013/20260821T021224Z/code-review-r2.json
 source_severity: n/a
 created_at: 2026-08-21T04:11:44Z
-updated_at: 2026-08-21T13:48:44Z
+updated_at: 2026-08-21T14:53:50Z
 source: review-analyzer
 occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r2/82911b41-2.md
@@ -21,6 +21,10 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r2/82911b41-13.md
     file: backend/fastapi/src/plant_tracking_api/routes/plants.py
     lines: 104-104
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r3/82911b41-0.md
+    file: backend/fastapi/src/plant_tracking_api/routes/plants.py
+    lines: 102-104
     date: 2026-08-21
 ---
 
@@ -53,3 +57,6 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r2/82911b41-13.md` (`backend/fastapi/src/plant_tracking_api/routes/plants.py`) lines 104-104
   The `or None` pattern at line 104 is a real but low-severity consistency concern, not a standalone concrete defect. Prior analysis (5 occurrences in backlog) confirmed the fix is not safe in isolation…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r3/82911b41-0.md` (`backend/fastapi/src/plant_tracking_api/routes/plants.py`) lines 102-104
+  Confirmed real but not standalone-fixable. The `or None` pattern at lines 102-104 does technically convert empty strings to None, but prior analysis (5 prior occurrences in backlog) established that t…
