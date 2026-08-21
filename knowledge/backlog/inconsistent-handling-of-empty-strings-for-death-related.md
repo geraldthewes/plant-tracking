@@ -3,12 +3,16 @@ title: Inconsistent handling of empty strings for death-related fields across en
 source_report: .review-runs/PROJ-0013/20260821T021224Z/code-review-r2.json
 source_severity: n/a
 created_at: 2026-08-21T04:11:44Z
-updated_at: 2026-08-21T04:11:44Z
+updated_at: 2026-08-21T05:26:30Z
 source: review-analyzer
 occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r2/82911b41-2.md
     file: backend/fastapi/src/plant_tracking_api/routes/plants.py
     lines: 109-152
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r3/82911b41-8.md
+    file: backend/fastapi/src/plant_tracking_api/routes/plants.py
+    lines: 76-106
     date: 2026-08-21
 ---
 
@@ -32,3 +36,6 @@ Revisit this deferred review finding when capacity allows.
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r2/82911b41-2.md` (`backend/fastapi/src/plant_tracking_api/routes/plants.py`) lines 109-152
   Could not parse structured JSON from LLM response: Let me verify the model defaults and existing route tests to ground the analysis.  I've verified the code, schema, domain validation, and existing te…
 
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r3/82911b41-8.md` (`backend/fastapi/src/plant_tracking_api/routes/plants.py`) lines 76-106
+  Confirmed real but not standalone-fixable. Verified facts: (1) All death fields are typed str|None / date|None in PlantResponse and PlantDeadResponse (schemas.py:45-47, 55-57) and in the domain Plant …
