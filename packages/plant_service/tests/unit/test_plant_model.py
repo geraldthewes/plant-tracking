@@ -1,5 +1,6 @@
 """Unit tests for Plant domain model"""
 from datetime import datetime
+from typing import ClassVar
 from unittest.mock import patch
 
 import pytest
@@ -388,3 +389,16 @@ class TestValidateDeathFields:
     def test_isolated_death_comment_rejected(self):
         with pytest.raises(ValueError, match="death_comment requires"):
             Plant.validate_death_fields(None, None, "orphan comment")
+
+    def test_subclass_death_reasons_respected_via_constructor(self):
+        class ExoticPlant(Plant):
+            DEATH_REASONS: ClassVar[tuple[str, ...]] = Plant.DEATH_REASONS + ("Custom reason",)
+
+        plant = ExoticPlant(
+            variety_name="Tomato",
+            latin_name="Solanum lycopersicum",
+            planting_date="2026-01-01",
+            death_date="2026-08-07",
+            death_reason="Custom reason",
+        )
+        assert plant.death_reason == "Custom reason"

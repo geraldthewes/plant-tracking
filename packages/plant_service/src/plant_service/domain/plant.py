@@ -49,7 +49,7 @@ class Plant:
 
     def __post_init__(self) -> None:
         """Validate death fields on construction."""
-        Plant.validate_death_fields(self.death_date, self.death_reason, self.death_comment)
+        type(self).validate_death_fields(self.death_date, self.death_reason, self.death_comment)
 
 
     @property
