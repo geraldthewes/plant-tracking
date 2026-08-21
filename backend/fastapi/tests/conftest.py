@@ -66,9 +66,17 @@ def _mock_uow_with_plants() -> unittest.mock.MagicMock:
 
 @pytest.fixture
 def client():
-    """Create test client."""
+    """Create test client with mocked UoW."""
     from fastapi.testclient import TestClient
-    return TestClient(app)
+
+    def mock_get_uow():
+        return unittest.mock.MagicMock()
+
+    app.dependency_overrides[get_uow] = mock_get_uow
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.clear()
 
 
 @pytest.fixture
