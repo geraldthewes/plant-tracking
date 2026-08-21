@@ -1790,6 +1790,13 @@ def _list_plants_from_files():
     return plants
 
 
+def _is_plant_dead(p):
+    """Return True if the plant record is marked dead."""
+    return getattr(p, "is_dead", False) or (
+        hasattr(p, "data") and p.data.get("death_date")
+    )
+
+
 def list_plants(args, db=None):
     """List all plants in a table format."""
     if db is None:
@@ -1821,19 +1828,9 @@ def list_plants(args, db=None):
 
     # Filter by alive/dead status
     if alive_only:
-        plants = [
-            p for p in plants
-            if not (
-                getattr(p, "is_dead", False)
-                or (hasattr(p, "data") and p.data.get("death_date"))
-            )
-        ]
+        plants = [p for p in plants if not _is_plant_dead(p)]
     elif dead_only:
-        plants = [
-            p for p in plants
-            if getattr(p, "is_dead", False)
-            or (hasattr(p, "data") and p.data.get("death_date"))
-        ]
+        plants = [p for p in plants if _is_plant_dead(p)]
 
     if not plants:
         print("No plants found.")
@@ -1844,12 +1841,7 @@ def list_plants(args, db=None):
     print(header)
     print(separator)
     for p in plants:
-        if hasattr(p, "is_dead"):
-            status = "dead" if p.is_dead else "alive"
-        elif hasattr(p, "data"):
-            status = "dead" if p.data.get("death_date") else "alive"
-        else:
-            status = "alive"
+        status = "dead" if _is_plant_dead(p) else "alive"
 
         if db and SERVICE_AVAILABLE:
             pid = p.id

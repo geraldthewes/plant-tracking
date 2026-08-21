@@ -1532,3 +1532,52 @@ class TestPlantLogModel(unittest.TestCase):
         self.assertEqual(entries[0]["plant_id"], plant_id)
         self.assertEqual(entries[0]["event_type"], "humidity")
         self.assertEqual(entries[0]["level"], 7)
+
+
+class TestIsPlantDeadHelper(unittest.TestCase):
+    """Tests for the _is_plant_dead CLI helper."""
+
+    def setUp(self):
+        from commands.plant_tracking_cli import _is_plant_dead
+
+        self._is_plant_dead = _is_plant_dead
+
+    def test_plant_object_with_is_dead_true(self):
+        """Plant object with is_dead=True is dead."""
+
+        class Plant:
+            is_dead = True
+
+        self.assertTrue(self._is_plant_dead(Plant()))
+
+    def test_plant_object_with_is_dead_false(self):
+        """Plant object with is_dead=False is alive."""
+
+        class Plant:
+            is_dead = False
+
+        self.assertFalse(self._is_plant_dead(Plant()))
+
+    def test_dict_based_object_with_death_date(self):
+        """Dict-based object with death_date in data is dead."""
+
+        class Record:
+            data = {"death_date": "2026-07-01"}
+
+        self.assertTrue(self._is_plant_dead(Record()))
+
+    def test_dict_based_object_without_death_date(self):
+        """Dict-based object without death_date in data is alive."""
+
+        class Record:
+            data = {"id": "PLANT-2026-001", "variety_name": "Test"}
+
+        self.assertFalse(self._is_plant_dead(Record()))
+
+    def test_neither_is_dead_nor_data(self):
+        """Object with neither is_dead nor data is alive."""
+
+        class Bare:
+            pass
+
+        self.assertFalse(self._is_plant_dead(Bare()))
