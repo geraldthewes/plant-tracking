@@ -3,7 +3,7 @@ title: "death_date (and planting_date) are typed as str | None (or str) and vali
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:43:05Z
-updated_at: 2026-08-21T05:25:04Z
+updated_at: 2026-08-21T07:27:25Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/d30f3ff2-29.md
@@ -29,6 +29,18 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r3/c0c9fd17-0.md
     file: backend/fastapi/src/plant_tracking_api/schemas.py
     lines: 6-10
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r4/c0c9fd17-5.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 8-8
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r5/c0c9fd17-0.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 8-8
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r5/82911b41-4.md
+    file: backend/fastapi/src/plant_tracking_api/routes/plants.py
+    lines: 128-140
     date: 2026-08-21
 ---
 
@@ -66,3 +78,12 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r3/c0c9fd17-0.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 6-10
   The type inconsistency is real: PlantDeathRequest.death_date is `str` (line 8) while all response schemas (PlantSummary, PlantResponse, PlantDeadResponse) use `date | None`. However, this is the exact…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r4/c0c9fd17-5.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-8
+  The observation is correct: PlantDeathRequest.death_date uses `str` while response models (PlantSummary, PlantResponse) use `date | None`, creating an inconsistent API contract and missing Pydantic's …
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r5/c0c9fd17-0.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-8
+  Confirmed real type inconsistency (death_date: str vs date | None in response models), but this is the exact same deferred theme already tracked in the backlog with 7 prior occurrences on this same fi…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r5/82911b41-4.md` (`backend/fastapi/src/plant_tracking_api/routes/plants.py`) lines 128-140
+  The future-date check is a valid concern but the suggested fix is in the wrong layer. It should be added to Plant.validate_death_fields (domain) rather than the route handler, so all callers (API, CLI…

@@ -3,7 +3,7 @@ title: The 13 new test methods in TestPlantDeathFields lack docstrings (fixtures
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:43:53Z
-updated_at: 2026-08-21T05:26:30Z
+updated_at: 2026-08-21T07:27:25Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/0ccd4f32-33.md
@@ -21,6 +21,10 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r3/0ccd4f32-12.md
     file: packages/plant_service/tests/integration/test_repository.py
     lines: 281-295
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r5/0ccd4f32-6.md
+    file: packages/plant_service/tests/integration/test_repository.py
+    lines: 280-280
     date: 2026-08-21
 ---
 
@@ -48,3 +52,6 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r3/0ccd4f32-12.md` (`packages/plant_service/tests/integration/test_repository.py`) lines 281-295
   The suggested change is a docstring addition, part of the broader '13 test methods lack docstrings' campaign already in backlog. The date-type inconsistency (sa.Date() in migration vs String(10) in mo…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r5/0ccd4f32-6.md` (`packages/plant_service/tests/integration/test_repository.py`) lines 280-280
+  Missing class-level docstring on TestPlantDeathFields is the same deferred documentation/style campaign already tracked in the backlog (4 prior occurrences, including an r1 finding on this exact line …

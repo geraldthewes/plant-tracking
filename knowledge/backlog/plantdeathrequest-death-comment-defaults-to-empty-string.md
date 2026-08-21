@@ -3,7 +3,7 @@ title: "PlantDeathRequest.death_comment defaults to empty string ('') while Plan
 source_report: .review-runs/code-review-r1.json
 source_severity: n/a
 created_at: 2026-08-18T22:15:12Z
-updated_at: 2026-08-21T05:25:04Z
+updated_at: 2026-08-21T07:27:25Z
 source: review-analyzer
 occurrences:
   - feedback: .review-runs/feedback-r1/c0c9fd17-1.md
@@ -25,6 +25,14 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r3/c0c9fd17-1.md
     file: backend/fastapi/src/plant_tracking_api/schemas.py
     lines: 6-10
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r4/c0c9fd17-10.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 6-10
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r5/c0c9fd17-1.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 10-10
     date: 2026-08-21
 ---
 
@@ -59,3 +67,9 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r3/c0c9fd17-1.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 6-10
   The finding is real: PlantDeathRequest.death_comment is `str = ""` (schemas.py:10) while the domain model, DB model, and all response schemas (PlantResponse:47, PlantDeadResponse:57) use `str | None =…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r4/c0c9fd17-10.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 6-10
+  Confirmed observation but a deferred theme, not a new defect. schemas.py:10 indeed declares death_comment: str = "" while all response schemas (PlantResponse:47, PlantDeadResponse:57) and the domain/D…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r5/c0c9fd17-1.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 10-10
+  Confirmed: backend/fastapi/src/plant_tracking_api/schemas.py:10 has `death_comment: str = ""` in PlantDeathRequest while response models (PlantResponse.brand, PlantSummary.death_reason at lines 20, 35…
