@@ -190,6 +190,48 @@ class TestPlantDeathFields:
         "constructor",
         [Plant, lambda **kw: Plant.create_from_dict(kw)],
     )
+    def test_death_date_before_planting_date_raises(self, constructor):
+        with pytest.raises(ValueError, match="death_date cannot be before planting_date"):
+            constructor(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date="2026-02-01",
+                death_date="2026-01-05",
+                death_reason="Disease",
+            )
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
+    def test_death_date_in_future_raises(self, constructor):
+        with pytest.raises(ValueError, match="death_date cannot be in the future"):
+            constructor(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date="2026-01-01",
+                death_date="2099-12-31",
+                death_reason="Disease",
+            )
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
+    def test_death_date_equal_to_planting_date_allowed(self, constructor):
+        plant = constructor(
+            variety_name="Tomato",
+            latin_name="Solanum lycopersicum",
+            planting_date="2026-02-01",
+            death_date="2026-02-01",
+            death_reason="Frost/cold damage",
+        )
+        assert plant.is_dead is True
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
     def test_invalid_death_reason(self, constructor):
         with pytest.raises(ValueError, match="death_reason must be one of"):
             constructor(
@@ -319,6 +361,21 @@ class TestValidateDeathFields:
 
     def test_valid_death_fields_no_comment(self):
         Plant.validate_death_fields("2026-08-07", "Drought")
+
+    def test_death_date_before_planting_date_rejected(self):
+        with pytest.raises(ValueError, match="death_date cannot be before planting_date"):
+            Plant.validate_death_fields("2026-01-05", "Disease", None, "2026-02-01")
+
+    def test_death_date_in_future_rejected(self):
+        with pytest.raises(ValueError, match="death_date cannot be in the future"):
+            Plant.validate_death_fields("2099-12-31", "Disease", None, "2026-01-01")
+
+    def test_death_date_valid_relative_to_planting_date(self):
+        Plant.validate_death_fields("2026-02-01", "Disease", None, "2026-01-01")
+
+    def test_malformed_planting_date_rejected(self):
+        with pytest.raises(ValueError, match="planting_date must be in YYYY-MM-DD format"):
+            Plant.validate_death_fields("2026-02-01", "Disease", None, "not-a-date")
 
     @pytest.mark.parametrize(
         "death_date",

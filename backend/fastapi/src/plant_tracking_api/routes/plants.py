@@ -128,7 +128,10 @@ async def mark_plant_dead(
     # Validate death fields
     try:
         PlantDomain.validate_death_fields(
-            death_data.death_date, death_data.death_reason, death_data.death_comment
+            death_data.death_date,
+            death_data.death_reason,
+            death_data.death_comment,
+            plant.planting_date,
         )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))

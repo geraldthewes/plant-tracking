@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from typing import ClassVar
 
 
@@ -49,7 +49,9 @@ class Plant:
 
     def __post_init__(self) -> None:
         """Validate death fields on construction."""
-        type(self).validate_death_fields(self.death_date, self.death_reason, self.death_comment)
+        type(self).validate_death_fields(
+            self.death_date, self.death_reason, self.death_comment, self.planting_date
+        )
 
 
     @property
@@ -137,17 +139,21 @@ class Plant:
         death_date: str | None,
         death_reason: str | None,
         death_comment: str | None = None,
+        planting_date: str | None = None,
     ) -> None:
-        """Validate death-related fields only.
+        """Validate death-related fields.
 
         - death_date (if provided) must be in YYYY-MM-DD format.
         - death_reason (if provided) must be in DEATH_REASONS.
         - If death_reason == 'Other', death_comment is required.
         - death_date and death_reason must both be present or both absent.
+        - If both death_date and planting_date are provided, death_date must be
+          on or after planting_date and not in the future.
         """
+        death_dt: date | None = None
         if death_date is not None:
             try:
-                datetime.strptime(death_date, "%Y-%m-%d")
+                death_dt = datetime.strptime(death_date, "%Y-%m-%d").date()
             except ValueError:
                 raise ValueError("death_date must be in YYYY-MM-DD format")
 
@@ -168,3 +174,13 @@ class Plant:
             raise ValueError("death_date is required when death_reason is provided")
         if death_comment and (not death_date or not death_reason):
             raise ValueError("death_comment requires both death_date and death_reason")
+
+        if death_dt is not None and planting_date is not None:
+            try:
+                planting_dt = datetime.strptime(planting_date, "%Y-%m-%d").date()
+            except ValueError:
+                raise ValueError("planting_date must be in YYYY-MM-DD format")
+            if death_dt < planting_dt:
+                raise ValueError("death_date cannot be before planting_date")
+            if death_dt > datetime.now().date():
+                raise ValueError("death_date cannot be in the future")
