@@ -48,7 +48,14 @@ class Plant:
     )
 
     def __post_init__(self) -> None:
-        """Validate death fields on construction."""
+        """Validate fields on construction."""
+        # Validate planting_date format if provided
+        if self.planting_date is not None:
+            try:
+                datetime.strptime(self.planting_date, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError("planting_date must be in YYYY-MM-DD format")
+        # Validate death fields
         type(self).validate_death_fields(
             self.death_date, self.death_reason, self.death_comment, self.planting_date
         )
