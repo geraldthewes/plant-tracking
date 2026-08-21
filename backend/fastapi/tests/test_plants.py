@@ -91,6 +91,17 @@ def test_mark_plant_dead(plants_client, plant_id, death_date, death_reason, deat
     assert data["is_dead"] is True
 
 
+def test_mark_plant_dead_empty_comment_normalized_to_null(plants_client):
+    """Test that empty death_comment is normalized to null in the response."""
+    response = plants_client.patch(
+        "/api/plants/PE-2026-002/dead",
+        json={"death_date": "2026-08-07", "death_reason": "Drought", "death_comment": ""}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["death_comment"] is None
+
+
 def test_mark_plant_already_dead(plants_client):
     """Test that marking already dead plant returns 400."""
     response = plants_client.patch(

@@ -145,8 +145,8 @@ async def mark_plant_dead(
     return PlantDeadResponse(
         id=updated.id,
         variety_name=updated.variety_name,
-        death_date=updated.death_date,
-        death_reason=updated.death_reason,
-        death_comment=updated.death_comment,
+        death_date=updated.death_date or None,
+        death_reason=updated.death_reason or None,
+        death_comment=updated.death_comment or None,
         is_dead=updated.is_dead,
     )
