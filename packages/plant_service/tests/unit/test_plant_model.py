@@ -183,6 +183,8 @@ class TestPlantDeathFields:
             }
             plant = Plant.create_from_dict(data)
             assert plant.death_reason == reason
+            expected_comment = "comment" if reason == "Other" else ""
+            assert plant.death_comment == expected_comment
 
     @pytest.mark.parametrize(
         "constructor",
