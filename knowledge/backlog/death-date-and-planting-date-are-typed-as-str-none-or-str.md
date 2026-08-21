@@ -3,7 +3,7 @@ title: "death_date (and planting_date) are typed as str | None (or str) and vali
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:43:05Z
-updated_at: 2026-08-21T16:41:10Z
+updated_at: 2026-08-21T18:27:40Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/d30f3ff2-29.md
@@ -61,6 +61,14 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r5/c0c9fd17-10.md
     file: backend/fastapi/src/plant_tracking_api/schemas.py
     lines: 8-8
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r6/c0c9fd17-0.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 8-8
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r7/c0c9fd17-2.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 8-9
     date: 2026-08-21
 ---
 
@@ -122,3 +130,9 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r5/c0c9fd17-10.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-8
   The type inconsistency is real and confirmed: PlantDeathRequest.death_date is str (schemas.py:8) while PlantSummary, PlantResponse, and PlantDeadResponse all use date | None. However, this is the same…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r6/c0c9fd17-0.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-8
+  This is the same deferred theme already tracked in knowledge/backlog/death-date-and-planting-date-are-typed-as-str-none-or-str.md, which covers death_date (and planting_date) being typed as str across…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r7/c0c9fd17-2.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-9
+  Confirmed: PlantDeathRequest.death_date is `str` (schemas.py:8) while all response models use `date | None`. The inconsistency is real but this is not a one-line auto-fix — changing the type requires …

@@ -3,7 +3,7 @@ title: There is a potential race condition where after checking the plant is not
 source_report: .review-runs/PROJ-0013/20260821T021224Z/code-review-r2.json
 source_severity: n/a
 created_at: 2026-08-21T04:12:09Z
-updated_at: 2026-08-21T16:41:10Z
+updated_at: 2026-08-21T18:27:40Z
 source: review-analyzer
 occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r2/cf9314f8-11.md
@@ -37,6 +37,10 @@ occurrences:
   - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r5/cf9314f8-5.md
     file: commands/plant_tracking_cli.py
     lines: 792-859
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r7/cf9314f8-3.md
+    file: commands/plant_tracking_cli.py
+    lines: 838-842
     date: 2026-08-21
 ---
 
@@ -76,3 +80,6 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r5/cf9314f8-5.md` (`commands/plant_tracking_cli.py`) lines 792-859
   The TOCTOU race condition is technically real but is the exact same deferred theme already tracked in the backlog with 7 prior occurrences. The check in Phase 1 commits before Phase 2 (user interactio…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r7/cf9314f8-3.md` (`commands/plant_tracking_cli.py`) lines 838-842
+  This is the same race condition theme in commands/plant_tracking_cli.py that has been consistently classified as BACKLOG in prior review rounds (r3, r4, r5). The catalog entry 'knowledge/backlog/there…
