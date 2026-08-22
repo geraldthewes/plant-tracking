@@ -39,6 +39,7 @@ node_modules/
 *.backup
 .opencode/plans/
 feedback/
+.review-runs/
 
 # IDE
 .vscode/
