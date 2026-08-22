@@ -91,15 +91,27 @@ def test_mark_plant_dead(plants_client, plant_id, death_date, death_reason, deat
     assert data["is_dead"] is True
 
 
-def test_mark_plant_dead_empty_comment_normalized_to_null(plants_client):
-    """Test that empty death_comment is normalized to null in the response."""
+@pytest.mark.parametrize(
+    "comment_payload",
+    [
+        pytest.param({}, id="omitted"),
+        pytest.param({"death_comment": ""}, id="empty_string"),
+        pytest.param({"death_comment": "   "}, id="whitespace"),
+        pytest.param({"death_comment": None}, id="null"),
+    ],
+)
+def test_mark_plant_dead_empty_comment_is_null(plants_client, comment_payload):
+    """Empty, omitted, or null death_comment is None at the schema boundary."""
     response = plants_client.patch(
         "/api/plants/PE-2026-002/dead",
-        json={"death_date": "2026-08-07", "death_reason": "Drought", "death_comment": ""}
+        json={"death_date": "2026-08-07", "death_reason": "Drought", **comment_payload},
     )
     assert response.status_code == 200
-    data = response.json()
-    assert data["death_comment"] is None
+    assert response.json()["death_comment"] is None
+
+    get_response = plants_client.get("/api/plants/PE-2026-002")
+    assert get_response.status_code == 200
+    assert get_response.json()["death_comment"] is None
 
 
 def test_mark_plant_already_dead(plants_client):

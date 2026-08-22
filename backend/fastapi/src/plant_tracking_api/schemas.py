@@ -1,13 +1,20 @@
 from datetime import date
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class PlantDeathRequest(BaseModel):
     """Request body for marking a plant as dead."""
     death_date: str
     death_reason: str
-    death_comment: str = ""
+    death_comment: str | None = None
+
+    @field_validator("death_comment", mode="before")
+    @classmethod
+    def empty_comment_to_none(cls, value: object) -> object:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
 
 class PlantSummary(BaseModel):
