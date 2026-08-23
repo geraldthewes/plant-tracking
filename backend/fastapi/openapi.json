@@ -59,7 +59,159 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PlantListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plants/": {
+      "get": {
+        "tags": [
+          "plants"
+        ],
+        "summary": "List Plants",
+        "description": "List all plants with optional alive/dead filtering.\n\nArgs:\n    alive_only: If True, return only plants without death_date.\n    dead_only: If True, return only plants with death_date.\n\nReturns:\n    PlantListResponse: List of matching plants and count.\n\nRaises:\n    HTTPException: 400 if both filters specified.",
+        "operationId": "list_plants_api_plants__get",
+        "parameters": [
+          {
+            "name": "alive_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Alive Only"
+            }
+          },
+          {
+            "name": "dead_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Dead Only"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plants/{plant_id}": {
+      "get": {
+        "tags": [
+          "plants"
+        ],
+        "summary": "Get Plant",
+        "description": "Get a specific plant by ID.",
+        "operationId": "get_plant_api_plants__plant_id__get",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plants/{plant_id}/dead": {
+      "patch": {
+        "tags": [
+          "plants"
+        ],
+        "summary": "Mark Plant Dead",
+        "description": "Mark a plant as dead.",
+        "operationId": "mark_plant_dead_api_plants__plant_id__dead_patch",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlantDeathRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantDeadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -431,6 +583,354 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "PlantDeadResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "variety_name": {
+            "type": "string",
+            "title": "Variety Name"
+          },
+          "death_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Date"
+          },
+          "death_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Reason"
+          },
+          "death_comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Comment"
+          },
+          "is_dead": {
+            "type": "boolean",
+            "title": "Is Dead",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "variety_name"
+        ],
+        "title": "PlantDeadResponse",
+        "description": "Response after marking a plant as dead."
+      },
+      "PlantDeathRequest": {
+        "properties": {
+          "death_date": {
+            "type": "string",
+            "title": "Death Date"
+          },
+          "death_reason": {
+            "type": "string",
+            "title": "Death Reason"
+          },
+          "death_comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "death_date",
+          "death_reason"
+        ],
+        "title": "PlantDeathRequest",
+        "description": "Request body for marking a plant as dead."
+      },
+      "PlantListResponse": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "plants": {
+            "items": {
+              "$ref": "#/components/schemas/PlantSummary"
+            },
+            "type": "array",
+            "title": "Plants"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "plants"
+        ],
+        "title": "PlantListResponse",
+        "description": "Response for plant list endpoints."
+      },
+      "PlantResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "variety_name": {
+            "type": "string",
+            "title": "Variety Name"
+          },
+          "latin_name": {
+            "type": "string",
+            "title": "Latin Name"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "days_to_maturity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days To Maturity"
+          },
+          "germination_time": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Germination Time"
+          },
+          "planting_depth": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planting Depth"
+          },
+          "spacing": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spacing"
+          },
+          "sun_requirements": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sun Requirements"
+          },
+          "indoor_start_time": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Indoor Start Time"
+          },
+          "planting_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planting Date"
+          },
+          "seed_packet_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed Packet Id"
+          },
+          "genus_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genus Id"
+          },
+          "death_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Date"
+          },
+          "death_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Reason"
+          },
+          "death_comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Comment"
+          },
+          "is_dead": {
+            "type": "boolean",
+            "title": "Is Dead",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "variety_name",
+          "latin_name"
+        ],
+        "title": "PlantResponse",
+        "description": "Full plant details response."
+      },
+      "PlantSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "variety_name": {
+            "type": "string",
+            "title": "Variety Name"
+          },
+          "latin_name": {
+            "type": "string",
+            "title": "Latin Name"
+          },
+          "planting_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planting Date"
+          },
+          "death_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Date"
+          },
+          "death_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Reason"
+          },
+          "is_dead": {
+            "type": "boolean",
+            "title": "Is Dead",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "variety_name",
+          "latin_name"
+        ],
+        "title": "PlantSummary",
+        "description": "Plant summary for list responses."
       },
       "ValidationError": {
         "properties": {
