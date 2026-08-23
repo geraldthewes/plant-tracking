@@ -5,7 +5,7 @@ Plant Tracking CLI - Main entry point for plant tracking commands
 import argparse
 import os
 import sys
-from datetime import datetime
+from datetime import date
 import traceback
 
 # Markdown model imports (for backup/export during transition)
@@ -365,6 +365,25 @@ def _prompt_field(field, description, data):
             print("This field is required")
 
 
+def _prompt_date_field(field, description, data):
+    """Prompt user for a required date field, stored as a date object."""
+    while True:
+        value = input(f"{description}: ").strip()
+        if not value:
+            print("This field is required")
+            continue
+        try:
+            data[field] = date.fromisoformat(value)
+            break
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+
+
+def _date_to_iso(value):
+    """Convert a date object to an ISO string for Markdown-backed models."""
+    return value.isoformat() if isinstance(value, date) else value
+
+
 def _prompt_optional_field(field, description, data):
     """Prompt user for an optional field value."""
     value = input(f"{description} (optional): ").strip()
@@ -650,7 +669,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
     # Phase 3: Plant-specific required field (always asked)
     print()
     print("--- Plant-specific field ---")
-    _prompt_field("planting_date", "Planting date (YYYY-MM-DD)", plant_data)
+    _prompt_date_field("planting_date", "Planting date (YYYY-MM-DD)", plant_data)
 
     try:
         plant_id = None
@@ -684,7 +703,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                 "id": plant.id,
                 "variety_name": plant.variety_name,
                 "latin_name": plant.latin_name,
-                "planting_date": plant.planting_date,
+                "planting_date": _date_to_iso(plant.planting_date),
                 "brand": plant.brand or "unknown",
                 "days_to_maturity": plant.days_to_maturity or "unknown",
                 "germination_time": plant.germination_time or "unknown",
@@ -700,7 +719,9 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
             _write_markdown_backup(filepath, markdown_plant)
         else:
             # Fallback to Markdown-only mode
-            plant = MarkdownPlant(plant_data)
+            markdown_data = dict(plant_data)
+            markdown_data["planting_date"] = _date_to_iso(markdown_data["planting_date"])
+            plant = MarkdownPlant(markdown_data)
             filepath = database_dir / f"{plant.data['id']}.md"
             _write_markdown_backup(filepath, plant)
             plant_id = plant.data["id"]
@@ -731,23 +752,24 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
         sys.exit(1)
 
 
-def _prompt_death_details() -> tuple[str, str, str]:
+def _prompt_death_details() -> tuple[date, str, str]:
     """Prompt user for death date, reason, and comment. No DB access."""
     # Prompt for death date
     while True:
         try:
-            death_date = input("Death date (YYYY-MM-DD): ").strip()
+            death_date_str = input("Death date (YYYY-MM-DD): ").strip()
         except (EOFError, KeyboardInterrupt):
             print("\nCancelled.")
             sys.exit(0)
         try:
-            d = datetime.strptime(death_date, "%Y-%m-%d")
-            if d > datetime.now():
-                print("Date cannot be in the future.")
-                continue
-            break
+            death_date = date.fromisoformat(death_date_str)
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
+            continue
+        if death_date > date.today():
+            print("Date cannot be in the future.")
+            continue
+        break
 
     # Prompt for death reason
     print("\nDeath reasons:")
@@ -810,7 +832,7 @@ def mark_dead(args, db=None):
 
             if plant.is_dead:
                 print(f"✗ Plant {plant_id} is already marked as dead")
-                print(f"  Death date: {plant.death_date}")
+                print(f"  Death date: {plant.death_date.isoformat()}")
                 print(f"  Death reason: {plant.death_reason}")
                 sys.exit(1)
 
@@ -843,7 +865,7 @@ def mark_dead(args, db=None):
 
         print()
         print("✓ Plant marked as dead successfully!")
-        print(f"  Death date: {updated.death_date}")
+        print(f"  Death date: {updated.death_date.isoformat()}")
         print(f"  Death reason: {updated.death_reason}")
         if updated.death_comment:
             print(f"  Comment: {updated.death_comment}")
@@ -1856,12 +1878,12 @@ def list_plants(args, db=None):
             pid = p.id
             variety = p.variety_name
             latin = p.latin_name
-            planting_date = p.planting_date
+            planting_date = _date_to_iso(p.planting_date)
         elif db:
             pid = p.id
             variety = p.variety_name
             latin = p.latin_name
-            planting_date = p.planting_date
+            planting_date = _date_to_iso(p.planting_date)
         else:
             pid = p.data["id"]
             variety = p.data["variety_name"]
@@ -1905,11 +1927,11 @@ def show_plant(args, db=None):
                 for field, label in fields_to_show:
                     val = getattr(plant, field, None)
                     if val:
-                        print(f"  {label:<22} {val}")
+                        print(f"  {label:<22} {_date_to_iso(val)}")
                 if plant.is_dead:
                     print()
                     print("  *** DEAD ***")
-                    print(f"  {'Death Date':<22} {plant.death_date}")
+                    print(f"  {'Death Date':<22} {plant.death_date.isoformat()}")
                     print(f"  {'Death Reason':<22} {plant.death_reason}")
                     if plant.death_comment:
                         print(f"  {'Death Comment':<22} {plant.death_comment}")
@@ -1952,11 +1974,10 @@ def show_plant(args, db=None):
         for field, label in fields_to_show:
             val = getattr(plant, field, None)
             if val:
-                print(f"  {label:<22} {val}")
+                print(f"  {label:<22} {_date_to_iso(val)}")
         print()
         if plant.created_at:
             print(f"  Created: {plant.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
-        if plant.updated_at:
             print(f"  Updated: {plant.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
     else:
         # Markdown fallback

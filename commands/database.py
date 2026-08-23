@@ -135,7 +135,7 @@ def export_to_markdown() -> None:
                 "spacing": plant.spacing or "unknown",
                 "sun_requirements": plant.sun_requirements or "unknown",
                 "indoor_start_time": plant.indoor_start_time or "unknown",
-                "planting_date": plant.planting_date,
+                "planting_date": plant.planting_date.isoformat() if plant.planting_date else "",
                 "seed_packet_id": plant.seed_packet_id or "unknown",
                 "genus_id": plant.genus_id or "unknown",
             }

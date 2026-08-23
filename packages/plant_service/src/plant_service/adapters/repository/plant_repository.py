@@ -1,7 +1,7 @@
 """Plant repository adapter implementing plant service port"""
 from __future__ import annotations
 
-import datetime
+from datetime import date
 from typing import Iterator
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -20,22 +20,14 @@ class PlantRepository(BaseRepository[Plant], PlantService):
 
     def create_plant(self, plant_data: dict) -> PlantDomain:
         """Create a new plant record"""
-        # Validate required fields and date format early
+        # Validate required fields early
         if "variety_name" not in plant_data:
             raise ValueError("Missing required field: variety_name")
 
-        planting_date = plant_data.get("planting_date")
-        if planting_date is not None:
-            try:
-                datetime.datetime.strptime(planting_date, "%Y-%m-%d")
-            except ValueError:
-                raise ValueError("planting_date must be in YYYY-MM-DD format")
-
         # Generate ID with sequence from existing records
+        planting_date = plant_data.get("planting_date") or date.today()
         abbrev = PlantDomain.make_abbrev(plant_data["variety_name"])
-        if planting_date is None:
-            planting_date = datetime.datetime.now().strftime("%Y-%m-%d")
-        year = datetime.datetime.strptime(planting_date, "%Y-%m-%d").year
+        year = planting_date.year
 
         existing_ids = self.get_all_ids()
         seq = PlantDomain.find_next_sequence(abbrev, year, existing_ids)

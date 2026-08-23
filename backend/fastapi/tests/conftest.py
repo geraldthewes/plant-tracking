@@ -1,4 +1,5 @@
 import unittest.mock
+from datetime import date
 
 import pytest
 
@@ -15,22 +16,22 @@ def _mock_uow_with_plants() -> unittest.mock.MagicMock:
         id="TO-2026-001",
         variety_name="Tomato",
         latin_name="Solanum lycopersicum",
-        planting_date="2026-01-01",
+        planting_date=date(2026, 1, 1),
     )
 
     alive_plant_2 = plant_service.domain.Plant(
         id="PE-2026-002",
         variety_name="Pepper",
         latin_name="Capsicum annuum",
-        planting_date="2026-03-01",
+        planting_date=date(2026, 3, 1),
     )
 
     dead_plant = plant_service.domain.Plant(
         id="PE-2026-001",
         variety_name="Pepper",
         latin_name="Capsicum annuum",
-        planting_date="2026-02-01",
-        death_date="2026-08-01",
+        planting_date=date(2026, 2, 1),
+        death_date=date(2026, 8, 1),
         death_reason="Disease",
         death_comment="Fungal infection",
     )

@@ -25,12 +25,12 @@ class Plant:
     spacing: str | None = None
     sun_requirements: str | None = None
     indoor_start_time: str | None = None
-    planting_date: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
+    planting_date: date = field(default_factory=date.today)
     seed_packet_id: str | None = None
     genus_id: str | None = None
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
-    death_date: str | None = None
+    death_date: date | None = None
     death_reason: str | None = None
     death_comment: str | None = None
 
@@ -49,12 +49,6 @@ class Plant:
 
     def __post_init__(self) -> None:
         """Validate fields on construction."""
-        # Validate planting_date format if provided
-        if self.planting_date is not None:
-            try:
-                datetime.strptime(self.planting_date, "%Y-%m-%d")
-            except ValueError:
-                raise ValueError("planting_date must be in YYYY-MM-DD format")
         # Validate death fields
         type(self).validate_death_fields(
             self.death_date, self.death_reason, self.death_comment, self.planting_date
@@ -78,7 +72,9 @@ class Plant:
             abbrev = variety_name[:4].upper()
         return abbrev
 
-    def generate_id(self, variety_name: str, planting_date: str, seq: int = 1) -> str:
+    def generate_id(
+        self, variety_name: str, planting_date: date | None = None, seq: int = 1
+    ) -> str:
         """
         Generate plant ID in VARIETY-YYYY-SEQ format.
         Preserves exact logic from commands/models/plant.py:52-69
@@ -87,12 +83,7 @@ class Plant:
         Default seq=1 is for standalone use (testing/domain layer only).
         """
         abbrev = self.make_abbrev(variety_name)
-
-        if planting_date:
-            year = datetime.strptime(planting_date, "%Y-%m-%d").year
-        else:
-            year = datetime.now().year
-
+        year = planting_date.year if planting_date else date.today().year
         return f"{abbrev}-{year}-{seq:03d}"
 
     @staticmethod
@@ -131,39 +122,24 @@ class Plant:
             if not re.match(r"^SPKT-\d{3}$", data["seed_packet_id"]):
                 raise ValueError("seed_packet_id must match SPKT-NNN format")
 
-        # Validate date format
-        if "planting_date" in data:
-            try:
-                datetime.strptime(data["planting_date"], "%Y-%m-%d")
-            except ValueError:
-                raise ValueError("planting_date must be in YYYY-MM-DD format")
-
         return cls(**data)
 
     @classmethod
     def validate_death_fields(
         cls,
-        death_date: str | None,
+        death_date: date | None,
         death_reason: str | None,
         death_comment: str | None = None,
-        planting_date: str | None = None,
+        planting_date: date | None = None,
     ) -> None:
         """Validate death-related fields.
 
-        - death_date (if provided) must be in YYYY-MM-DD format.
         - death_reason (if provided) must be in DEATH_REASONS.
         - If death_reason == 'Other', death_comment is required.
         - death_date and death_reason must both be present or both absent.
         - If both death_date and planting_date are provided, death_date must be
           on or after planting_date and not in the future.
         """
-        death_dt: date | None = None
-        if death_date is not None:
-            try:
-                death_dt = datetime.strptime(death_date, "%Y-%m-%d").date()
-            except ValueError:
-                raise ValueError("death_date must be in YYYY-MM-DD format")
-
         if death_reason is not None:
             if death_reason not in cls.DEATH_REASONS:
                 raise ValueError(
@@ -182,12 +158,8 @@ class Plant:
         if death_comment and (not death_date or not death_reason):
             raise ValueError("death_comment requires both death_date and death_reason")
 
-        if death_dt is not None and planting_date is not None:
-            try:
-                planting_dt = datetime.strptime(planting_date, "%Y-%m-%d").date()
-            except ValueError:
-                raise ValueError("planting_date must be in YYYY-MM-DD format")
-            if death_dt < planting_dt:
+        if death_date is not None and planting_date is not None:
+            if death_date < planting_date:
                 raise ValueError("death_date cannot be before planting_date")
-            if death_dt > datetime.now().date():
+            if death_date > date.today():
                 raise ValueError("death_date cannot be in the future")

@@ -8,7 +8,7 @@ import shutil
 import tempfile
 import unittest
 from unittest import mock
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 
@@ -1595,7 +1595,7 @@ class TestListPlantsDBFiltering(unittest.TestCase):
         p.id = plant_id
         p.variety_name = "Test Plant"
         p.latin_name = "Testum testum"
-        p.planting_date = "2026-05-01"
+        p.planting_date = date(2026, 5, 1)
         p.is_dead = death_date is not None
         return p
 

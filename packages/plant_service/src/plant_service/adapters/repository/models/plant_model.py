@@ -1,8 +1,9 @@
 """SQLAlchemy ORM model for Plant entity"""
 from __future__ import annotations
 
+from datetime import date
 from typing import TYPE_CHECKING, Optional
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import Date, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base, TimestampMixin
 
@@ -27,7 +28,7 @@ class Plant(Base, TimestampMixin):
     spacing: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     sun_requirements: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     indoor_start_time: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    planting_date: Mapped[str] = mapped_column(String(10), nullable=False)
+    planting_date: Mapped[date] = mapped_column(Date(), nullable=False)
 
     seed_packet_id: Mapped[Optional[str]] = mapped_column(
         String(10), ForeignKey("seed_packets.id"), nullable=True
@@ -36,7 +37,7 @@ class Plant(Base, TimestampMixin):
         String(10), ForeignKey("genera.id"), nullable=True
     )
 
-    death_date: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    death_date: Mapped[Optional[date]] = mapped_column(Date(), nullable=True)
     death_reason: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     death_comment: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 

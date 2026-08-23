@@ -5,7 +5,7 @@ from pydantic import BaseModel, field_validator
 
 class PlantDeathRequest(BaseModel):
     """Request body for marking a plant as dead."""
-    death_date: str
+    death_date: date
     death_reason: str
     death_comment: str | None = None
 

@@ -3,7 +3,7 @@ title: "death_date (and planting_date) are typed as str | None (or str) and vali
 source_report: code-review-proj-0013-r4.json
 source_severity: n/a
 created_at: 2026-08-13T02:43:05Z
-updated_at: 2026-08-21T18:27:40Z
+updated_at: 2026-08-23T21:45:00Z
 source: review-analyzer
 occurrences:
   - feedback: feedback-proj-0013-r4/d30f3ff2-29.md
@@ -70,9 +70,45 @@ occurrences:
     file: backend/fastapi/src/plant_tracking_api/schemas.py
     lines: 8-9
     date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r8/1ff5ce22-0.md
+    file: alembic/versions/a1b2c3d4e5f6_add_death_fields_to_plant.py
+    lines: 23-26
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r8/c0c9fd17-1.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 8-10
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r8/82911b41-7.md
+    file: backend/fastapi/src/plant_tracking_api/routes/plants.py
+    lines: 57-73
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r9/c0c9fd17-9.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 8-8
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r9/c0c9fd17-10.md
+    file: backend/fastapi/src/plant_tracking_api/schemas.py
+    lines: 6-6
+    date: 2026-08-21
 ---
 
 # death_date (and planting_date) are typed as str | None (or str) and validated wi…
+
+## Status
+
+RESOLVED by PROJ-0014 - Use native date types end-to-end for planting_date and death_date (2026-08-23)
+
+## Resolution Summary
+
+Changed planting_date and death_date from string representations to native date types:
+- DATABASE: VARCHAR(10) → DATE columns (death revision edited in place before first application; new `b3c4d5e6f7a8` conversion migration for existing data)
+- ORM: Mapped[str] → Mapped[date] with Date() type in both model trees
+- DOMAIN: str/str | None → date/date | None objects with native comparisons
+- API: responses were already correct; requests now Pydantic-validated (422 on malformed input)
+- CLI: string input/output → date.fromisoformat()/isoformat()
+- All strptime/strftime usage removed for these fields (timestamp fields remain out of scope)
+
+New occurrences of this theme (including any "align column type with the ORM" feedback) should be dispositioned as "resolved by PROJ-0014".
 
 ## Problem
 
@@ -85,6 +121,8 @@ Could not parse structured JSON from LLM response: **Verdict: BACKLOG**
 ## Recommendation
 
 Revisit this deferred review finding when capacity allows.
+
+> **2026-08-22 — Owner decision (Gerald)**: all date fields (`planting_date`, `death_date`) use native date types end-to-end — `sa.Date()` in migrations, `Date()`/`Mapped[date]` in ORM, `date` in domain and Pydantic. Resolution path: **PROJ-0014**. Until PROJ-0014 completes, disposition new occurrences of this theme (including any "align column type with the ORM" feedback) as "covered by PROJ-0014" rather than changing the column type.
 
 ## Occurrences
 
@@ -136,3 +174,18 @@ Revisit this deferred review finding when capacity allows.
 
 - **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r7/c0c9fd17-2.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-9
   Confirmed: PlantDeathRequest.death_date is `str` (schemas.py:8) while all response models use `date | None`. The inconsistency is real but this is not a one-line auto-fix — changing the type requires …
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r8/1ff5ce22-0.md` (`alembic/versions/a1b2c3d4e5f6_add_death_fields_to_plant.py`) lines 23-26
+  Confirmed: alembic/versions/a1b2c3d4e5f6_add_death_fields_to_plant.py:25 does use sa.String(length=10) for death_date. However, this is not an isolated defect — the migration is intentionally consiste…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r8/c0c9fd17-1.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-10
+  The type inconsistency is real but the suggested fix is inappropriate — making death_date/death_reason optional in a 'mark dead' request is semantically wrong (domain validation requires both). The pr…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r8/82911b41-7.md` (`backend/fastapi/src/plant_tracking_api/routes/plants.py`) lines 57-73
+  The type mismatch is real: PlantSummary declares planting_date/death_date as `date | None` (schemas.py:18-19) while the domain model stores them as `str`/`str | None` (plant.py:28,33). However, Pydant…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r9/c0c9fd17-9.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 8-8
+  Confirmed real: PlantDeathRequest.death_date is typed as `str` (schemas.py:8) while PlantSummary.death_date, PlantResponse.death_date, and PlantDeadResponse.death_date all use `date | None` (lines 19,…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r9/c0c9fd17-10.md` (`backend/fastapi/src/plant_tracking_api/schemas.py`) lines 6-6
+  The domain model already validates future death dates in Plant.validate_death_fields (plant.py:192-193: `if death_dt > datetime.now().date(): raise ValueError(...)`). In the mark_plant_dead flow, the …

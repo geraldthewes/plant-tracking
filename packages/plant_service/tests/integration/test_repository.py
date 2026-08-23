@@ -1,4 +1,6 @@
 """Integration tests for repository adapters using SQLite in-memory database"""
+from datetime import date
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -35,7 +37,7 @@ def sample_plant_dict():
     return {
         "variety_name": "Test Plant",
         "latin_name": "Test Latin",
-        "planting_date": "2026-01-01",
+        "planting_date": date(2026, 1, 1),
     }
 
 
@@ -63,7 +65,7 @@ def alive_and_dead_plants(uow, sample_plant_dict):
         })
     with uow:
         uow.plants.update_plant(dead.id, {
-            "death_date": "2026-08-01",
+            "death_date": date(2026, 8, 1),
             "death_reason": "Drought",
         })
     return alive.id, dead.id
@@ -75,7 +77,7 @@ class TestPlantRepository:
             plant = uow.plants.create_plant({
                 "variety_name": "Yellow Habanero",
                 "latin_name": "Capsicum chinense",
-                "planting_date": "2026-03-15",
+                "planting_date": date(2026, 3, 15),
             })
         assert plant.id.startswith("YEHA-")
         assert plant.variety_name == "Yellow Habanero"
@@ -85,7 +87,7 @@ class TestPlantRepository:
             plant = uow.plants.create_plant({
                 "variety_name": "Tomato",
                 "latin_name": "Solanum lycopersicum",
-                "planting_date": "2026-01-01",
+                "planting_date": date(2026, 1, 1),
             })
             plant_id = plant.id
 
@@ -99,12 +101,12 @@ class TestPlantRepository:
             uow.plants.create_plant({
                 "variety_name": "Plant 1",
                 "latin_name": "Latin 1",
-                "planting_date": "2026-01-01",
+                "planting_date": date(2026, 1, 1),
             })
             uow.plants.create_plant({
                 "variety_name": "Plant 2",
                 "latin_name": "Latin 2",
-                "planting_date": "2026-01-02",
+                "planting_date": date(2026, 1, 2),
             })
 
         with uow:
@@ -175,7 +177,7 @@ class TestLogRepository:
             plant = uow.plants.create_plant({
                 "variety_name": "Test Plant",
                 "latin_name": "Test Latin",
-                "planting_date": "2026-01-01",
+                "planting_date": date(2026, 1, 1),
             })
             plant_id = plant.id
 
@@ -194,7 +196,7 @@ class TestLogRepository:
             plant = uow.plants.create_plant({
                 "variety_name": "Test Plant",
                 "latin_name": "Test Latin",
-                "planting_date": "2026-01-01",
+                "planting_date": date(2026, 1, 1),
             })
             plant_id = plant.id
 
@@ -219,7 +221,7 @@ class TestLogRepository:
             plant = uow.plants.create_plant({
                 "variety_name": "Test Plant",
                 "latin_name": "Test Latin",
-                "planting_date": "2026-01-01",
+                "planting_date": date(2026, 1, 1),
             })
             plant_id = plant.id
 
@@ -249,7 +251,7 @@ class TestUnitOfWork:
                 uow.plants.create_plant({
                     "variety_name": "Test Plant",
                     "latin_name": "Test Latin",
-                    "planting_date": "2026-01-01",
+                    "planting_date": date(2026, 1, 1),
                 })
                 raise ValueError("Test exception")
         except ValueError:
@@ -267,7 +269,7 @@ class TestUnitOfWork:
             uow.plants.create_plant({
                 "variety_name": "Test Plant",
                 "latin_name": "Test Latin",
-                "planting_date": "2026-01-01",
+                "planting_date": date(2026, 1, 1),
             })
 
         # Verify the plant was committed
@@ -283,13 +285,13 @@ class TestPlantDeathFields:
 
         with uow:
             updated = uow.plants.update_plant(sample_plant.id, {
-                "death_date": "2026-08-07",
+                "death_date": date(2026, 8, 7),
                 "death_reason": "Disease",
                 "death_comment": "Fungal infection",
             })
 
         assert updated is not None
-        assert updated.death_date == "2026-08-07"
+        assert updated.death_date == date(2026, 8, 7)
         assert updated.death_reason == "Disease"
         assert updated.death_comment == "Fungal infection"
         assert updated.is_dead is True
@@ -305,7 +307,7 @@ class TestPlantDeathFields:
 
         with uow:
             uow.plants.update_plant(plant_id, {
-                "death_date": "2026-08-01",
+                "death_date": date(2026, 8, 1),
                 "death_reason": "Drought",
             })
 
@@ -314,7 +316,7 @@ class TestPlantDeathFields:
 
         assert retrieved is not None
         assert retrieved.is_dead is True
-        assert retrieved.death_date == "2026-08-01"
+        assert retrieved.death_date == date(2026, 8, 1)
         assert retrieved.death_reason == "Drought"
 
     def test_list_plants_includes_death_fields(self, uow, alive_and_dead_plants):
@@ -326,7 +328,7 @@ class TestPlantDeathFields:
         dead_plants = [p for p in plants if p.is_dead]
         assert len(alive_plants) == 1
         assert len(dead_plants) == 1
-        assert dead_plants[0].death_date == "2026-08-01"
+        assert dead_plants[0].death_date == date(2026, 8, 1)
 
     def test_list_plants_identifies_alive(self, uow, alive_and_dead_plants):
         with uow:
@@ -347,7 +349,7 @@ class TestPlantDeathFields:
     def test_clear_death_fields(self, uow, sample_plant):
         with uow:
             uow.plants.update_plant(sample_plant.id, {
-                "death_date": "2026-08-01",
+                "death_date": date(2026, 8, 1),
                 "death_reason": "Disease",
             })
 
@@ -406,11 +408,11 @@ class TestPlantDeathFields:
 
         with uow:
             uow.plants.update_plant(plant1.id, {
-                "death_date": "2026-08-01",
+                "death_date": date(2026, 8, 1),
                 "death_reason": "Drought",
             })
             uow.plants.update_plant(plant2.id, {
-                "death_date": "2026-08-02",
+                "death_date": date(2026, 8, 2),
                 "death_reason": "Pest infestation",
             })
 

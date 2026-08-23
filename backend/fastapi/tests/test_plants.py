@@ -148,3 +148,21 @@ def test_mark_plant_not_found(plants_client):
         json={"death_date": "2026-08-07", "death_reason": "Disease"}
     )
     assert response.status_code == 404
+
+
+def test_mark_plant_malformed_date_returns_422(plants_client):
+    """Malformed death_date is rejected by Pydantic with 422."""
+    response = plants_client.patch(
+        "/api/plants/TO-2026-001/dead",
+        json={"death_date": "2026-13-99", "death_reason": "Disease"}
+    )
+    assert response.status_code == 422
+
+
+def test_mark_plant_date_string_returns_422(plants_client):
+    """A date string that is not ISO-8601 is rejected with 422."""
+    response = plants_client.patch(
+        "/api/plants/TO-2026-001/dead",
+        json={"death_date": "08-07-2026", "death_reason": "Disease"}
+    )
+    assert response.status_code == 422
