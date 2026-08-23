@@ -1799,16 +1799,24 @@ def _is_plant_dead(p):
 
 def list_plants(args, db=None):
     """List all plants in a table format."""
-    if db is None:
-        db = _get_db()
-
     alive_only = getattr(args, "alive_only", False)
     dead_only = getattr(args, "dead_only", False)
 
+    if alive_only and dead_only:
+        print("Error: cannot specify both --alive-only and --dead-only")
+        sys.exit(1)
+
+    if db is None:
+        db = _get_db()
+
+    db_filtered = False
     if db and SERVICE_AVAILABLE:
         try:
             with create_unit_of_work() as uow:
-                plants = list(uow.plants.list_plants())
+                plants = list(
+                    uow.plants.list_plants(alive_only=alive_only, dead_only=dead_only)
+                )
+            db_filtered = True
         except Exception:
             # Fallback to original models if service fails
             if db:
@@ -1826,11 +1834,12 @@ def list_plants(args, db=None):
         # Markdown fallback
         plants = _list_plants_from_files()
 
-    # Filter by alive/dead status
-    if alive_only:
-        plants = [p for p in plants if not _is_plant_dead(p)]
-    elif dead_only:
-        plants = [p for p in plants if _is_plant_dead(p)]
+    # Filter in Python only when the DB did not already filter
+    if not db_filtered:
+        if alive_only:
+            plants = [p for p in plants if not _is_plant_dead(p)]
+        elif dead_only:
+            plants = [p for p in plants if _is_plant_dead(p)]
 
     if not plants:
         print("No plants found.")

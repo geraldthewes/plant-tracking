@@ -2,6 +2,7 @@
 Test suite for plant tracking system
 """
 
+import io
 import os
 import shutil
 import tempfile
@@ -1581,3 +1582,125 @@ class TestIsPlantDeadHelper(unittest.TestCase):
             pass
 
         self.assertFalse(self._is_plant_dead(Bare()))
+
+
+class TestListPlantsDBFiltering(unittest.TestCase):
+    """Tests that CLI list_plants pushes alive/dead filters to the DB layer."""
+
+    def _make_args(self, alive_only=False, dead_only=False):
+        return type("Args", (), {"alive_only": alive_only, "dead_only": dead_only})()
+
+    def _make_domain_plant(self, plant_id, death_date=None):
+        p = mock.Mock()
+        p.id = plant_id
+        p.variety_name = "Test Plant"
+        p.latin_name = "Testum testum"
+        p.planting_date = "2026-05-01"
+        p.is_dead = death_date is not None
+        return p
+
+    def _make_file_stub(self, plant_id, death_date=None):
+        data = {
+            "id": plant_id,
+            "variety_name": "Test Plant",
+            "latin_name": "Testum testum",
+            "planting_date": "2026-05-01",
+        }
+        if death_date:
+            data["death_date"] = death_date
+
+        class Record:
+            pass
+
+        record = Record()
+        record.data = data
+        return record
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_alive_only_passed_to_repository(self, mock_create_uow):
+        """alive_only is forwarded to the repository, not filtered in Python."""
+        from commands.plant_tracking_cli import list_plants
+
+        uow = mock.Mock()
+        uow.plants.list_plants.return_value = iter(
+            [self._make_domain_plant("PL-2026-001")]
+        )
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            list_plants(self._make_args(alive_only=True), db=object())
+
+        uow.plants.list_plants.assert_called_once_with(alive_only=True, dead_only=False)
+        self.assertIn("PL-2026-001", mock_stdout.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_dead_only_passed_to_repository(self, mock_create_uow):
+        """dead_only is forwarded to the repository, not filtered in Python."""
+        from commands.plant_tracking_cli import list_plants
+
+        uow = mock.Mock()
+        uow.plants.list_plants.return_value = iter(
+            [self._make_domain_plant("PL-2026-002", "2026-07-01")]
+        )
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            list_plants(self._make_args(dead_only=True), db=object())
+
+        uow.plants.list_plants.assert_called_once_with(alive_only=False, dead_only=True)
+        self.assertIn("PL-2026-002", mock_stdout.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_no_filters_passes_falses(self, mock_create_uow):
+        """Without flags, the repository is called with both filters False."""
+        from commands.plant_tracking_cli import list_plants
+
+        uow = mock.Mock()
+        uow.plants.list_plants.return_value = iter([])
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        list_plants(self._make_args(), db=object())
+
+        uow.plants.list_plants.assert_called_once_with(
+            alive_only=False, dead_only=False
+        )
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_both_flags_rejected_without_db_call(self, mock_create_uow):
+        """Specifying both filters is an error and never reaches the DB."""
+        from commands.plant_tracking_cli import list_plants
+
+        with self.assertRaises(SystemExit):
+            list_plants(self._make_args(alive_only=True, dead_only=True), db=object())
+
+        mock_create_uow.assert_not_called()
+
+    @mock.patch("commands.plant_tracking_cli._list_plants_from_files")
+    def test_file_fallback_still_filters_in_python(self, mock_list_files):
+        """Markdown fallback path keeps filtering in Python via _is_plant_dead."""
+        from commands.plant_tracking_cli import list_plants
+
+        mock_list_files.return_value = [
+            self._make_file_stub("PL-2026-001"),
+            self._make_file_stub("PL-2026-002", "2026-07-01"),
+        ]
+
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            list_plants(self._make_args(dead_only=True), db=None)
+        output = mock_stdout.getvalue()
+        self.assertIn("PL-2026-002", output)
+        self.assertNotIn("PL-2026-001", output)
+
+        mock_list_files.return_value = [
+            self._make_file_stub("PL-2026-001"),
+            self._make_file_stub("PL-2026-002", "2026-07-01"),
+        ]
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            list_plants(self._make_args(alive_only=True), db=None)
+        output = mock_stdout.getvalue()
+        self.assertIn("PL-2026-001", output)
+        self.assertNotIn("PL-2026-002", output)
