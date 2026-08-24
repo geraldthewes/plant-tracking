@@ -81,7 +81,8 @@ def _get_db():
 
         database.init_db()
         return database
-    except Exception:
+    except Exception as e:
+        print(f"Warning: database unavailable: {e}", file=sys.stderr)
         return None
 
 
@@ -1839,8 +1840,12 @@ def list_plants(args, db=None):
                     uow.plants.list_plants(alive_only=alive_only, dead_only=dead_only)
                 )
             db_filtered = True
-        except Exception:
+        except Exception as e:
             # Fallback to original models if service fails
+            print(
+                f"Warning: database listing failed ({e}); using legacy models",
+                file=sys.stderr,
+            )
             if db:
                 from .models import Plant
 
@@ -1854,6 +1859,10 @@ def list_plants(args, db=None):
         plants = Plant.list_all()
     else:
         # Markdown fallback
+        print(
+            "Warning: database unavailable; showing Markdown backup files",
+            file=sys.stderr,
+        )
         plants = _list_plants_from_files()
 
     # Filter in Python only when the DB did not already filter

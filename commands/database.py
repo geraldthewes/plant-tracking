@@ -10,22 +10,28 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
 
-# Database URL from environment variable
-DATABASE_URL: Optional[str] = os.environ.get("DATABASE_URL")
-
 # Engine and session - created lazily
 engine = None
 SessionLocal = None
+
+
+def get_database_url() -> Optional[str]:
+    """Read DATABASE_URL from the environment.
+
+    Read per call so import order never races .env loading.
+    """
+    return os.environ.get("DATABASE_URL")
 
 
 def _get_engine():
     """Get or create the database engine."""
     global engine
     if engine is None:
-        if not DATABASE_URL:
+        url = get_database_url()
+        if not url:
             raise ValueError("DATABASE_URL environment variable must be set")
         engine = create_engine(
-            DATABASE_URL,
+            url,
             poolclass=SingletonThreadPool,
             pool_pre_ping=True,
             echo=False,

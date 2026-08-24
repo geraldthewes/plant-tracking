@@ -1679,8 +1679,9 @@ class TestListPlantsDBFiltering(unittest.TestCase):
 
         mock_create_uow.assert_not_called()
 
+    @mock.patch("commands.plant_tracking_cli._get_db", return_value=None)
     @mock.patch("commands.plant_tracking_cli._list_plants_from_files")
-    def test_file_fallback_still_filters_in_python(self, mock_list_files):
+    def test_file_fallback_still_filters_in_python(self, mock_list_files, mock_get_db):
         """Markdown fallback path keeps filtering in Python via _is_plant_dead."""
         from commands.plant_tracking_cli import list_plants
 
@@ -1704,3 +1705,96 @@ class TestListPlantsDBFiltering(unittest.TestCase):
         output = mock_stdout.getvalue()
         self.assertIn("PL-2026-001", output)
         self.assertNotIn("PL-2026-002", output)
+
+
+class TestDatabaseConfigLoading(unittest.TestCase):
+    """Regression: .env must be loaded before DATABASE_URL is read."""
+
+    def _restore_database_url(self, original):
+        if original is not None:
+            os.environ["DATABASE_URL"] = original
+        else:
+            os.environ.pop("DATABASE_URL", None)
+
+    def test_get_database_url_reads_env_lazily(self):
+        """get_database_url reflects the current environment, not an import-time snapshot."""
+        from commands import database
+
+        self.addCleanup(setattr, database, "engine", None)
+        original = os.environ.get("DATABASE_URL")
+        self.addCleanup(self._restore_database_url, original)
+        os.environ["DATABASE_URL"] = "postgresql://lazy:test/db"
+        self.assertEqual(database.get_database_url(), "postgresql://lazy:test/db")
+        os.environ.pop("DATABASE_URL")
+        self.assertIsNone(database.get_database_url())
+
+    def test_get_engine_raises_when_url_missing(self):
+        """_get_engine raises ValueError when DATABASE_URL is unset."""
+        from commands import database
+
+        self.addCleanup(setattr, database, "engine", None)
+        database.engine = None
+        original = os.environ.get("DATABASE_URL")
+        self.addCleanup(self._restore_database_url, original)
+        os.environ.pop("DATABASE_URL", None)
+        with self.assertRaises(ValueError):
+            database._get_engine()
+
+    def test_fresh_interpreter_loads_env_before_database_import(self):
+        """A process without DATABASE_URL in its env still resolves it from .env."""
+        import subprocess
+        import sys
+
+        repo_root = Path(__file__).resolve().parent.parent
+        if not (repo_root / ".env").exists():
+            self.skipTest("no .env in repo root")
+
+        env = {k: v for k, v in os.environ.items() if k != "DATABASE_URL"}
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from commands.database import get_database_url; "
+                "print(get_database_url() or '')",
+            ],
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=repo_root,
+            timeout=60,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.startswith("postgresql://"), result.stdout)
+
+    def test_get_db_reports_root_cause_on_failure(self):
+        """_get_db surfaces the underlying error instead of failing silently."""
+        from commands import plant_tracking_cli as cli
+
+        with mock.patch(
+            "commands.database.init_db",
+            side_effect=ValueError(
+                "DATABASE_URL environment variable must be set"
+            ),
+        ), mock.patch("sys.stderr", new_callable=io.StringIO) as mock_stderr:
+            db = cli._get_db()
+
+        self.assertIsNone(db)
+        self.assertIn(
+            "DATABASE_URL environment variable must be set", mock_stderr.getvalue()
+        )
+
+    def test_list_plants_warns_on_markdown_fallback(self):
+        """list_plants warns on stderr when it falls back to Markdown files."""
+        from commands import plant_tracking_cli as cli
+        from commands.plant_tracking_cli import list_plants
+
+        args = type("Args", (), {"alive_only": False, "dead_only": False})()
+        with mock.patch.object(cli, "_get_db", return_value=None), mock.patch.object(
+            cli, "_list_plants_from_files", return_value=[]
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout, mock.patch(
+            "sys.stderr", new_callable=io.StringIO
+        ) as mock_stderr:
+            list_plants(args)
+
+        self.assertIn("No plants found", mock_stdout.getvalue())
+        self.assertIn("Markdown", mock_stderr.getvalue())
