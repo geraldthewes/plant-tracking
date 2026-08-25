@@ -6,7 +6,6 @@ import argparse
 import os
 import sys
 from datetime import date
-import traceback
 
 # Markdown model imports (for backup/export during transition)
 from .genus_model import get_genera_dir
@@ -807,7 +806,7 @@ def _prompt_death_details() -> tuple[date, str, str]:
                 "Comment (required for 'Other'): "
             ).strip()
     else:
-        death_comment = input("Additional comment (optional): ").strip()
+        death_comment = input("Additional comment (optional, press Enter to skip): ").strip()
 
     return death_date, death_reason, death_comment
 
@@ -845,7 +844,6 @@ def mark_dead(args, db=None):
         sys.exit(1)
     except Exception as e:
         print(f"✗ Unexpected error: {e}")
-        traceback.print_exc()
         sys.exit(1)
 
     print("=== Mark Plant as Dead ===")
