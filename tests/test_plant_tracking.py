@@ -1798,3 +1798,246 @@ class TestDatabaseConfigLoading(unittest.TestCase):
 
         self.assertIn("No plants found", mock_stdout.getvalue())
         self.assertIn("Markdown", mock_stderr.getvalue())
+
+
+class TestPromptDeathDetails(unittest.TestCase):
+    """Tests for the _prompt_death_details CLI helper (interactive input loops)."""
+
+    def _call_with_inputs(self, inputs):
+        from commands.plant_tracking_cli import _prompt_death_details
+
+        with mock.patch("builtins.input", side_effect=list(inputs)), mock.patch(
+            "sys.stdout", new_callable=io.StringIO
+        ) as mock_stdout:
+            result = _prompt_death_details()
+        return result, mock_stdout.getvalue()
+
+    def test_happy_path_reason_by_number(self):
+        """Valid date + numbered reason + comment returns the expected tuple."""
+        result, _ = self._call_with_inputs(["2026-07-15", "2", "Fungal infection"])
+        self.assertEqual(result, (date(2026, 7, 15), "Disease", "Fungal infection"))
+
+    def test_reason_by_name_case_insensitive(self):
+        """A reason name (any case) is accepted without numbering."""
+        result, _ = self._call_with_inputs(["2026-07-15", "disease", ""])
+        self.assertEqual(result, (date(2026, 7, 15), "Disease", ""))
+
+    def test_future_date_rejected_then_accepted(self):
+        """A future date is rejected with a message, then the loop re-prompts."""
+        from datetime import timedelta
+
+        future = (date.today() + timedelta(days=1)).isoformat()
+        result, output = self._call_with_inputs([future, "2026-07-15", "3", ""])
+        self.assertIn("Date cannot be in the future.", output)
+        self.assertEqual(result, (date(2026, 7, 15), "Overwatering", ""))
+
+    def test_invalid_date_format_rejected_then_accepted(self):
+        """A malformed date is rejected with a message, then the loop re-prompts."""
+        result, output = self._call_with_inputs(["07-15-2026", "2026-07-15", "3", ""])
+        self.assertIn("Invalid date format", output)
+        self.assertEqual(result[0], date(2026, 7, 15))
+
+    def test_invalid_reason_reprompted(self):
+        """An out-of-range number and an unknown name both re-prompt."""
+        result, output = self._call_with_inputs(
+            ["2026-07-15", "99", "not a reason", "2", ""]
+        )
+        self.assertIn("Please enter a number between 1 and 10", output)
+        self.assertIn("Invalid reason", output)
+        self.assertEqual(result[1], "Disease")
+
+    def test_other_reason_requires_comment(self):
+        """'Other' with an empty comment loops until a non-empty comment is given."""
+        # Empty comment is rejected by the loop; the second input is accepted.
+        # (input() prompt strings are not emitted when builtins.input is mocked,
+        # so behavior is verified via the returned tuple.)
+        result, _ = self._call_with_inputs(["2026-07-15", "10", "", "custom cause"])
+        self.assertEqual(result, (date(2026, 7, 15), "Other", "custom cause"))
+
+
+class TestMarkDeadCLI(unittest.TestCase):
+    """Tests for the mark_dead CLI command (service-backed path)."""
+
+    PLANT_ID = "PE-2026-001"
+
+    def _make_args(self):
+        return type("Args", (), {"plant_id": self.PLANT_ID})()
+
+    def _make_plant(self, is_dead=False, death_date=None):
+        plant = mock.Mock()
+        plant.id = self.PLANT_ID
+        plant.variety_name = "Test Plant"
+        plant.latin_name = "Testum testum"
+        plant.is_dead = is_dead
+        plant.death_date = death_date
+        plant.death_reason = "Disease" if is_dead else None
+        return plant
+
+    def _make_uow(self, plant, updated=None):
+        uow = mock.Mock()
+        uow.plants.get_plant.return_value = plant
+        uow.plants.update_plant.return_value = updated
+        return uow
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_happy_path_marks_plant_dead(self, mock_create_uow):
+        """Happy path: prompt results are written via update_plant and reported."""
+        from commands import plant_tracking_cli
+
+        plant = self._make_plant()
+        updated = mock.Mock()
+        updated.death_date = date(2026, 7, 15)
+        updated.death_reason = "Disease"
+        updated.death_comment = "Fungal infection"
+        mock_create_uow.return_value.__enter__.return_value = self._make_uow(
+            plant, updated
+        )
+
+        with mock.patch(
+            "builtins.input",
+            side_effect=["2026-07-15", "2", "Fungal infection"],
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        uow = mock_create_uow.return_value.__enter__.return_value
+        uow.plants.update_plant.assert_called_once_with(
+            self.PLANT_ID,
+            {
+                "death_date": date(2026, 7, 15),
+                "death_reason": "Disease",
+                "death_comment": "Fungal infection",
+            },
+        )
+        output = mock_stdout.getvalue()
+        self.assertIn("marked as dead successfully", output)
+        self.assertIn("Disease", output)
+        self.assertIn("Fungal infection", output)
+
+    @mock.patch("commands.plant_tracking_cli._get_db", return_value=None)
+    def test_service_unavailable_without_db(self, mock_get_db):
+        """Without a database, mark_dead exits with a friendly error."""
+        from commands import plant_tracking_cli
+
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("requires database service", mock_stdout.getvalue())
+        mock_get_db.assert_called_once()
+
+    @mock.patch("commands.plant_tracking_cli._get_db")
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", False)
+    def test_service_unavailable_flag(self, mock_get_db):
+        """With the service flag off, mark_dead exits even when db is present."""
+        from commands import plant_tracking_cli
+
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("requires database service", mock_stdout.getvalue())
+        mock_get_db.assert_not_called()
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_plant_not_found(self, mock_create_uow):
+        """A missing plant exits before prompting or writing."""
+        from commands import plant_tracking_cli
+
+        mock_create_uow.return_value.__enter__.return_value = self._make_uow(None)
+
+        with mock.patch("builtins.input") as mock_input, mock.patch(
+            "sys.stdout", new_callable=io.StringIO
+        ) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant not found", mock_stdout.getvalue())
+        mock_input.assert_not_called()
+        uow = mock_create_uow.return_value.__enter__.return_value
+        uow.plants.update_plant.assert_not_called()
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_already_dead_rejected(self, mock_create_uow):
+        """An already-dead plant exits with its existing death details."""
+        from commands import plant_tracking_cli
+
+        plant = self._make_plant(is_dead=True, death_date=date(2026, 7, 1))
+        mock_create_uow.return_value.__enter__.return_value = self._make_uow(plant)
+
+        with mock.patch("builtins.input") as mock_input, mock.patch(
+            "sys.stdout", new_callable=io.StringIO
+        ) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        output = mock_stdout.getvalue()
+        self.assertIn("already marked as dead", output)
+        self.assertIn("2026-07-01", output)
+        mock_input.assert_not_called()
+        uow = mock_create_uow.return_value.__enter__.return_value
+        uow.plants.update_plant.assert_not_called()
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_update_returns_none_exits_cleanly(self, mock_create_uow):
+        """A None result from update_plant (missing row) exits cleanly, no crash."""
+        from commands import plant_tracking_cli
+
+        uow = self._make_uow(self._make_plant())
+        uow.plants.update_plant.return_value = None
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        with mock.patch(
+            "builtins.input", side_effect=["2026-07-15", "2", ""]
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant not found", mock_stdout.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_validation_error_from_update(self, mock_create_uow):
+        """A ValidationException from the write phase exits with a clean message."""
+        from commands import plant_tracking_cli
+        from plant_service.domain.exceptions import ValidationException
+
+        uow = self._make_uow(self._make_plant())
+        uow.plants.update_plant.side_effect = ValidationException("bad reason")
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        with mock.patch(
+            "builtins.input", side_effect=["2026-07-15", "2", ""]
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Validation error", mock_stdout.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_unexpected_error_from_update(self, mock_create_uow):
+        """An unexpected exception from the write phase exits cleanly."""
+        from commands import plant_tracking_cli
+
+        uow = self._make_uow(self._make_plant())
+        uow.plants.update_plant.side_effect = RuntimeError("boom")
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        with mock.patch(
+            "builtins.input", side_effect=["2026-07-15", "2", ""]
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Unexpected error marking plant as dead", mock_stdout.getvalue())

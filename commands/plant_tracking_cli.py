@@ -864,6 +864,10 @@ def mark_dead(args, db=None):
                 "death_comment": death_comment,
             })
 
+        if updated is None:
+            print(f"✗ Plant not found: {plant_id}")
+            sys.exit(1)
+
         print()
         print("✓ Plant marked as dead successfully!")
         print(f"  Death date: {updated.death_date.isoformat()}")
