@@ -6,8 +6,12 @@ import os
 import re
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import TYPE_CHECKING, Dict, Any, Optional
 import yaml
+
+if TYPE_CHECKING:
+    from commands.genus_model import Genus
+    from commands.seed_packet_model import SeedPacket
 
 # Fields needed for label generation (all required)
 LABEL_FIELDS = ["variety_name", "latin_name", "planting_date"]

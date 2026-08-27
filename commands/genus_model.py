@@ -126,7 +126,7 @@ def find_by_variety_name(variety_name: str) -> Optional["Genus"]:
 
 def list_all() -> List["Genus"]:
     """Load all genus records"""
-    genera = []
+    genera: List[Genus] = []
     genera_dir = get_genera_dir()
     if not genera_dir.exists():
         return genera

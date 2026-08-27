@@ -118,7 +118,7 @@ def find_matching(variety_name: str, latin_name: str) -> Optional[SeedPacket]:
 
 def list_all() -> List[SeedPacket]:
     """Return all seed packets."""
-    packets = []
+    packets: List[SeedPacket] = []
     packets_dir = get_seed_packets_dir()
     if not packets_dir.exists():
         return packets
