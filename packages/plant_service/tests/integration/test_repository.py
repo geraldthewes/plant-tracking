@@ -82,6 +82,16 @@ class TestPlantRepository:
         assert plant.id.startswith("YEHA-")
         assert plant.variety_name == "Yellow Habanero"
 
+    def test_create_plant_preserves_caller_provided_id(self, uow):
+        with uow:
+            plant = uow.plants.create_plant({
+                "id": "CUSTOM-2026-001",
+                "variety_name": "Yellow Habanero",
+                "latin_name": "Capsicum chinense",
+                "planting_date": date(2026, 3, 15),
+            })
+        assert plant.id == "CUSTOM-2026-001"
+
     def test_get_plant(self, uow):
         with uow:
             plant = uow.plants.create_plant({

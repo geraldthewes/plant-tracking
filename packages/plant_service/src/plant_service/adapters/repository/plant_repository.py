@@ -24,18 +24,18 @@ class PlantRepository(BaseRepository[Plant], PlantService):
         if "variety_name" not in plant_data:
             raise ValueError("Missing required field: variety_name")
 
-        # Generate ID with sequence from existing records
-        planting_date = plant_data.get("planting_date") or date.today()
-        abbrev = PlantDomain.make_abbrev(plant_data["variety_name"])
-        year = planting_date.year
+        # Preserve caller-provided ID; otherwise generate one via domain logic
+        if not plant_data.get("id"):
+            planting_date = plant_data.get("planting_date") or date.today()
+            abbrev = PlantDomain.make_abbrev(plant_data["variety_name"])
+            year = planting_date.year
 
-        existing_ids = self.get_all_ids()
-        seq = PlantDomain.find_next_sequence(abbrev, year, existing_ids)
+            existing_ids = self.get_all_ids()
+            seq = PlantDomain.find_next_sequence(abbrev, year, existing_ids)
 
-        plant_data["id"] = PlantDomain().generate_id(
-            plant_data["variety_name"], planting_date, seq
-
-        )
+            plant_data["id"] = PlantDomain().generate_id(
+                plant_data["variety_name"], planting_date, seq
+            )
         domain_obj = PlantDomain.create_from_dict(plant_data)
         orm_obj = Plant(
             id=domain_obj.id,
