@@ -36,7 +36,9 @@ class ExportService:
                         "spacing": plant.spacing,
                         "sun_requirements": plant.sun_requirements,
                         "indoor_start_time": plant.indoor_start_time,
-                        "planting_date": plant.planting_date,
+                        "planting_date": (
+                            plant.planting_date.isoformat() if plant.planting_date else ""
+                        ),
                         "seed_packet_id": plant.seed_packet_id,
                         "genus_id": plant.genus_id,
                     }

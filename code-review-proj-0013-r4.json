@@ -1,0 +1,576 @@
+{
+  "status": "complete",
+  "llm": {
+    "provider": "xai",
+    "model": "grok-build-0.1"
+  },
+  "message": "Review complete: 38 finding(s) across 14 selected item(s).",
+  "summary": {
+    "files_reviewed": 14,
+    "comments": 38,
+    "total_tokens": 1119272,
+    "input_tokens": 1089336,
+    "output_tokens": 29936,
+    "cache_read_tokens": 703936,
+    "elapsed": "19m3s"
+  },
+  "tool_calls": {
+    "total": 100,
+    "by_tool": {
+      "code_comment": 13,
+      "code_search": 37,
+      "file_find": 4,
+      "file_read": 35,
+      "file_read_diff": 11
+    }
+  },
+  "comments": [
+    {
+      "path": "backend/fastapi/tests/conftest.py",
+      "content": "The list_plants side_effect uses a complex inline boolean condition that is hard to read and may incorrectly return all plants when both alive_only and dead_only are True (instead of empty or raising). Simplify the logic with explicit if/elif for clarity and correctness.",
+      "suggestion_code": "    def _filter_plants(alive_only: bool = False, dead_only: bool = False):\n        if alive_only and dead_only:\n            return iter([])\n        if alive_only:\n            return iter([p for p in [alive_plant, dead_plant] if not p.is_dead])\n        if dead_only:\n            return iter([p for p in [alive_plant, dead_plant] if p.is_dead])\n        return iter([alive_plant, dead_plant])\n    mock_uow.plants.list_plants.side_effect = _filter_plants",
+      "existing_code": "    mock_uow.plants.list_plants.side_effect = lambda alive_only=False, dead_only=False: iter(\n        [p for p in [alive_plant, dead_plant]\n         if (alive_only and not p.is_dead) or\n             (dead_only and p.is_dead) or\n             (not alive_only and not dead_only)]\n    )",
+      "start_line": 30,
+      "end_line": 35,
+      "category": "maintainability",
+      "severity": "high"
+    },
+    {
+      "path": "backend/fastapi/tests/conftest.py",
+      "content": "plants_client fixture mutates the global app.dependency_overrides without restoring previous state or using context isolation. This risks test pollution across the suite. Use a context manager or pytest's monkeypatch for overrides.",
+      "suggestion_code": "    original_overrides = app.dependency_overrides.copy()\n    app.dependency_overrides[get_uow] = mock_uow_gen\n    try:\n        yield TestClient(app)\n    finally:\n        app.dependency_overrides.clear()\n        app.dependency_overrides.update(original_overrides)",
+      "existing_code": "    app.dependency_overrides[get_uow] = mock_uow_gen\n\n    try:\n        yield TestClient(app)\n    finally:\n        app.dependency_overrides.clear()",
+      "start_line": 74,
+      "end_line": 79,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "backend/fastapi/tests/conftest.py",
+      "content": "update_plant and get_plant use direct setattr on Plant domain objects and are defined as nested functions without type hints. This bypasses any validation in Plant (e.g. __post_init__ or validate_death_fields) and makes code harder to maintain.",
+      "suggestion_code": "    def get_plant(plant_id: str) -\u003e plant_service.domain.Plant | None:\n        if plant_id == \"TO-2026-001\":\n            return alive_plant\n        if plant_id == \"PE-2026-001\":\n            return dead_plant\n        return None\n\n    def update_plant(plant_id: str, data: dict) -\u003e plant_service.domain.Plant | None:\n        plant = get_plant(plant_id)\n        if plant:\n            # Note: direct setattr bypasses domain validation; consider using Plant.from_dict or service update\n            for k, v in data.items():\n                setattr(plant, k, v)\n            return plant\n        return None",
+      "existing_code": "    def get_plant(plant_id):\n        if plant_id == \"TO-2026-001\":\n            return alive_plant\n        if plant_id == \"PE-2026-001\":\n            return dead_plant\n        return None\n\n    def update_plant(plant_id, data):\n        plant = get_plant(plant_id)\n        if plant:\n            for k, v in data.items():\n                setattr(plant, k, v)\n            return plant\n        return None",
+      "start_line": 37,
+      "end_line": 50,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "backend/fastapi/tests/conftest.py",
+      "content": "Imports are not in standard order (stdlib before third-party before local). Missing type hints on _mock_uow_with_plants and inner functions. Add full docstrings and type hints per PEP 484.",
+      "suggestion_code": "import unittest.mock\nfrom typing import Iterator\n\nimport pytest\n\nfrom plant_tracking_api.dependencies import get_uow\nfrom plant_tracking_api.main import app\n\nimport plant_service.domain\n\n\ndef _mock_uow_with_plants() -\u003e unittest.mock.MagicMock:\n    \"\"\"Create a mock UoW with test plants for API tests.\"\"\"\n    mock_uow = unittest.mock.MagicMock()",
+      "existing_code": "import pytest\nimport unittest.mock\n\nimport plant_service.domain\nfrom plant_tracking_api.dependencies import get_uow\nfrom plant_tracking_api.main import app\n\n\ndef _mock_uow_with_plants():\n    \"\"\"Create a mock UoW with test plants for API tests.\"\"\"\n    mock_uow = unittest.mock.MagicMock()",
+      "start_line": 1,
+      "end_line": 11,
+      "category": "style",
+      "severity": "medium"
+    },
+    {
+      "path": "backend/fastapi/tests/conftest.py",
+      "content": "MagicMock created without spec= or spec_set= (allows any attribute silently). Test data uses hardcoded future dates without factory. Consider using spec and a plant factory for robustness.",
+      "suggestion_code": "    mock_uow = unittest.mock.MagicMock(spec=...)  # or use spec_set\n\n    alive_plant = plant_service.domain.Plant(\n        id=\"TO-2026-001\",\n        variety_name=\"Tomato\",\n        latin_name=\"Solanum lycopersicum\",\n        planting_date=\"2026-01-01\",\n    )",
+      "existing_code": "    mock_uow = unittest.mock.MagicMock()\n\n    alive_plant = plant_service.domain.Plant(\n        id=\"TO-2026-001\",\n        variety_name=\"Tomato\",\n        latin_name=\"Solanum lycopersicum\",\n        planting_date=\"2026-01-01\",\n    )",
+      "start_line": 11,
+      "end_line": 18,
+      "category": "maintainability",
+      "severity": "low"
+    },
+    {
+      "path": "backend/fastapi/tests/test_plants.py",
+      "content": "The parametrized test_mark_plant_dead reuses the exact same plant_id 'TO-2026-001' for both parameter sets. Since each call to the /dead endpoint mutates the plant state (marking it dead), the second parametrized invocation will operate on an already-dead plant and likely receive a 400 response instead of the expected 200. This introduces test order/state dependency and will cause the test to fail or flake.",
+      "suggestion_code": "@pytest.mark.parametrize(\n    \"plant_id,death_date,death_reason,death_comment,expected_reason\",\n    [\n        (\"TO-2026-001\", \"2026-08-07\", \"Drought\", \"Too hot\", \"Drought\"),\n        (\"PE-2026-002\", \"2026-08-07\", \"Other\", \"Pest infestation\", \"Other\"),  # use distinct or reset plant\n    ],\n)\ndef test_mark_plant_dead(plants_client, plant_id, death_date, death_reason, death_comment, expected_reason):\n    \"\"\"Test that mark plant dead works.\"\"\"\n    response = plants_client.patch(\n        f\"/api/plants/{plant_id}/dead\",\n        params={\"death_date\": death_date, \"death_reason\": death_reason, \"death_comment\": death_comment}\n    )",
+      "existing_code": "@pytest.mark.parametrize(\n    \"plant_id,death_date,death_reason,death_comment,expected_reason\",\n    [\n        (\"TO-2026-001\", \"2026-08-07\", \"Drought\", \"Too hot\", \"Drought\"),\n        (\"TO-2026-001\", \"2026-08-07\", \"Other\", \"Pest infestation\", \"Other\"),\n    ],\n)\ndef test_mark_plant_dead(plants_client, plant_id, death_date, death_reason, death_comment, expected_reason):\n    \"\"\"Test that mark plant dead works.\"\"\"\n    response = plants_client.patch(\n        f\"/api/plants/{plant_id}/dead\",\n        params={\"death_date\": death_date, \"death_reason\": death_reason, \"death_comment\": death_comment}\n    )",
+      "start_line": 70,
+      "end_line": 82,
+      "category": "test",
+      "severity": "high"
+    },
+    {
+      "path": "backend/fastapi/src/plant_tracking_api/routes/plants.py",
+      "content": "mark_plant_dead uses bare function parameters (death_date, death_reason, death_comment) which FastAPI treats as required query parameters for the PATCH endpoint. This violates REST conventions for updates (prefer request body), bypasses Pydantic schema validation and OpenAPI documentation for the payload, and can cause encoding issues for fields like death_comment. Use a Pydantic model (e.g., PlantDeathRequest) with Body() instead.",
+      "suggestion_code": "@router.patch(\"/{plant_id}/dead\", response_model=PlantDeadResponse)\nasync def mark_plant_dead(\n    plant_id: str,\n    death_data: PlantDeathRequest = Body(...),\n    uow: SqlAlchemyUnitOfWork = Depends(get_uow),\n) -\u003e PlantDeadResponse:",
+      "existing_code": "@router.patch(\"/{plant_id}/dead\", response_model=PlantDeadResponse)\nasync def mark_plant_dead(\n    plant_id: str,\n    death_date: str,\n    death_reason: str,\n    death_comment: str = \"\",\n    uow: SqlAlchemyUnitOfWork = Depends(get_uow),\n) -\u003e PlantDeadResponse:",
+      "start_line": 108,
+      "end_line": 115,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "backend/fastapi/src/plant_tracking_api/routes/plants.py",
+      "content": "Routes (list_plants, get_plant, mark_plant_dead) use uow directly (e.g. uow.plants.get_plant, uow.plants.update_plant) without entering the SqlAlchemyUnitOfWork context manager. The dependency get_uow yields an uninitialized UoW (no __enter__), so accessing .plants will raise RuntimeError(\"Accessing plants outside of transaction context\"). No explicit transaction boundaries, commits, or handling for concurrent updates (e.g. race on mark dead). This can lead to data not persisting or inconsistencies.",
+      "existing_code": "    plants = list(uow.plants.list_plants(alive_only=alive_only, dead_only=dead_only))\n\n    return PlantListResponse(\n        plants=[\n            PlantSummary(\n                id=p.id,\n                variety_name=p.variety_name,\n                latin_name=p.latin_name,\n                planting_date=p.planting_date,\n                death_date=p.death_date,\n                death_reason=p.death_reason,\n                is_dead=p.is_dead,\n            )\n            for p in plants\n        ],\n        count=len(plants),\n    )",
+      "start_line": 56,
+      "end_line": 72,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "backend/fastapi/src/plant_tracking_api/routes/plants.py",
+      "content": "In mark_plant_dead, separate get_plant followed by update_plant (and prior is_dead check) without atomic transaction or locking. Validation is done manually after get. Under concurrency, could mark already-dead plant or lose updates. Use UoW context to ensure commit/rollback and consider re-checking state inside transaction.",
+      "existing_code": "    plant = uow.plants.get_plant(plant_id)\n    if not plant:\n        raise HTTPException(status_code=404, detail=f\"Plant not found: {plant_id}\")\n\n    if plant.is_dead:\n        raise HTTPException(\n            status_code=400,\n            detail=f\"Plant {plant_id} is already marked as dead on {plant.death_date}\",\n        )\n\n    # Validate death fields\n    try:\n        PlantDomain.validate_death_fields(death_date, death_reason, death_comment)\n    except ValueError as e:\n        raise HTTPException(status_code=422, detail=str(e))\n\n    updated = uow.plants.update_plant(plant_id, {\n        \"death_date\": death_date,\n        \"death_reason\": death_reason,\n        \"death_comment\": death_comment,\n    })\n\n    if not updated:\n        raise HTTPException(status_code=404, detail=f\"Plant not found: {plant_id}\")",
+      "start_line": 119,
+      "end_line": 142,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "backend/fastapi/src/plant_tracking_api/routes/plants.py",
+      "content": "get_plant has only a one-line docstring and mark_plant_dead has a minimal docstring. list_plants has detailed Args/Returns/Raises. Add full Google/NumPy style docstrings to all public endpoints including parameters, return values, raises, and edge cases for consistency and maintainability.",
+      "existing_code": "async def get_plant(\n    plant_id: str,\n    uow: SqlAlchemyUnitOfWork = Depends(get_uow),\n) -\u003e PlantResponse:\n    \"\"\"\n    Get a specific plant by ID.\n    \"\"\"\n    plant = uow.plants.get_plant(plant_id)",
+      "start_line": 76,
+      "end_line": 83,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "backend/fastapi/tests/test_plants.py",
+      "content": "test_mark_plant_invalid_reason and test_mark_plant_other_requires_comment both target plant 'TO-2026-001' for PATCH /dead, but this plant is mutated (marked dead) by the preceding parametrized test_mark_plant_dead which runs on the same ID twice. Depending on test execution order and fixture isolation, these may hit the 'already dead' 400 path instead of the expected 422 validation error. Tests should be independent and not rely on prior test mutations.",
+      "suggestion_code": "def test_mark_plant_invalid_reason(plants_client):\n    \"\"\"Test that invalid death reason returns 422.\"\"\"\n    response = plants_client.patch(\n        \"/api/plants/TO-2026-002/dead\",  # use a fresh/alive plant ID\n        params={\"death_date\": \"2026-08-07\", \"death_reason\": \"InvalidReason\"}\n    )\n    assert response.status_code == 422\n\n\ndef test_mark_plant_other_requires_comment(plants_client):\n    \"\"\"Test that 'Other' reason requires comment.\"\"\"\n    response = plants_client.patch(\n        \"/api/plants/TO-2026-002/dead\",  # use a fresh/alive plant ID\n        params={\"death_date\": \"2026-08-07\", \"death_reason\": \"Other\", \"death_comment\": \"\"}\n    )\n    assert response.status_code == 422",
+      "existing_code": "def test_mark_plant_invalid_reason(plants_client):\n    \"\"\"Test that invalid death reason returns 422.\"\"\"\n    response = plants_client.patch(\n        \"/api/plants/TO-2026-001/dead\",\n        params={\"death_date\": \"2026-08-07\", \"death_reason\": \"InvalidReason\"}\n    )\n    assert response.status_code == 422\n\n\ndef test_mark_plant_other_requires_comment(plants_client):\n    \"\"\"Test that 'Other' reason requires comment.\"\"\"\n    response = plants_client.patch(\n        \"/api/plants/TO-2026-001/dead\",\n        params={\"death_date\": \"2026-08-07\", \"death_reason\": \"Other\", \"death_comment\": \"\"}\n    )\n    assert response.status_code == 422",
+      "start_line": 101,
+      "end_line": 116,
+      "category": "test",
+      "severity": "high"
+    },
+    {
+      "path": "commands/plant_tracking_cli.py",
+      "content": "In mark_dead (new function), bare `except Exception as e:` catches everything after specific exceptions, prints full traceback with traceback.print_exc(), and exits. This swallows unexpected errors, hides root causes, and can leak stack info. Use specific exceptions or re-raise after logging. Pre-existing broad excepts exist but new code should avoid this per error handling rules.",
+      "suggestion_code": "    except (ValidationException, PlantTrackingServiceException) as e:\n        print(f\"✗ Error marking plant as dead: {e}\")\n        sys.exit(1)\n    except Exception as e:\n        print(f\"✗ Unexpected error marking plant as dead: {e}\")\n        # Consider logging instead of print_exc for prod; avoid in CLI for dev\n        raise",
+      "existing_code": "    except Exception as e:\n        print(f\"✗ Error marking plant as dead: {e}\")\n        traceback.print_exc()\n        sys.exit(1)",
+      "start_line": 843,
+      "end_line": 846,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "commands/plant_tracking_cli.py",
+      "content": "In list_plants, newly added alive/dead filtering logic (after fetching plants) uses `getattr(p, \"is_dead\", False)` for ALL cases. However, in the markdown fallback path (`else: plants = _list_plants_from_files()`), plant objects use `.data` dict (no `is_dead` attr), so filters always treat them as alive. Inconsistent with status display logic below which correctly branches on p.data.get(\"death_date\"). This makes --alive-only/--dead-only ineffective for markdown mode.",
+      "suggestion_code": "    # Filter by alive/dead status\n    if alive_only:\n        plants = [\n            p for p in plants\n            if not (\n                getattr(p, \"is_dead\", False)\n                or (hasattr(p, \"data\") and p.data.get(\"death_date\"))\n            )\n        ]\n    elif dead_only:\n        plants = [\n            p for p in plants\n            if getattr(p, \"is_dead\", False)\n            or (hasattr(p, \"data\") and p.data.get(\"death_date\"))\n        ]",
+      "existing_code": "    # Filter by alive/dead status\n    if alive_only:\n        plants = [p for p in plants if not getattr(p, \"is_dead\", False)]\n    elif dead_only:\n        plants = [p for p in plants if getattr(p, \"is_dead\", False)]",
+      "start_line": 1809,
+      "end_line": 1813,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "commands/plant_tracking_cli.py",
+      "content": "In mark_dead, the initial plant validation try block only catches PlantNotFoundException (and handles None return). Other exceptions from create_unit_of_work/get_plant (e.g. DB errors, service exceptions) are uncaught and will cause unhandled crash/traceback instead of user-friendly error like the update phase. Inconsistent error paths.",
+      "suggestion_code": "    # Phase 1: validate plant exists and is not already dead\n    try:\n        with create_unit_of_work() as uow:\n            plant = uow.plants.get_plant(plant_id)\n            if not plant:\n                print(f\"✗ Plant not found: {plant_id}\")\n                sys.exit(1)\n\n            if plant.is_dead:\n                print(f\"✗ Plant {plant_id} is already marked as dead\")\n                print(f\"  Death date: {plant.death_date}\")\n                print(f\"  Death reason: {plant.death_reason}\")\n                sys.exit(1)\n\n    except PlantNotFoundException:\n        print(f\"✗ Plant not found: {plant_id}\")\n        sys.exit(1)\n    except (PlantTrackingServiceException, Exception) as e:  # or specific\n        print(f\"✗ Error checking plant: {e}\")\n        sys.exit(1)",
+      "existing_code": "    # Phase 1: validate plant exists and is not already dead\n    try:\n        with create_unit_of_work() as uow:\n            plant = uow.plants.get_plant(plant_id)\n            if not plant:\n                print(f\"✗ Plant not found: {plant_id}\")\n                sys.exit(1)\n\n            if plant.is_dead:\n                print(f\"✗ Plant {plant_id} is already marked as dead\")\n                print(f\"  Death date: {plant.death_date}\")\n                print(f\"  Death reason: {plant.death_reason}\")\n                sys.exit(1)\n\n    except PlantNotFoundException:\n        print(f\"✗ Plant not found: {plant_id}\")\n        sys.exit(1)",
+      "start_line": 796,
+      "end_line": 812,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "commands/plant_tracking_cli.py",
+      "content": "mark_dead(args, db=None) is a public CLI handler but lacks type hints (PEP 484). _prompt_death_details has a return hint but mark_dead does not. Other new/modified funcs like list_plants also lack. Add hints e.g. from argparse import Namespace; def mark_dead(args: Namespace, db: Any = None) -\u003e None:",
+      "suggestion_code": "from argparse import Namespace\n...\ndef mark_dead(args: Namespace, db: Any = None) -\u003e None:\n    \"\"\"Mark a plant as dead with date, reason, and optional comment.\"\"\"",
+      "existing_code": "def mark_dead(args, db=None):\n    \"\"\"Mark a plant as dead with date, reason, and optional comment.\"\"\"",
+      "start_line": 785,
+      "end_line": 786,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "commands/plant_tracking_cli.py",
+      "content": "_prompt_death_details uses raw input() in loops without catching EOFError/KeyboardInterrupt (e.g. Ctrl+C, piped input EOF). Will crash CLI instead of graceful exit. Also, death_date only checks strptime format; no range validation (future dates, before planting date etc.) - relies on later service but prompt should be robust.",
+      "suggestion_code": "import signal\n...\ndef _prompt_death_details() -\u003e tuple[str, str, str]:\n    ...\n    while True:\n        try:\n            death_date = input(\"Death date (YYYY-MM-DD): \").strip()\n        except (EOFError, KeyboardInterrupt):\n            print(\"\\nCancelled.\")\n            sys.exit(0)\n        try:\n            d = datetime.strptime(death_date, \"%Y-%m-%d\")\n            if d \u003e datetime.now():  # example\n                print(\"Date cannot be in future.\")\n                continue\n            break\n        except ValueError:\n            print(\"Invalid date format. Please use YYYY-MM-DD.\")",
+      "existing_code": "def _prompt_death_details() -\u003e tuple[str, str, str]:\n    \"\"\"Prompt user for death date, reason, and comment. No DB access.\"\"\"\n    # Prompt for death date\n    while True:\n        death_date = input(\"Death date (YYYY-MM-DD): \").strip()\n        try:\n            datetime.strptime(death_date, \"%Y-%m-%d\")\n            break\n        except ValueError:\n            print(\"Invalid date format. Please use YYYY-MM-DD.\")",
+      "start_line": 734,
+      "end_line": 743,
+      "category": "bug",
+      "severity": "medium"
+    },
+    {
+      "path": "frontend/src/api/plantTrackingAPI.ts",
+      "content": "Client-side validation in markPlantDeadApiPlantsPlantIdDeadPatch trims inputs and throws a synchronous Error('death_date and death_reason are required and non-empty') if empty. This does not match the defined response type (which includes 400/404/422 error variants) or the pattern used by other functions (which always return {data, status, headers} even for errors). Callers expecting to inspect status for errors will receive uncaught exceptions instead.",
+      "suggestion_code": "  // Remove client-side throw; let backend return 422/400 responses\n  // or return a structured error response object matching the type if pre-validation needed",
+      "existing_code": "  const date = body.death_date?.trim();\n  const reason = body.death_reason?.trim();\n  if (!date || !reason) {\n    throw new Error('death_date and death_reason are required and non-empty');\n  }\n  formUrlEncoded.append('death_date', date);\n  formUrlEncoded.append('death_reason', reason);\n  if (body.death_comment?.trim()) {\n    formUrlEncoded.append('death_comment', body.death_comment.trim());\n  }",
+      "start_line": 666,
+      "end_line": 675,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "frontend/src/api/plantTrackingAPI.ts",
+      "content": "listPlantsApiPlantsGetResponse only defines success (200) variant with no error types (e.g. for 400 when both alive_only and dead_only are true, per backend). Unlike getPlantApiPlantsPlantIdGetResponse and markPlantDead... which include error unions. The function always casts as success and parses without status guards, leading to type unsafety and inconsistent API client.",
+      "suggestion_code": "export type listPlantsApiPlantsGetResponse400 = {\n  data: { detail: string }\n  status: 400\n}\n\nexport type listPlantsApiPlantsGetResponseSuccess = (listPlantsApiPlantsGetResponse200) \u0026 {\n  headers: Headers;\n};\nexport type listPlantsApiPlantsGetResponseError = (listPlantsApiPlantsGetResponse400) \u0026 {\n  headers: Headers;\n};\n\nexport type listPlantsApiPlantsGetResponse = (listPlantsApiPlantsGetResponseSuccess | listPlantsApiPlantsGetResponseError)",
+      "existing_code": "export type listPlantsApiPlantsGetResponse200 = {\n  data: PlantsListResponse\n  status: 200\n}\n\nexport type listPlantsApiPlantsGetResponseSuccess = (listPlantsApiPlantsGetResponse200) \u0026 {\n  headers: Headers;\n};\n\nexport type listPlantsApiPlantsGetResponse = (listPlantsApiPlantsGetResponseSuccess)",
+      "start_line": 539,
+      "end_line": 548,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "frontend/src/api/plantTrackingAPI.ts",
+      "content": "Hardcoded API URL paths (e.g. `/api/plants`, `/api/plants/${plantId}`, `/api/plants/${plantId}/dead`) and query params in the new URL builders. This duplicates the pattern from existing functions but violates prohibition on hardcoding business URL paths (use constants or config instead to avoid maintenance issues when routes change).",
+      "existing_code": "export const getListPlantsApiPlantsGetUrl = (\n  aliveOnly?: boolean,\n  deadOnly?: boolean,\n) =\u003e {\n  const params = new URLSearchParams();\n  if (aliveOnly) params.append('alive_only', 'true');\n  if (deadOnly) params.append('dead_only', 'true');\n  const query = params.toString();\n  return `/api/plants${query ? '?' + query : ''}`\n}",
+      "start_line": 550,
+      "end_line": 559,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "commands/plant_tracking_cli.py",
+      "content": "In list_plants, the filtering for alive_only/dead_only (lines ~1810-1813) uses `getattr(p, \"is_dead\", False)` unconditionally. For markdown fallback plants (p.data dict), this always evaluates to False (treated as alive). This makes --dead-only/--alive-only filters ineffective in markdown mode, while status display correctly checks p.data.get(\"death_date\"). Inconsistent behavior between filter and display for fallback path.",
+      "suggestion_code": "    # Filter by alive/dead status\n    def _is_dead(p):\n        if hasattr(p, \"is_dead\"):\n            return bool(p.is_dead)\n        if hasattr(p, \"data\"):\n            return bool(p.data.get(\"death_date\"))\n        return False\n\n    if alive_only:\n        plants = [p for p in plants if not _is_dead(p)]\n    elif dead_only:\n        plants = [p for p in plants if _is_dead(p)]",
+      "existing_code": "    # Filter by alive/dead status\n    if alive_only:\n        plants = [p for p in plants if not getattr(p, \"is_dead\", False)]\n    elif dead_only:\n        plants = [p for p in plants if getattr(p, \"is_dead\", False)]",
+      "start_line": 1809,
+      "end_line": 1813,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "commands/plant_tracking_cli.py",
+      "content": "In list_plants display loop, status extraction does `status = \"dead\" if p.is_dead else \"alive\"` in the `if db and SERVICE_AVAILABLE:` and `elif db:` branches (direct attr access). However, inside the service try, on except Exception it falls back to `Plant.list_all()` (original models) while SERVICE_AVAILABLE remains True, so display will do p.is_dead on potentially non-domain objects -\u003e AttributeError. New death filtering/display logic exposes this structural fragility.",
+      "suggestion_code": "        if hasattr(p, \"is_dead\"):  # works for domain + hopefully models\n            status = \"dead\" if p.is_dead else \"alive\"\n        elif hasattr(p, \"data\"):\n            status = \"dead\" if p.data.get(\"death_date\") else \"alive\"\n        else:\n            status = \"alive\"\n\n        if db and SERVICE_AVAILABLE:\n            pid = p.id\n            ...\n        elif db:\n            ...\n        else:\n            ...",
+      "existing_code": "        if db and SERVICE_AVAILABLE:\n            pid = p.id\n            variety = p.variety_name\n            latin = p.latin_name\n            planting_date = p.planting_date\n            status = \"dead\" if p.is_dead else \"alive\"\n        elif db:\n            # Fallback to original models\n            pid = p.id\n            variety = p.variety_name\n            latin = p.latin_name\n            planting_date = p.planting_date\n            status = \"dead\" if p.is_dead else \"alive\"",
+      "start_line": 1824,
+      "end_line": 1836,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "commands/plant_tracking_cli.py",
+      "content": "mark_dead uses bare `except Exception as e:` (with traceback.print_exc() and sys.exit) for the update phase. This catches and swallows unexpected errors (DB, etc.), prints full stack (info leak risk), and is inconsistent with 'never use bare except without proper handling'. Other specific excepts are good, but this broad one violates robustness guidelines.",
+      "suggestion_code": "    except (ValidationException, PlantTrackingServiceException) as e:\n        print(f\"✗ {type(e).__name__}: {e}\")\n        sys.exit(1)\n    except Exception as e:\n        print(f\"✗ Unexpected error marking plant as dead: {e}\")\n        # Log to file instead of print_exc in production; avoid exposing trace\n        raise  # or sys.exit after logging",
+      "existing_code": "    except Exception as e:\n        print(f\"✗ Error marking plant as dead: {e}\")\n        traceback.print_exc()\n        sys.exit(1)",
+      "start_line": 843,
+      "end_line": 846,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "commands/plant_tracking_cli.py",
+      "content": "Public function mark_dead(args, db=None) lacks type hints (PEP 484/PEP 8). _prompt_death_details has -\u003e tuple but mark_dead does not. New code should follow the guideline that every public function must have type hints. Similar for list_plants which now takes/uses args with new attrs.",
+      "suggestion_code": "from argparse import Namespace\n# ...\ndef mark_dead(args: Namespace, db: Any = None) -\u003e None:\n    \"\"\"Mark a plant as dead with date, reason, and optional comment.\"\"\"",
+      "existing_code": "def mark_dead(args, db=None):\n    \"\"\"Mark a plant as dead with date, reason, and optional comment.\"\"\"",
+      "start_line": 785,
+      "end_line": 786,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "commands/plant_tracking_cli.py",
+      "content": "In mark_dead phase 1 validation try, only PlantNotFoundException is caught. Other exceptions from uow.get_plant (e.g. service/DB errors) are not caught here, causing unhandled crash instead of friendly message (unlike the update try which catches more). Also, if non-PlantNotFound exception, 'plant' var may be unbound for later use.",
+      "suggestion_code": "    # Phase 1: validate plant exists and is not already dead\n    try:\n        with create_unit_of_work() as uow:\n            plant = uow.plants.get_plant(plant_id)\n            if not plant:\n                print(f\"✗ Plant not found: {plant_id}\")\n                sys.exit(1)\n\n            if plant.is_dead:\n                print(f\"✗ Plant {plant_id} is already marked as dead\")\n                print(f\"  Death date: {plant.death_date}\")\n                print(f\"  Death reason: {plant.death_reason}\")\n                sys.exit(1)\n\n    except PlantNotFoundException:\n        print(f\"✗ Plant not found: {plant_id}\")\n        sys.exit(1)\n    except Exception as e:  # or PlantTrackingServiceException\n        print(f\"✗ Error validating plant {plant_id}: {e}\")\n        sys.exit(1)",
+      "existing_code": "    # Phase 1: validate plant exists and is not already dead\n    try:\n        with create_unit_of_work() as uow:\n            plant = uow.plants.get_plant(plant_id)\n            if not plant:\n                print(f\"✗ Plant not found: {plant_id}\")\n                sys.exit(1)\n\n            if plant.is_dead:\n                print(f\"✗ Plant {plant_id} is already marked as dead\")\n                print(f\"  Death date: {plant.death_date}\")\n                print(f\"  Death reason: {plant.death_reason}\")\n                sys.exit(1)\n\n    except PlantNotFoundException:\n        print(f\"✗ Plant not found: {plant_id}\")\n        sys.exit(1)",
+      "start_line": 796,
+      "end_line": 812,
+      "category": "bug",
+      "severity": "medium"
+    },
+    {
+      "path": "commands/plant_tracking_cli.py",
+      "content": "_prompt_death_details uses raw input() in while loops without catching EOFError/KeyboardInterrupt. CLI will crash on Ctrl+C or EOF instead of graceful handling. Date validation is only strptime format, no semantic checks (e.g. not future, not before plant date).",
+      "suggestion_code": "    while True:\n        try:\n            death_date = input(\"Death date (YYYY-MM-DD): \").strip()\n        except (EOFError, KeyboardInterrupt):\n            print(\"\\nOperation cancelled.\")\n            sys.exit(0)\n        try:\n            d = datetime.strptime(death_date, \"%Y-%m-%d\")\n            # TODO: add range check vs planting date if available\n            if d.date() \u003e datetime.now().date():\n                print(\"Death date cannot be in the future.\")\n                continue\n            break\n        except ValueError:\n            print(\"Invalid date format. Please use YYYY-MM-DD.\")",
+      "existing_code": "    while True:\n        death_date = input(\"Death date (YYYY-MM-DD): \").strip()\n        try:\n            datetime.strptime(death_date, \"%Y-%m-%d\")\n            break\n        except ValueError:\n            print(\"Invalid date format. Please use YYYY-MM-DD.\")",
+      "start_line": 737,
+      "end_line": 743,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "packages/plant_service/src/plant_service/service_layer/plant_service.py",
+      "content": "The updated docstring for list_plants is brief and does not document the new parameters (alive_only, dead_only) or their semantics, mutual exclusivity, or expected behavior when both are False (i.e., return all plants). Per guidelines, public API methods should use Google or NumPy style docstrings with Args sections for clarity.",
+      "suggestion_code": "    def list_plants(self, alive_only: bool = False, dead_only: bool = False) -\u003e Iterator[Plant]:\n        \"\"\"List plants with optional alive/dead filtering (returns iterator for streaming).\n\n        Args:\n            alive_only: If True, only return plants that are still alive (no death_date).\n            dead_only: If True, only return plants that are dead (have death_date set).\n\n        Note:\n            If both are False, all plants are returned. Implementations should raise\n            ValueError if both alive_only and dead_only are True.\n        \"\"\"\n        ...",
+      "existing_code": "    def list_plants(self, alive_only: bool = False, dead_only: bool = False) -\u003e Iterator[Plant]:\n        \"\"\"List plants with optional alive/dead filtering (returns iterator for streaming)\"\"\"\n        ...",
+      "start_line": 21,
+      "end_line": 23,
+      "category": "documentation",
+      "severity": "low"
+    },
+    {
+      "path": "packages/plant_service/src/plant_service/domain/plant.py",
+      "content": "Validation logic for death fields (both date+reason present/absent, comment required only for 'Other') is enforced solely in __post_init__ (called at construction) and create_from_dict. The Plant dataclass remains mutable, so after creation, setting e.g. plant.death_date = '2024-01-01' or plant.death_comment = 'foo' bypasses validate_death_fields and can produce invalid instances (wrong is_dead, inconsistent fields). This was introduced by the new death fields and their validation.",
+      "suggestion_code": "    def __post_init__(self) -\u003e None:\n        \"\"\"Validate death fields on construction.\"\"\"\n        Plant.validate_death_fields(self.death_date, self.death_reason, self.death_comment)\n\n    # Consider making the class frozen=True (or adding __setattr__ override) to prevent mutation,\n    # or re-validate in property setters for death_* fields.",
+      "existing_code": "    def __post_init__(self) -\u003e None:\n        \"\"\"Validate death fields on construction.\"\"\"\n        Plant.validate_death_fields(self.death_date, self.death_reason, self.death_comment)",
+      "start_line": 50,
+      "end_line": 52,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "packages/plant_service/src/plant_service/domain/plant.py",
+      "content": "The from_dict/create_from_dict condition triggers validate_death_fields whenever any death_* key is present in the dict (even if value is None or only comment provided). Inside validate_death_fields, isolated death_comment (with death_date=None and death_reason=None) passes without error, as none of the if-conditions catch it. This allows partial death data in Plant instances, which can lead to inconsistent state (e.g. comment without marking dead).",
+      "suggestion_code": "        # Validate death fields only if any non-None death value is provided\n        death_keys = (\"death_date\", \"death_reason\", \"death_comment\")\n        if any(k in data and data[k] is not None for k in death_keys):\n            cls.validate_death_fields(\n                data.get(\"death_date\"),\n                data.get(\"death_reason\"),\n                data.get(\"death_comment\"),\n            )",
+      "existing_code": "        # Validate death fields (delegates to shared validator)\n        if any(k in data for k in (\"death_date\", \"death_reason\", \"death_comment\")):\n            cls.validate_death_fields(\n                data.get(\"death_date\"),\n                data.get(\"death_reason\"),\n                data.get(\"death_comment\"),\n            )",
+      "start_line": 132,
+      "end_line": 138,
+      "category": "bug",
+      "severity": "medium"
+    },
+    {
+      "path": "packages/plant_service/src/plant_service/domain/plant.py",
+      "content": "validate_death_fields permits death_comment to be provided independently (no date/reason), and does not reject it. Combined with the above, stray comments can enter the model. Also, when death_reason=='Other', it only checks 'not death_comment' (allows whitespace-only strings).",
+      "suggestion_code": "        if death_reason == \"Other\" and (not death_comment or not str(death_comment).strip()):\n            raise ValueError(\n                'death_comment is required when death_reason is \"Other\"'\n            )\n\n        # Reject comment unless tied to a death reason\n        if death_comment and not death_reason:\n            raise ValueError(\"death_comment is only allowed when death_reason is provided\")\n\n        if death_date is not None and not death_reason:\n            raise ValueError(\"death_reason is required when death_date is provided\")\n        if death_reason is not None and not death_date:\n            raise ValueError(\"death_date is required when death_reason is provided\")",
+      "existing_code": "        if death_reason == \"Other\" and not death_comment:\n            raise ValueError(\n                'death_comment is required when death_reason is \"Other\"'\n            )\n\n        if death_date is not None and not death_reason:\n            raise ValueError(\"death_reason is required when death_date is provided\")\n        if death_reason is not None and not death_date:\n            raise ValueError(\"death_date is required when death_reason is provided\")",
+      "start_line": 168,
+      "end_line": 176,
+      "category": "bug",
+      "severity": "medium"
+    },
+    {
+      "path": "packages/plant_service/src/plant_service/domain/plant.py",
+      "content": "death_date (and planting_date) are typed as str | None (or str) and validated with manual strptime, instead of using datetime.date or date type. This mirrors the existing planting_date pattern but reduces type safety, makes date math/comparisons harder, and risks format bugs. Consider using date | None for death fields (and update planting_date for consistency in future).",
+      "suggestion_code": "    death_date: date | None = None\n    death_reason: str | None = None\n    death_comment: str | None = None\n\n# and import: from datetime import date\n# then adjust strptime to .date() or use date.fromisoformat()",
+      "existing_code": "    death_date: str | None = None\n    death_reason: str | None = None\n    death_comment: str | None = None",
+      "start_line": 33,
+      "end_line": 35,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "packages/plant_service/src/plant_service/domain/plant.py",
+      "content": "DEATH_REASONS is a public mutable ClassVar[list[str]]. Consumers can mutate it, and exposing the list directly makes it harder to evolve (e.g. to Enum). Prefer a tuple (immutable) or private _DEATH_REASONS with a property/getter, or use enum.StrEnum for reasons.",
+      "suggestion_code": "    DEATH_REASONS: ClassVar[tuple[str, ...]] = (\n        \"Pest infestation\",\n        ...\n    )  # or define as Enum",
+      "existing_code": "    DEATH_REASONS: ClassVar[list[str]] = [\n        \"Pest infestation\",\n        \"Disease\",\n        \"Overwatering\",\n        \"Underwatering\",\n        \"Frost/cold damage\",\n        \"Heat stress\",\n        \"Transplant shock\",\n        \"Drought\",\n        \"Unknown\",\n        \"Other\",\n    ]",
+      "start_line": 37,
+      "end_line": 48,
+      "category": "maintainability",
+      "severity": "low"
+    },
+    {
+      "path": "packages/plant_service/tests/integration/test_repository.py",
+      "content": "Hard-coding the exact exception message in pytest.raises(match=...) tightly couples the test to the implementation detail of the error message text. If the message in list_plants changes (even slightly for clarity), this test will break without indicating a real logic regression. Prefer checking only the exception type, or use a partial match if the message must be asserted.",
+      "existing_code": "        with uow:\n            with pytest.raises(ValueError, match=\"Cannot specify both alive_only and dead_only\"):\n                list(uow.plants.list_plants(alive_only=True, dead_only=True))",
+      "start_line": 390,
+      "end_line": 392,
+      "category": "test",
+      "severity": "medium"
+    },
+    {
+      "path": "packages/plant_service/tests/integration/test_repository.py",
+      "content": "Plant data setup is duplicated across the new fixtures and multiple test methods (e.g. inline overrides of sample_plant_dict for create_plant calls in test_retrieve_dead_plant, test_list_plants_alive_only_all_dead_db, test_list_plants_dead_only_all_alive_db, and alive_and_dead_plants). This increases the risk of drift and maintenance effort if plant creation requirements evolve. Consider extracting a helper or using pytest parametrization for varied plant setups.",
+      "existing_code": "        with uow:\n            plant = uow.plants.create_plant({\n                **sample_plant_dict,\n                \"variety_name\": \"Dead Plant\",\n                \"latin_name\": \"Dead Latin\",\n            })\n            plant_id = plant.id",
+      "start_line": 298,
+      "end_line": 304,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "packages/plant_service/tests/integration/test_repository.py",
+      "content": "The 13 new test methods in TestPlantDeathFields lack docstrings (fixtures have brief ones). For complex scenarios like death field transitions and filter combinations, docstrings would aid future readers in understanding test intent without reading the full body.",
+      "suggestion_code": "    def test_update_plant_death_fields(self, uow, sample_plant):\n        \"\"\"Test that setting death_date/reason/comment on update marks the plant dead and stores the values.\"\"\"\n        assert sample_plant.is_dead is False\n\n        with uow:\n            updated = uow.plants.update_plant(sample_plant.id, {\n                \"death_date\": \"2026-08-07\",\n                \"death_reason\": \"Disease\",\n                \"death_comment\": \"Fungal infection\",\n            })\n\n        assert updated is not None\n        assert updated.death_date == \"2026-08-07\"\n        assert updated.death_reason == \"Disease\"\n        assert updated.death_comment == \"Fungal infection\"\n        assert updated.is_dead is True",
+      "existing_code": "    def test_update_plant_death_fields(self, uow, sample_plant):\n        assert sample_plant.is_dead is False\n\n        with uow:\n            updated = uow.plants.update_plant(sample_plant.id, {\n                \"death_date\": \"2026-08-07\",\n                \"death_reason\": \"Disease\",\n                \"death_comment\": \"Fungal infection\",\n            })\n\n        assert updated is not None\n        assert updated.death_date == \"2026-08-07\"\n        assert updated.death_reason == \"Disease\"\n        assert updated.death_comment == \"Fungal infection\"\n        assert updated.is_dead is True",
+      "start_line": 281,
+      "end_line": 295,
+      "category": "documentation",
+      "severity": "low"
+    },
+    {
+      "path": "packages/plant_service/tests/unit/test_plant_model.py",
+      "content": "Missing test coverage for providing death_reason (or death_comment) without death_date. Tests cover death_date without reason and various empty cases, but no test exercises the 'death_date is required when death_reason is provided' path (e.g. validate_death_fields(None, 'Disease') or constructor with only death_reason). This leaves part of the validation logic untested in both direct and create_from_dict paths.",
+      "existing_code": "    def test_death_date_without_reason_raises(self, constructor):\n        with pytest.raises(\n            ValueError, match=\"death_reason is required when death_date is provided\"\n        ):\n            constructor(\n                variety_name=\"Tomato\",\n                latin_name=\"Solanum lycopersicum\",\n                planting_date=\"2026-01-01\",\n                death_date=\"2026-08-07\",\n            )",
+      "start_line": 237,
+      "end_line": 246,
+      "category": "test",
+      "severity": "medium"
+    },
+    {
+      "path": "packages/plant_service/tests/unit/test_plant_model.py",
+      "content": "Several tests use bare `pytest.raises(ValueError)` without a `match` argument (e.g. test_death_date_without_reason_raises, test_empty_string_death_date_rejected, test_empty_string_death_reason_rejected, test_both_empty_strings_rejected, and the via_constructor variants). Other similar tests use specific match patterns. Bare raises reduce test precision and may pass for unrelated ValueErrors if validation messages or order change.",
+      "existing_code": "def test_empty_string_death_date_rejected(self):\n        with pytest.raises(ValueError):\n            Plant.validate_death_fields(\"\", \"Disease\")\n\n    def test_empty_string_death_reason_rejected(self):\n        with pytest.raises(ValueError):\n            Plant.validate_death_fields(\"2026-08-07\", \"\")\n\n    def test_both_empty_strings_rejected(self):\n        with pytest.raises(ValueError):\n            Plant.validate_death_fields(\"\", \"\")\n\n    def test_empty_string_death_date_via_constructor(self):\n        with pytest.raises(ValueError):\n            Plant(\n                variety_name=\"Tomato\",\n                latin_name=\"Solanum lycopersicum\",\n                planting_date=\"2026-01-01\",\n                death_date=\"\",\n                death_reason=\"Disease\",\n            )\n\n    def test_empty_string_death_reason_via_constructor(self):\n        with pytest.raises(ValueError):\n            Plant(\n                variety_name=\"Tomato\",\n                latin_name=\"Solanum lycopersicum\",\n                planting_date=\"2026-01-01\",\n                death_date=\"2026-08-07\",\n                death_reason=\"\",\n            )",
+      "start_line": 315,
+      "end_line": 345,
+      "category": "test",
+      "severity": "medium"
+    },
+    {
+      "path": "packages/plant_service/tests/unit/test_plant_model.py",
+      "content": "No coverage for calendar-invalid but format-matching death_date values such as '2026-02-30' or '2026-13-01'. Only non-matching formats like '01-01-2026' are tested. Although strptime will reject them under the same error, explicit test cases for boundary/invalid dates would better validate the date parsing logic.",
+      "existing_code": "    def test_invalid_death_date_format(self, constructor):\n        with pytest.raises(ValueError, match=\"death_date must be in YYYY-MM-DD format\"):\n            constructor(\n                variety_name=\"Tomato\",\n                latin_name=\"Solanum lycopersicum\",\n                planting_date=\"2026-01-01\",\n                death_date=\"01-01-2026\",\n            )",
+      "start_line": 252,
+      "end_line": 259,
+      "category": "test",
+      "severity": "low"
+    },
+    {
+      "path": "packages/plant_service/tests/unit/test_plant_model.py",
+      "content": "High duplication of literal test data (variety_name, latin_name, planting_date) repeated in ~10+ test methods and parametrized calls. The base_plant_dict fixture is defined but not used in the parametrized tests or TestValidateDeathFields. Consider expanding the fixture or adding a helper to reduce repetition and improve maintainability if the Plant signature changes.",
+      "existing_code": "    @pytest.mark.parametrize(\n        \"constructor\",\n        [Plant, lambda **kw: Plant.create_from_dict(kw)],\n    )\n    def test_invalid_death_reason(self, constructor):\n        with pytest.raises(ValueError, match=\"death_reason must be one of\"):\n            constructor(\n                variety_name=\"Tomato\",\n                latin_name=\"Solanum lycopersicum\",\n                planting_date=\"2026-01-01\",\n                death_date=\"2026-08-07\",\n                death_reason=\"Not a valid reason\",\n            )",
+      "start_line": 186,
+      "end_line": 198,
+      "category": "maintainability",
+      "severity": "low"
+    }
+  ],
+  "session_id": "ed8858d4-bd19-47e7-b792-636708fe4156",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "ed8858d4-bd19-47e7-b792-636708fe4156",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "aaa131cb0e735e91fc9a9d7df23f43c6bd5cddaaeb7137d211aaab6afd87c427"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "main",
+      "requested_head": "PROJ-0013",
+      "resolved_base": "df9513052c36aabdb4c36a1fcc7789c5aae8c74b",
+      "resolved_head": "b0fc27520432d9af24e9b87f021cc96eb52b5d42",
+      "exact_range": "df9513052c36aabdb4c36a1fcc7789c5aae8c74b..b0fc27520432d9af24e9b87f021cc96eb52b5d42",
+      "source_artifact_sha256": "1f0ed329dd270d522dbd3a89f6f16f240a464dc52ad8cfaf6ff7943912be62d7"
+    },
+    "execution": {
+      "ocr_version": "v1.8.10",
+      "provider": "xai",
+      "model": "grok-build-0.1",
+      "configured_concurrency": 3,
+      "rule_config_sha256": "2567ededa46b8c29386a06ab5c208726448ab8b2ea4a4bde153bc3189b98f54f",
+      "runtime_config_sha256": "853f2d5c7a18464e48b417dec75da9ebc241a3223757aee048ce1a90d1975c12"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "00503a5227fd1d28596a6e814fe572e5311414ee81487aea6592fe3671c9fc1f",
+          "path": "packages/plant_service/tests/unit/test_plant_model.py",
+          "fingerprint": "482d33fe63cb2abd524741fafadb51100a442cdcae86e08d895297081598e318"
+        },
+        {
+          "item_id": "1c355d00d51c18298d21198b1173810153661495db9b190ba89b8ac880e0651e",
+          "path": "backend/fastapi/tests/test_plants.py",
+          "fingerprint": "7591f2248b086b622d93a24741f9615e669f81f20c0025d9667aa9bda96109bf"
+        },
+        {
+          "item_id": "3e68581af1e0451fa6ed8839f13d0bbe78548f6c3706ca01f2010afd76e5aadf",
+          "path": "backend/fastapi/src/plant_tracking_api/routes/plants.py",
+          "fingerprint": "1fb337878c33d71ad339e17f70e6d7fbc287956e0c8803c0153a4e2df2e07efb"
+        },
+        {
+          "item_id": "45932facf0ae03ad8ede56c180ae8b694700800cdb7298347519d0f6e395c5f2",
+          "path": "packages/plant_service/src/plant_service/service_layer/plant_service.py",
+          "fingerprint": "cf643aa10e98173b984dd9f69d3228c719616528a1cd5c1c1d56470ce4e31381"
+        },
+        {
+          "item_id": "620add34ce449e4521f4daff5900830a647fb4061f02f1f19923673bfa5161b6",
+          "path": "commands/plant_tracking_cli.py",
+          "fingerprint": "8d667391c82bc6e75afa7bfe7e83ec87dec730139dfac0035d20802bd45f4686"
+        },
+        {
+          "item_id": "6373d2cb030dd4266041bccc5ee6b052e25db05acd97c0a494b68e2b418f94f1",
+          "path": "backend/fastapi/tests/conftest.py",
+          "fingerprint": "8feff38b8042ac8a6ac0b5d58240aa877ae44f1bdd90024977c55ec842e4feeb"
+        },
+        {
+          "item_id": "8b09329c1b7a3c6b712d8a87d9c0d28e84309826d60bf77f09b25b3f82b7a80c",
+          "path": "packages/plant_service/src/plant_service/adapters/repository/models/plant_model.py",
+          "fingerprint": "74582d182aa5e52c861c4f770d28122533bc3b72de2e79196cb3f77f929e1ae3"
+        },
+        {
+          "item_id": "9defcd0b8a88215a206bfb2dfeb7c91cdde30759a60f5a780d8867e73ba16a5f",
+          "path": "packages/plant_service/tests/integration/test_repository.py",
+          "fingerprint": "3a74a4d1a921ddf00af70a9c209945281cad77d6aa5bef718c3e9e88a64b6a71"
+        },
+        {
+          "item_id": "ac4905a18be7f07925af7b0700242d73d730e6f5a4d25f2f2115288e63fde8f6",
+          "path": "code-review-proj-0013-r3.json",
+          "fingerprint": "9d2835847412db58a11259f4460acaa2b21144f984008714207fbc9103e83cba"
+        },
+        {
+          "item_id": "b65756f3fb1d73671b822670676aa3c966acaff9d0913651d321d5ccf1972995",
+          "path": "packages/plant_service/src/plant_service/adapters/repository/plant_repository.py",
+          "fingerprint": "344c1f98f6eac9ff6135bad170ee1bcdb95583496285d7a9395d30a0130a983c"
+        },
+        {
+          "item_id": "b7ae62f9c80bab0d998488e138608c4f82919dc57f7cc89da6794750eacd53c8",
+          "path": "packages/plant_service/src/plant_service/domain/plant.py",
+          "fingerprint": "a794c2305bec45fe035738392b7f531ae2b6fd3e21d0d4d149fe6d0f34d05e62"
+        },
+        {
+          "item_id": "cdbb89461e701bf1651286fced1d8a4e2a2af6547dbdc1e6150cb2690877a91f",
+          "path": "code-review-proj-0013-r2.json",
+          "fingerprint": "4cc1ee491fdc7051f9df0dda61d9ad38548f5b4c67d6c6ef1a2fd2c49e0521ca"
+        },
+        {
+          "item_id": "d9b92a1c700ab7a68f88ecda7daa76fd3923729375ec8e77357282ed0cfaf11c",
+          "path": "alembic/versions/a1b2c3d4e5f6_add_death_fields_to_plant.py",
+          "fingerprint": "9c1a4bbe03d524a291cfbbd7a5474cb3a4c38473d6fd8b5b20b8d4b25fab3bf5"
+        },
+        {
+          "item_id": "fbcd75e87198c9e9221596f4c85661888b03f467b1d184d0efb75dc2ea8678c4",
+          "path": "frontend/src/api/plantTrackingAPI.ts",
+          "fingerprint": "56d9f1256075be9633c333a13e8ce69ad32ce3a9f44d4d9743801b333c91a346"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "00503a5227fd1d28596a6e814fe572e5311414ee81487aea6592fe3671c9fc1f",
+          "path": "packages/plant_service/tests/unit/test_plant_model.py",
+          "fingerprint": "482d33fe63cb2abd524741fafadb51100a442cdcae86e08d895297081598e318"
+        },
+        {
+          "item_id": "1c355d00d51c18298d21198b1173810153661495db9b190ba89b8ac880e0651e",
+          "path": "backend/fastapi/tests/test_plants.py",
+          "fingerprint": "7591f2248b086b622d93a24741f9615e669f81f20c0025d9667aa9bda96109bf"
+        },
+        {
+          "item_id": "3e68581af1e0451fa6ed8839f13d0bbe78548f6c3706ca01f2010afd76e5aadf",
+          "path": "backend/fastapi/src/plant_tracking_api/routes/plants.py",
+          "fingerprint": "1fb337878c33d71ad339e17f70e6d7fbc287956e0c8803c0153a4e2df2e07efb"
+        },
+        {
+          "item_id": "45932facf0ae03ad8ede56c180ae8b694700800cdb7298347519d0f6e395c5f2",
+          "path": "packages/plant_service/src/plant_service/service_layer/plant_service.py",
+          "fingerprint": "cf643aa10e98173b984dd9f69d3228c719616528a1cd5c1c1d56470ce4e31381"
+        },
+        {
+          "item_id": "620add34ce449e4521f4daff5900830a647fb4061f02f1f19923673bfa5161b6",
+          "path": "commands/plant_tracking_cli.py",
+          "fingerprint": "8d667391c82bc6e75afa7bfe7e83ec87dec730139dfac0035d20802bd45f4686"
+        },
+        {
+          "item_id": "6373d2cb030dd4266041bccc5ee6b052e25db05acd97c0a494b68e2b418f94f1",
+          "path": "backend/fastapi/tests/conftest.py",
+          "fingerprint": "8feff38b8042ac8a6ac0b5d58240aa877ae44f1bdd90024977c55ec842e4feeb"
+        },
+        {
+          "item_id": "8b09329c1b7a3c6b712d8a87d9c0d28e84309826d60bf77f09b25b3f82b7a80c",
+          "path": "packages/plant_service/src/plant_service/adapters/repository/models/plant_model.py",
+          "fingerprint": "74582d182aa5e52c861c4f770d28122533bc3b72de2e79196cb3f77f929e1ae3"
+        },
+        {
+          "item_id": "9defcd0b8a88215a206bfb2dfeb7c91cdde30759a60f5a780d8867e73ba16a5f",
+          "path": "packages/plant_service/tests/integration/test_repository.py",
+          "fingerprint": "3a74a4d1a921ddf00af70a9c209945281cad77d6aa5bef718c3e9e88a64b6a71"
+        },
+        {
+          "item_id": "ac4905a18be7f07925af7b0700242d73d730e6f5a4d25f2f2115288e63fde8f6",
+          "path": "code-review-proj-0013-r3.json",
+          "fingerprint": "9d2835847412db58a11259f4460acaa2b21144f984008714207fbc9103e83cba"
+        },
+        {
+          "item_id": "b65756f3fb1d73671b822670676aa3c966acaff9d0913651d321d5ccf1972995",
+          "path": "packages/plant_service/src/plant_service/adapters/repository/plant_repository.py",
+          "fingerprint": "344c1f98f6eac9ff6135bad170ee1bcdb95583496285d7a9395d30a0130a983c"
+        },
+        {
+          "item_id": "b7ae62f9c80bab0d998488e138608c4f82919dc57f7cc89da6794750eacd53c8",
+          "path": "packages/plant_service/src/plant_service/domain/plant.py",
+          "fingerprint": "a794c2305bec45fe035738392b7f531ae2b6fd3e21d0d4d149fe6d0f34d05e62"
+        },
+        {
+          "item_id": "cdbb89461e701bf1651286fced1d8a4e2a2af6547dbdc1e6150cb2690877a91f",
+          "path": "code-review-proj-0013-r2.json",
+          "fingerprint": "4cc1ee491fdc7051f9df0dda61d9ad38548f5b4c67d6c6ef1a2fd2c49e0521ca"
+        },
+        {
+          "item_id": "d9b92a1c700ab7a68f88ecda7daa76fd3923729375ec8e77357282ed0cfaf11c",
+          "path": "alembic/versions/a1b2c3d4e5f6_add_death_fields_to_plant.py",
+          "fingerprint": "9c1a4bbe03d524a291cfbbd7a5474cb3a4c38473d6fd8b5b20b8d4b25fab3bf5"
+        },
+        {
+          "item_id": "fbcd75e87198c9e9221596f4c85661888b03f467b1d184d0efb75dc2ea8678c4",
+          "path": "frontend/src/api/plantTrackingAPI.ts",
+          "fingerprint": "56d9f1256075be9633c333a13e8ce69ad32ce3a9f44d4d9743801b333c91a346"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 1143226
+  }
+}

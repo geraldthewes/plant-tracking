@@ -3,11 +3,14 @@
 Plant Tracking CLI - Main entry point for plant tracking commands
 """
 import argparse
+import logging
 import os
 import sys
+from datetime import date
+from typing import Any
 
 # Markdown model imports (for backup/export during transition)
-from .genus_model import get_genera_dir
+from .genus_model import Genus as MarkdownGenus, get_genera_dir
 from .plant_log_model import get_logs_dir
 from .plant_model import Plant as MarkdownPlant, get_database_dir, load_plant_from_file
 from .seed_packet_model import (
@@ -18,32 +21,34 @@ from .seed_packet_model import (
 )
 
 # Fuzzy matching for genus name searches
+FUZZY_MATCHING_AVAILABLE = False
+fuzz: Any = None
+process: Any = None
 try:
     from thefuzz import fuzz, process
 
     FUZZY_MATCHING_AVAILABLE = True
 except ImportError:
-    FUZZY_MATCHING_AVAILABLE = False
-    process = None
-    fuzz = None
+    pass
 
 
 # Service package imports
 try:
     from plant_service.bootstrap import create_unit_of_work
+    from plant_service.domain import Plant as PlantDomain
     from plant_service.domain.exceptions import (
         PlantTrackingServiceException,
         ValidationException,
         PlantNotFoundException,
-        SeedPacketNotFoundException,
-        GenusNotFoundException,
-        PlantLogNotFoundException,
-        DatabaseUnavailableError,
-        ExportError,
     )
+
     SERVICE_AVAILABLE = True
 except ImportError:
     SERVICE_AVAILABLE = False
+
+
+# CLI logger per ADR-0009; configured once in main() via _configure_logging
+logger = logging.getLogger("plant_tracking.cli")
 
 
 # Module-level directory variables for backward compatibility with tests
@@ -78,8 +83,26 @@ def _get_db():
 
         database.init_db()
         return database
-    except Exception:
+    except Exception as e:
+        print(f"Warning: database unavailable: {e}", file=sys.stderr)
         return None
+
+
+def _configure_logging():
+    """Configure CLI logging once per ADR-0009.
+
+    Logger 'plant_tracking.cli' writes to stderr (stdout stays command
+    output only). Level comes from PLANT_TRACKING_LOG_LEVEL, default INFO.
+    """
+    level_name = os.environ.get("PLANT_TRACKING_LOG_LEVEL", "INFO").upper()
+    logger.setLevel(getattr(logging, level_name, logging.INFO))
+
+    # Only add handler if none exists to avoid duplicate logs
+    if not logger.handlers:
+        handler = logging.StreamHandler(sys.stderr)
+        formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
 
 def main():
@@ -89,13 +112,14 @@ def main():
     # Initialize PostgreSQL if available
     db = _get_db()
 
+    # Configure logging per ADR-0009
+    _configure_logging()
+
     parser = argparse.ArgumentParser(description="Plant Tracking System")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # create-plant subcommand
-    subparsers.add_parser(
-        "create-plant", help="Create a new plant record"
-    )
+    subparsers.add_parser("create-plant", help="Create a new plant record")
 
     # print-label subcommand (consolidated from create-label and print-label)
     print_parser = subparsers.add_parser(
@@ -130,19 +154,26 @@ def main():
     subparsers.add_parser("list-genera", help="List all genera")
 
     # show-genus subcommand
-    show_genus_parser = subparsers.add_parser(
-        "show-genus", help="Show genus details"
-    )
+    show_genus_parser = subparsers.add_parser("show-genus", help="Show genus details")
     show_genus_parser.add_argument("genus_id", help="Genus ID")
 
-    # list-plants subcommand
-    subparsers.add_parser("list-plants", help="List all plants")
-
     # show-plant subcommand
-    show_plant_parser = subparsers.add_parser(
-        "show-plant", help="Show plant details"
-    )
+    show_plant_parser = subparsers.add_parser("show-plant", help="Show plant details")
     show_plant_parser.add_argument("plant_id", help="Plant ID")
+
+    # mark-dead subcommand
+    mark_dead_parser = subparsers.add_parser("mark-dead", help="Mark a plant as dead")
+    mark_dead_parser.add_argument("plant_id", help="Plant ID")
+
+    # list-plants subcommand
+    list_parser = subparsers.add_parser("list-plants", help="List all plants")
+    status_group = list_parser.add_mutually_exclusive_group()
+    status_group.add_argument(
+        "--alive-only", action="store_true", help="Show only living plants"
+    )
+    status_group.add_argument(
+        "--dead-only", action="store_true", help="Show only dead plants"
+    )
 
     # log subcommand
     log_parser = subparsers.add_parser("log", help="Log plant observations")
@@ -300,6 +331,8 @@ def main():
         list_plants(args, db)
     elif args.command == "show-plant":
         show_plant(args, db)
+    elif args.command == "mark-dead":
+        mark_dead(args, db)
     elif args.command == "log":
         if args.log_command == "humidity":
             log_humidity(args, db)
@@ -335,7 +368,12 @@ def main():
 
 
 def _prompt_field(field, description, data):
-    """Prompt user for a single field value with validation."""
+    """Prompt user for a single field value with validation.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
+    """
     while True:
         value = input(f"{description}: ").strip()
         if value:
@@ -345,8 +383,37 @@ def _prompt_field(field, description, data):
             print("This field is required")
 
 
+def _prompt_date_field(field, description, data):
+    """Prompt user for a required date field, stored as a date object.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
+    """
+    while True:
+        value = input(f"{description}: ").strip()
+        if not value:
+            print("This field is required")
+            continue
+        try:
+            data[field] = date.fromisoformat(value)
+            break
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+
+
+def _date_to_iso(value):
+    """Convert a date object to an ISO string for Markdown-backed models."""
+    return value.isoformat() if isinstance(value, date) else value
+
+
 def _prompt_optional_field(field, description, data):
-    """Prompt user for an optional field value."""
+    """Prompt user for an optional field value.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
+    """
     value = input(f"{description} (optional): ").strip()
     if value:
         data[field] = value
@@ -398,7 +465,11 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                         genus_variety = genus.variety_name
                         break
         except Exception:
-            pass
+            logger.warning(
+                "Genus lookup failed for variety_name=%s",
+                plant_data.get("variety_name", "unknown"),
+                exc_info=True,
+            )
     elif db:
         # Fallback to original models if service not available
         from .models import Genus
@@ -417,9 +488,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
             genus_variety = existing_genus.data["variety_name"]
 
     if genus_id:
-        print(
-            f"\n✓ Found genus: {genus_id} - {genus_variety}"
-        )
+        print(f"\n✓ Found genus: {genus_id} - {genus_variety}")
         print(f"  Latin name: {genus_latin}")
         plant_data["latin_name"] = genus_latin
         plant_data["genus_id"] = genus_id
@@ -438,14 +507,22 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                                     f"\n✓ Fuzzy match found: {genus.id} - {genus.variety_name}"
                                 )
                                 print(f"  Latin name: {genus.latin_name}")
-                                confirm = input("Use this genus? (Y/n): ").strip().lower()
+                                confirm = (
+                                    input("Use this genus? (Y/n): ").strip().lower()
+                                )
                                 if confirm != "n":
                                     plant_data["latin_name"] = genus.latin_name
                                     plant_data["genus_id"] = genus.id
-                                    print("  Latin name auto-resolved from genus database.")
+                                    print(
+                                        "  Latin name auto-resolved from genus database."
+                                    )
                                 break
                 except Exception:
-                    pass
+                    logger.warning(
+                        "Fuzzy genus search failed for variety_name=%s",
+                        plant_data.get("variety_name", "unknown"),
+                        exc_info=True,
+                    )
             elif db:
                 # Fallback to original models
                 from .models import Genus
@@ -522,6 +599,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                     plant_data["genus_id"] = genus.id
                     # Markdown backup
                     from .genus_model import Genus as MarkdownGenus
+
                     backup_data = genus_data.copy()
                     backup_data["id"] = genus.id
                     markdown_genus = MarkdownGenus(backup_data)
@@ -564,7 +642,12 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                         packet_matched = True
                         break
         except Exception:
-            pass
+            logger.warning(
+                "Seed packet lookup failed for variety_name=%s, latin_name=%s",
+                plant_data.get("variety_name", "unknown"),
+                plant_data.get("latin_name", "unknown"),
+                exc_info=True,
+            )
     elif db:
         # Fallback to original models
         from .models import SeedPacket
@@ -573,9 +656,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
             plant_data["variety_name"], plant_data["latin_name"]
         )
         if spkt:
-            print(
-                f"\n✓ Found seed packet: {spkt.id} - {spkt.variety_name}"
-            )
+            print(f"\n✓ Found seed packet: {spkt.id} - {spkt.variety_name}")
             plant_data["seed_packet_id"] = spkt.id
             packet_matched = True
     else:
@@ -630,7 +711,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
     # Phase 3: Plant-specific required field (always asked)
     print()
     print("--- Plant-specific field ---")
-    _prompt_field("planting_date", "Planting date (YYYY-MM-DD)", plant_data)
+    _prompt_date_field("planting_date", "Planting date (YYYY-MM-DD)", plant_data)
 
     try:
         plant_id = None
@@ -646,6 +727,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                 print(f"\n✗ Service error: {e}")
                 sys.exit(1)
             except Exception as e:
+                logger.exception("Error creating plant record: %s", e)
                 print(f"\n✗ Error creating plant record: {e}")
                 sys.exit(1)
         elif db:
@@ -664,7 +746,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                 "id": plant.id,
                 "variety_name": plant.variety_name,
                 "latin_name": plant.latin_name,
-                "planting_date": plant.planting_date,
+                "planting_date": _date_to_iso(plant.planting_date),
                 "brand": plant.brand or "unknown",
                 "days_to_maturity": plant.days_to_maturity or "unknown",
                 "germination_time": plant.germination_time or "unknown",
@@ -680,7 +762,11 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
             _write_markdown_backup(filepath, markdown_plant)
         else:
             # Fallback to Markdown-only mode
-            plant = MarkdownPlant(plant_data)
+            markdown_data = dict(plant_data)
+            markdown_data["planting_date"] = _date_to_iso(
+                markdown_data["planting_date"]
+            )
+            plant = MarkdownPlant(markdown_data)
             filepath = database_dir / f"{plant.data['id']}.md"
             _write_markdown_backup(filepath, plant)
             plant_id = plant.data["id"]
@@ -696,9 +782,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
             print(f"Genus: {genus_id}")
         print(f"Saved to: {filepath}")
         print("\nNext steps:")
-        print(
-            f"  1. Generate/print label: plant-tracking print-label {plant_id}"
-        )
+        print(f"  1. Generate/print label: plant-tracking print-label {plant_id}")
         print(
             f"  2. Generate image only: plant-tracking print-label {plant_id} --no-print"
         )
@@ -707,12 +791,156 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
         )
 
     except Exception as e:
+        logger.exception("Error creating plant record: %s", e)
         print(f"\n✗ Error creating plant record: {e}")
+        sys.exit(1)
+
+
+def _prompt_death_details() -> tuple[date, str, str]:
+    """Prompt user for death date, reason, and comment. No DB access.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
+    """
+    # Prompt for death date
+    while True:
+        try:
+            death_date_str = input("Death date (YYYY-MM-DD): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nCancelled.")
+            sys.exit(0)
+        try:
+            death_date = date.fromisoformat(death_date_str)
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+            continue
+        if death_date > date.today():
+            print("Date cannot be in the future.")
+            continue
+        break
+
+    # Prompt for death reason
+    print("\nDeath reasons:")
+    reasons = PlantDomain.DEATH_REASONS
+    for i, reason in enumerate(reasons, 1):
+        print(f"  {i}. {reason}")
+    print()
+
+    while True:
+        reason_input = input("Death reason (number or name): ").strip()
+        if reason_input.isdigit():
+            idx = int(reason_input) - 1
+            if 0 <= idx < len(reasons):
+                death_reason = reasons[idx]
+                break
+            else:
+                print(f"Please enter a number between 1 and {len(reasons)}")
+        else:
+            matching = [r for r in reasons if r.lower() == reason_input.lower()]
+            if matching:
+                death_reason = matching[0]
+                break
+            else:
+                print("Invalid reason. Please enter a number or exact name.")
+
+    # Prompt for comment if "Other"
+    death_comment = ""
+    if death_reason == "Other":
+        while not death_comment:
+            death_comment = input("Comment (required for 'Other'): ").strip()
+    else:
+        death_comment = input(
+            "Additional comment (optional, press Enter to skip): "
+        ).strip()
+
+    return death_date, death_reason, death_comment
+
+
+def mark_dead(args, db=None):
+    """Mark a plant as dead with date, reason, and optional comment."""
+    if db is None:
+        db = _get_db()
+
+    plant_id = args.plant_id
+
+    if not db or not SERVICE_AVAILABLE:
+        print("Error: mark-dead requires database service")
+        sys.exit(1)
+
+    # Phase 1: validate plant exists and is not already dead
+    try:
+        with create_unit_of_work() as uow:
+            plant = uow.plants.get_plant(plant_id)
+            if not plant:
+                print(f"✗ Plant not found: {plant_id}")
+                sys.exit(1)
+
+            if plant.is_dead:
+                print(f"✗ Plant {plant_id} is already marked as dead")
+                print(f"  Death date: {plant.death_date.isoformat()}")
+                print(f"  Death reason: {plant.death_reason}")
+                sys.exit(1)
+
+    except PlantNotFoundException:
+        print(f"✗ Plant not found: {plant_id}")
+        sys.exit(1)
+    except PlantTrackingServiceException as e:
+        print(f"✗ Error checking plant: {e}")
+        sys.exit(1)
+    except Exception as e:
+        logger.exception("Unexpected error: %s", e)
+        print(f"✗ Unexpected error: {e}")
+        sys.exit(1)
+
+    print("=== Mark Plant as Dead ===")
+    print(f"Plant: {plant.id} - {plant.variety_name} ({plant.latin_name})")
+    print()
+
+    # Phase 2: user interaction (no DB)
+    death_date, death_reason, death_comment = _prompt_death_details()
+
+    # Phase 3: short write transaction
+    try:
+        with create_unit_of_work() as uow:
+            updated = uow.plants.update_plant(
+                plant_id,
+                {
+                    "death_date": death_date,
+                    "death_reason": death_reason,
+                    "death_comment": death_comment,
+                },
+            )
+
+        if updated is None:
+            print(f"✗ Plant not found: {plant_id}")
+            sys.exit(1)
+
+        print()
+        print("✓ Plant marked as dead successfully!")
+        print(f"  Death date: {updated.death_date.isoformat()}")
+        print(f"  Death reason: {updated.death_reason}")
+        if updated.death_comment:
+            print(f"  Comment: {updated.death_comment}")
+
+    except ValidationException as e:
+        print(f"✗ Validation error: {e}")
+        sys.exit(1)
+    except PlantTrackingServiceException as e:
+        print(f"✗ Service error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        logger.exception("Unexpected error marking plant as dead: %s", e)
+        print(f"✗ Unexpected error marking plant as dead: {e}")
         sys.exit(1)
 
 
 def _prompt_packet_choice(plant_data):
     """Prompt user to choose how to handle seed packet.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
 
     Returns 'create', 'select', or 'skip'.
     """
@@ -848,7 +1076,12 @@ def _select_existing_packet(db):
 
 
 def _prompt_record_fields(plant_data):
-    """Prompt for record-keeping fields when no seed packet is used."""
+    """Prompt for record-keeping fields when no seed packet is used.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
+    """
     print()
     print("--- Optional record fields (enter directly, no seed packet) ---")
     record_fields = [
@@ -866,6 +1099,10 @@ def _prompt_record_fields(plant_data):
 
 def _prompt_genus_choice(plant_data):
     """Prompt user to choose genus handling method.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
 
     Returns 'create', 'select', 'fuzzy', or 'skip'.
     """
@@ -1007,6 +1244,7 @@ def _fuzzy_search_genus(variety_name: str, db):
         return None
 
     try:
+        genera: list[Any]
         if db and SERVICE_AVAILABLE:
             with create_unit_of_work() as uow:
                 genera = list(uow.genera.list_genera())
@@ -1058,6 +1296,7 @@ def print_label(args):
             print("✗ Failed to submit label print job")
             sys.exit(1)
     except Exception as e:
+        logger.exception("Error printing label: %s", e)
         print(f"✗ Error printing label: {e}")
         sys.exit(1)
 
@@ -1101,7 +1340,12 @@ def create_seed_packet(args, db=None, packets_dir=None):
                             return
                         break
         except Exception:
-            pass
+            logger.warning(
+                "Duplicate seed packet check failed for variety_name=%s, latin_name=%s",
+                packet_data.get("variety_name", "unknown"),
+                packet_data.get("latin_name", "unknown"),
+                exc_info=True,
+            )
     elif db:
         # Fallback to original models
         from .models import SeedPacket
@@ -1194,6 +1438,7 @@ def create_seed_packet(args, db=None, packets_dir=None):
             print(f"ID: {packet.data['id']}")
             print(f"Saved to: {filepath}")
     except Exception as e:
+        logger.exception("Error creating seed packet: %s", e)
         print(f"\n✗ Error creating seed packet: {e}")
         sys.exit(1)
 
@@ -1250,9 +1495,7 @@ def list_seed_packets(args, db=None):
             pid = p.data["id"]
             variety = p.data["variety_name"]
             latin = p.data["latin_name"]
-        print(
-            f"{pid:<12} {variety:<25} {latin:<25} {brand:<20}"
-        )
+        print(f"{pid:<12} {variety:<25} {latin:<25} {brand:<20}")
 
 
 def show_seed_packet(args, db=None):
@@ -1288,10 +1531,15 @@ def show_seed_packet(args, db=None):
                         print(f"  {label:<22} {val}")
                 print()
                 if packet.created_at:
-                    print(f"  Created: {packet.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Created: {packet.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
                 if packet.updated_at:
-                    print(f"  Updated: {packet.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Updated: {packet.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
         except Exception as e:
+            logger.exception("Error showing seed packet: %s", e)
             print(f"✗ Error showing seed packet: {e}")
             sys.exit(1)
     elif db:
@@ -1398,7 +1646,12 @@ def create_genus(args, db=None, genera_dir=None):
                             return
                         break
         except Exception:
-            pass
+            logger.warning(
+                "Duplicate genus check failed for variety_name=%s, latin_name=%s",
+                genus_data.get("variety_name", "unknown"),
+                genus_data.get("latin_name", "unknown"),
+                exc_info=True,
+            )
     elif db:
         # Fallback to original models
         from .models import Genus
@@ -1418,9 +1671,7 @@ def create_genus(args, db=None, genera_dir=None):
         # Markdown fallback
         from .genus_model import find_matching
 
-        existing = find_matching(
-            genus_data["variety_name"], genus_data["latin_name"]
-        )
+        existing = find_matching(genus_data["variety_name"], genus_data["latin_name"])
         if existing:
             print("\n⚠ A matching genus already exists:")
             print(f"  ID: {existing.data['id']}")
@@ -1481,6 +1732,7 @@ def create_genus(args, db=None, genera_dir=None):
             print(f"ID: {genus.data['id']}")
             print(f"Saved to: {filepath}")
     except Exception as e:
+        logger.exception("Error creating genus: %s", e)
         print(f"\n✗ Error creating genus: {e}")
         sys.exit(1)
 
@@ -1538,9 +1790,7 @@ def list_genera(args, db=None):
             gid = g.data["id"]
             variety = g.data["variety_name"]
             latin = g.data["latin_name"]
-        print(
-            f"{gid:<12} {variety:<25} {latin:<25}"
-        )
+        print(f"{gid:<12} {variety:<25} {latin:<25}")
 
 
 def show_genus(args, db=None):
@@ -1569,10 +1819,15 @@ def show_genus(args, db=None):
                         print(f"  {label:<22} {val}")
                 print()
                 if genus.created_at:
-                    print(f"  Created: {genus.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Created: {genus.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
                 if genus.updated_at:
-                    print(f"  Updated: {genus.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Updated: {genus.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
         except Exception as e:
+            logger.exception("Error showing genus: %s", e)
             print(f"✗ Error showing genus: {e}")
             sys.exit(1)
     elif db:
@@ -1638,21 +1893,43 @@ def _list_plants_from_files():
         try:
             plants.append(load_plant_from_file(filepath))
         except Exception:
-            continue
+            logger.warning("Skipping unreadable file: %s", filepath)
     return plants
+
+
+def _is_plant_dead(p):
+    """Return True if the plant record is marked dead."""
+    return getattr(p, "is_dead", False) or (
+        hasattr(p, "data") and p.data.get("death_date")
+    )
 
 
 def list_plants(args, db=None):
     """List all plants in a table format."""
+    alive_only = getattr(args, "alive_only", False)
+    dead_only = getattr(args, "dead_only", False)
+
+    if alive_only and dead_only:
+        print("Error: cannot specify both --alive-only and --dead-only")
+        sys.exit(1)
+
     if db is None:
         db = _get_db()
 
+    db_filtered = False
     if db and SERVICE_AVAILABLE:
         try:
             with create_unit_of_work() as uow:
-                plants = list(uow.plants.list_plants())
-        except Exception:
+                plants = list(
+                    uow.plants.list_plants(alive_only=alive_only, dead_only=dead_only)
+                )
+            db_filtered = True
+        except Exception as e:
             # Fallback to original models if service fails
+            print(
+                f"Warning: database listing failed ({e}); using legacy models",
+                file=sys.stderr,
+            )
             if db:
                 from .models import Plant
 
@@ -1666,37 +1943,46 @@ def list_plants(args, db=None):
         plants = Plant.list_all()
     else:
         # Markdown fallback
+        print(
+            "Warning: database unavailable; showing Markdown backup files",
+            file=sys.stderr,
+        )
         plants = _list_plants_from_files()
+
+    # Filter in Python only when the DB did not already filter
+    if not db_filtered:
+        if alive_only:
+            plants = [p for p in plants if not _is_plant_dead(p)]
+        elif dead_only:
+            plants = [p for p in plants if _is_plant_dead(p)]
 
     if not plants:
         print("No plants found.")
         return
 
-    header = f"{'ID':<12} {'Variety':<25} {'Latin Name':<25} {'Planting Date':<15}"
-    separator = f"{'-' * 12}  {'-' * 25}  {'-' * 25}  {'-' * 15}"
+    header = f"{'ID':<12} {'Variety':<25} {'Latin Name':<25} {'Planting Date':<15} {'Status':<10}"
+    separator = f"{'-' * 12}  {'-' * 25}  {'-' * 25}  {'-' * 15}  {'-' * 10}"
     print(header)
     print(separator)
     for p in plants:
+        status = "dead" if _is_plant_dead(p) else "alive"
+
         if db and SERVICE_AVAILABLE:
             pid = p.id
             variety = p.variety_name
             latin = p.latin_name
-            planting_date = p.planting_date
+            planting_date = _date_to_iso(p.planting_date)
         elif db:
-            # Fallback to original models
             pid = p.id
             variety = p.variety_name
             latin = p.latin_name
-            planting_date = p.planting_date
+            planting_date = _date_to_iso(p.planting_date)
         else:
-            # Markdown fallback
             pid = p.data["id"]
             variety = p.data["variety_name"]
             latin = p.data["latin_name"]
             planting_date = p.data["planting_date"]
-        print(
-            f"{pid:<12} {variety:<25} {latin:<25} {planting_date:<15}"
-        )
+        print(f"{pid:<12} {variety:<25} {latin:<25} {planting_date:<15} {status:<10}")
 
 
 def show_plant(args, db=None):
@@ -1732,13 +2018,25 @@ def show_plant(args, db=None):
                 for field, label in fields_to_show:
                     val = getattr(plant, field, None)
                     if val:
-                        print(f"  {label:<22} {val}")
+                        print(f"  {label:<22} {_date_to_iso(val)}")
+                if plant.is_dead:
+                    print()
+                    print("  *** DEAD ***")
+                    print(f"  {'Death Date':<22} {plant.death_date.isoformat()}")
+                    print(f"  {'Death Reason':<22} {plant.death_reason}")
+                    if plant.death_comment:
+                        print(f"  {'Death Comment':<22} {plant.death_comment}")
                 print()
                 if plant.created_at:
-                    print(f"  Created: {plant.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Created: {plant.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
                 if plant.updated_at:
-                    print(f"  Updated: {plant.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Updated: {plant.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
         except Exception as e:
+            logger.exception("Error showing plant: %s", e)
             print(f"✗ Error showing plant: {e}")
             sys.exit(1)
     elif db:
@@ -1772,11 +2070,10 @@ def show_plant(args, db=None):
         for field, label in fields_to_show:
             val = getattr(plant, field, None)
             if val:
-                print(f"  {label:<22} {val}")
+                print(f"  {label:<22} {_date_to_iso(val)}")
         print()
         if plant.created_at:
             print(f"  Created: {plant.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
-        if plant.updated_at:
             print(f"  Updated: {plant.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
     else:
         # Markdown fallback
@@ -1814,6 +2111,7 @@ def show_plant(args, db=None):
 
 # ─── Log command handlers ────────────────────────────────────────
 
+
 def log_humidity(args, db=None):
     """Log a humidity reading for a plant."""
     if db is None:
@@ -1828,7 +2126,11 @@ def log_humidity(args, db=None):
                 if plant:
                     plant_exists = True
         except Exception:
-            pass
+            logger.warning(
+                "Plant existence check failed for plant_id=%s",
+                args.plant_id,
+                exc_info=True,
+            )
     elif db:
         # Fallback to original models
         from .models import Plant
@@ -1845,7 +2147,7 @@ def log_humidity(args, db=None):
 
     if not plant_exists:
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
-        return
+        sys.exit(1)
 
     entry_data = {
         "plant_id": args.plant_id,
@@ -1872,15 +2174,21 @@ def log_humidity(args, db=None):
             print(f"✓ Humidity logged for plant {args.plant_id}")
         else:
             # Markdown fallback
-            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+            from .plant_log_model import (
+                PlantLogEntry as MarkdownLogEntry,
+                append_log_entry,
+            )
 
             entry = MarkdownLogEntry(entry_data)
             append_log_entry(entry)
             print(f"✓ Humidity logged for plant {args.plant_id}")
     except ValidationException as e:
         print(f"✗ Error: {e}")
+        sys.exit(1)
     except Exception as e:
+        logger.exception("Error: %s", e)
         print(f"✗ Error: {e}")
+        sys.exit(1)
 
 
 def log_water(args, db=None):
@@ -1897,7 +2205,11 @@ def log_water(args, db=None):
                 if plant:
                     plant_exists = True
         except Exception:
-            pass
+            logger.warning(
+                "Plant existence check failed for plant_id=%s",
+                args.plant_id,
+                exc_info=True,
+            )
     elif db:
         # Fallback to original models
         from .models import Plant
@@ -1909,10 +2221,12 @@ def log_water(args, db=None):
     else:
         # Markdown fallback
         plant_file = get_database_dir() / f"{args.plant_id}.md"
+        if plant_file.exists():
+            plant_exists = True
 
     if not plant_exists:
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
-        return
+        sys.exit(1)
 
     from .plant_log_model import normalize_water_amount
 
@@ -1920,7 +2234,7 @@ def log_water(args, db=None):
         water_data = normalize_water_amount(args.amount)
     except ValueError as e:
         print(f"✗ Error: Invalid water amount: {e}")
-        return
+        sys.exit(1)
 
     entry_data = {
         "plant_id": args.plant_id,
@@ -1948,15 +2262,21 @@ def log_water(args, db=None):
             print(f"✓ Watering logged for plant {args.plant_id}")
         else:
             # Markdown fallback
-            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+            from .plant_log_model import (
+                PlantLogEntry as MarkdownLogEntry,
+                append_log_entry,
+            )
 
             entry = MarkdownLogEntry(entry_data)
             append_log_entry(entry)
             print(f"✓ Watering logged for plant {args.plant_id}")
     except ValidationException as e:
         print(f"✗ Error: {e}")
+        sys.exit(1)
     except Exception as e:
+        logger.exception("Error: %s", e)
         print(f"✗ Error: {e}")
+        sys.exit(1)
 
 
 def log_fertilizer(args, db=None):
@@ -1973,7 +2293,11 @@ def log_fertilizer(args, db=None):
                 if plant:
                     plant_exists = True
         except Exception:
-            pass
+            logger.warning(
+                "Plant existence check failed for plant_id=%s",
+                args.plant_id,
+                exc_info=True,
+            )
     elif db:
         # Fallback to original models
         from .models import Plant
@@ -1990,7 +2314,7 @@ def log_fertilizer(args, db=None):
 
     if not plant_exists:
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
-        return
+        sys.exit(1)
 
     entry_data = {
         "plant_id": args.plant_id,
@@ -2018,7 +2342,10 @@ def log_fertilizer(args, db=None):
             print(f"✓ Fertilizer logged for plant {args.plant_id}")
         else:
             # Markdown fallback
-            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+            from .plant_log_model import (
+                PlantLogEntry as MarkdownLogEntry,
+                append_log_entry,
+            )
 
             # For markdown, use original field names
             md_entry_data = {
@@ -2034,8 +2361,11 @@ def log_fertilizer(args, db=None):
             print(f"✓ Fertilizer logged for plant {args.plant_id}")
     except ValidationException as e:
         print(f"✗ Error: {e}")
+        sys.exit(1)
     except Exception as e:
+        logger.exception("Error: %s", e)
         print(f"✗ Error: {e}")
+        sys.exit(1)
 
 
 def log_note(args, db=None):
@@ -2056,18 +2386,18 @@ def log_note(args, db=None):
                     note_text = f.read()
             except FileNotFoundError:
                 print(f"✗ Error: File not found: {args.file}")
-                return
+                sys.exit(1)
     else:
         # Check if stdin has data (not a terminal)
         if not sys.stdin.isatty():
             note_text = sys.stdin.read()
         else:
             print("Error: No note text provided. Use --text, --file, or pipe to stdin.")
-            return
+            sys.exit(1)
 
     if not note_text or not note_text.strip():
         print("Error: Note text is empty")
-        return
+        sys.exit(1)
 
     # Validate plant exists
     plant_exists = False
@@ -2078,7 +2408,11 @@ def log_note(args, db=None):
                 if plant:
                     plant_exists = True
         except Exception:
-            pass
+            logger.warning(
+                "Plant existence check failed for plant_id=%s",
+                args.plant_id,
+                exc_info=True,
+            )
     elif db:
         # Fallback to original models
         from .models import Plant
@@ -2095,7 +2429,7 @@ def log_note(args, db=None):
 
     if not plant_exists:
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
-        return
+        sys.exit(1)
 
     entry_data = {"plant_id": args.plant_id, "event_type": "note", "text": note_text}
 
@@ -2118,15 +2452,21 @@ def log_note(args, db=None):
             print(f"✓ Note logged for plant {args.plant_id}")
         else:
             # Markdown fallback
-            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+            from .plant_log_model import (
+                PlantLogEntry as MarkdownLogEntry,
+                append_log_entry,
+            )
 
             entry = MarkdownLogEntry(entry_data)
             append_log_entry(entry)
             print(f"✓ Note logged for plant {args.plant_id}")
     except ValidationException as e:
         print(f"✗ Error: {e}")
+        sys.exit(1)
     except Exception as e:
+        logger.exception("Error: %s", e)
         print(f"✗ Error: {e}")
+        sys.exit(1)
 
 
 def log_list(args, db=None):
@@ -2143,7 +2483,11 @@ def log_list(args, db=None):
                 if plant:
                     plant_exists = True
         except Exception:
-            pass
+            logger.warning(
+                "Plant existence check failed for plant_id=%s",
+                args.plant_id,
+                exc_info=True,
+            )
     elif db:
         # Fallback to original models
         from .models import Plant
@@ -2160,16 +2504,16 @@ def log_list(args, db=None):
 
     if not plant_exists:
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
-        return
+        sys.exit(1)
 
     event_type = None if args.type == "all" else args.type
 
     if db and SERVICE_AVAILABLE:
         try:
             with create_unit_of_work() as uow:
-                entries = list(uow.logs.list_entries(
-                    plant_id=args.plant_id, event_type=event_type
-                ))
+                entries = list(
+                    uow.logs.list_entries(plant_id=args.plant_id, event_type=event_type)
+                )
                 # Convert domain objects to dict for display
                 entries_dict = []
                 for entry in entries:
@@ -2216,7 +2560,9 @@ def log_list(args, db=None):
                 # Markdown fallback
                 from .plant_log_model import load_log_entries
 
-                entries_dict = load_log_entries(plant_id=args.plant_id, event_type=event_type)
+                entries_dict = load_log_entries(
+                    plant_id=args.plant_id, event_type=event_type
+                )
     elif db:
         # Fallback to original models
         from .models import PlantLogEntry
@@ -2282,6 +2628,7 @@ def log_list(args, db=None):
 
 # ─── Media command handlers ─────────────────────────────────────
 
+
 def media_add_attachment(args, db=None, media_type="image"):
     """Handle adding media attachment (image, video, audio)."""
     if db is None:
@@ -2290,7 +2637,7 @@ def media_add_attachment(args, db=None, media_type="image"):
     file_path = getattr(args, f"{media_type}_path")
     if not os.path.exists(file_path):
         print(f"Error: File not found: {file_path}")
-        return
+        sys.exit(1)
 
     plant_exists = False
     if db and SERVICE_AVAILABLE:
@@ -2300,7 +2647,11 @@ def media_add_attachment(args, db=None, media_type="image"):
                 if plant:
                     plant_exists = True
         except Exception:
-            pass
+            logger.warning(
+                "Plant existence check failed for plant_id=%s",
+                args.plant_id,
+                exc_info=True,
+            )
     else:
         plant_file = get_database_dir() / f"{args.plant_id}.md"
         if plant_file.exists():
@@ -2308,11 +2659,11 @@ def media_add_attachment(args, db=None, media_type="image"):
 
     if not plant_exists:
         print(f"Error: Plant ID '{args.plant_id}' not found")
-        return
+        sys.exit(1)
 
     if not db or not SERVICE_AVAILABLE:
         print("Error: Media attachments require database service")
-        return
+        sys.exit(1)
 
     try:
         from plant_service.service_layer.s3_service import S3Service
@@ -2344,8 +2695,11 @@ def media_add_attachment(args, db=None, media_type="image"):
             print(f"Timestamp: {media_attachment.timestamp}")
     except ValueError as e:
         print(f"Error: {e}")
+        sys.exit(1)
     except Exception as e:
+        logger.exception("Error creating %s attachment: %s", media_type, e)
         print(f"Error creating {media_type} attachment: {e}")
+        sys.exit(1)
 
 
 def media_list_attachments(args, db=None):
@@ -2355,7 +2709,7 @@ def media_list_attachments(args, db=None):
 
     if not db or not SERVICE_AVAILABLE:
         print("Error: Media attachments require database service")
-        return
+        sys.exit(1)
 
     try:
         with create_unit_of_work() as uow:
@@ -2368,9 +2722,7 @@ def media_list_attachments(args, db=None):
                 return
 
             print(f"Media attachments for plant {args.plant_id}:")
-            print(
-                f"{'ID':<5} {'Type':<8} {'Label':<25} {'Tags':<30} {'Timestamp':<20}"
-            )
+            print(f"{'ID':<5} {'Type':<8} {'Label':<25} {'Tags':<30} {'Timestamp':<20}")
             print("-" * 90)
             for ma in media_attachments:
                 label = ma.label or ""
@@ -2380,7 +2732,9 @@ def media_list_attachments(args, db=None):
                     f"{tags:<30} {ma.timestamp:<20}"
                 )
     except Exception as e:
+        logger.exception("Error listing media attachments: %s", e)
         print(f"Error listing media attachments: {e}")
+        sys.exit(1)
 
 
 def media_show_attachment(args, db=None):
@@ -2390,17 +2744,15 @@ def media_show_attachment(args, db=None):
 
     if not db or not SERVICE_AVAILABLE:
         print("Error: Media attachments require database service")
-        return
+        sys.exit(1)
 
     try:
         with create_unit_of_work() as uow:
-            media_attachment = uow.media_attachments.get_media_attachment(
-                args.media_id
-            )
+            media_attachment = uow.media_attachments.get_media_attachment(args.media_id)
 
             if not media_attachment:
                 print(f"Media attachment not found: {args.media_id}")
-                return
+                sys.exit(1)
 
             print(f"=== Media Attachment: {media_attachment.id} ===")
             print()
@@ -2411,7 +2763,9 @@ def media_show_attachment(args, db=None):
             print(f"Tags: {media_attachment.tags or 'N/A'}")
             print(f"Timestamp: {media_attachment.timestamp}")
     except Exception as e:
+        logger.exception("Error showing media attachment: %s", e)
         print(f"Error showing media attachment: {e}")
+        sys.exit(1)
 
 
 def media_delete_attachment(args, db=None):
@@ -2421,18 +2775,16 @@ def media_delete_attachment(args, db=None):
 
     if not db or not SERVICE_AVAILABLE:
         print("Error: Media attachments require database service")
-        return
+        sys.exit(1)
 
     try:
         from plant_service.service_layer.s3_service import S3Service
 
         with create_unit_of_work() as uow:
-            media_attachment = uow.media_attachments.get_media_attachment(
-                args.media_id
-            )
+            media_attachment = uow.media_attachments.get_media_attachment(args.media_id)
             if not media_attachment:
                 print(f"Media attachment not found: {args.media_id}")
-                return
+                sys.exit(1)
 
             s3_service = S3Service()
             s3_service.delete_file(media_attachment.s3_key)
@@ -2443,8 +2795,11 @@ def media_delete_attachment(args, db=None):
                 print(f"✓ Media attachment {args.media_id} deleted successfully")
             else:
                 print(f"Failed to delete media attachment {args.media_id}")
+                sys.exit(1)
     except Exception as e:
+        logger.exception("Error deleting media attachment: %s", e)
         print(f"Error deleting media attachment: {e}")
+        sys.exit(1)
 
 
 def media_get_url(args, db=None):
@@ -2454,18 +2809,16 @@ def media_get_url(args, db=None):
 
     if not db or not SERVICE_AVAILABLE:
         print("Error: Media attachments require database service")
-        return
+        sys.exit(1)
 
     try:
         from plant_service.service_layer.s3_service import S3Service
 
         with create_unit_of_work() as uow:
-            media_attachment = uow.media_attachments.get_media_attachment(
-                args.media_id
-            )
+            media_attachment = uow.media_attachments.get_media_attachment(args.media_id)
             if not media_attachment:
                 print(f"Media attachment not found: {args.media_id}")
-                return
+                sys.exit(1)
 
             s3_service = S3Service()
             url = s3_service.get_presigned_url(media_attachment.s3_key)
@@ -2474,8 +2827,11 @@ def media_get_url(args, db=None):
                 print(url)
             else:
                 print("Failed to generate URL")
+                sys.exit(1)
     except Exception as e:
+        logger.exception("Error getting media attachment URL: %s", e)
         print(f"Error getting media attachment URL: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

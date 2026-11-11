@@ -1,10 +1,11 @@
 """
 SQLAlchemy model for Plant entity
 """
+
 import re
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import TYPE_CHECKING, Optional
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import Date, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base, TimestampMixin
 
@@ -31,7 +32,7 @@ class Plant(Base, TimestampMixin):
     spacing: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     sun_requirements: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     indoor_start_time: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    planting_date: Mapped[str] = mapped_column(String(10), nullable=False)
+    planting_date: Mapped[date] = mapped_column(Date(), nullable=False)
 
     # Foreign keys
     seed_packet_id: Mapped[Optional[str]] = mapped_column(
@@ -41,6 +42,9 @@ class Plant(Base, TimestampMixin):
         String(10), ForeignKey("genera.id"), nullable=True
     )
 
+    # Death tracking
+    death_date: Mapped[Optional[date]] = mapped_column(Date(), nullable=True)
+
     # Relationships
     seed_packet: Mapped[Optional["SeedPacket"]] = relationship(
         "SeedPacket", lazy="selectin", back_populates="plants"
@@ -49,7 +53,7 @@ class Plant(Base, TimestampMixin):
         "Genus", lazy="selectin", back_populates="plants"
     )
 
-    def generate_id(self, variety_name: str, planting_date: str) -> str:
+    def generate_id(self, variety_name: str, planting_date: date | None) -> str:
         """
         Generate plant ID in VARIETY-YYYY-SEQ format
         Preserves exact logic from commands/plant_model.py:103-149
@@ -60,7 +64,7 @@ class Plant(Base, TimestampMixin):
             abbrev = variety_name[:4].upper()
 
         if planting_date:
-            year = datetime.strptime(planting_date, "%Y-%m-%d").year
+            year = planting_date.year
         else:
             year = datetime.now(timezone.utc).year
 
@@ -108,17 +112,11 @@ class Plant(Base, TimestampMixin):
             if not re.match(r"^GENUS-\d{3}$", data["genus_id"]):
                 raise ValueError("genus_id must match GENUS-NNN format or be 'unknown'")
 
-        if "planting_date" in data:
-            try:
-                datetime.strptime(data["planting_date"], "%Y-%m-%d")
-            except ValueError:
-                raise ValueError("planting_date must be in YYYY-MM-DD format")
-
         if "id" not in data:
             instance = cls()
             data["id"] = instance.generate_id(
                 data["variety_name"],
-                data.get("planting_date", ""),
+                data.get("planting_date"),
             )
 
         return cls(**data)

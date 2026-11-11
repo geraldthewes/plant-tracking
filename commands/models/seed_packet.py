@@ -1,6 +1,7 @@
 """
 SQLAlchemy model for SeedPacket entity
 """
+
 import re
 from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import String
@@ -84,7 +85,9 @@ class SeedPacket(Base, TimestampMixin):
         return cls(**data)
 
     @classmethod
-    def find_matching(cls, variety_name: str, latin_name: str) -> Optional["SeedPacket"]:
+    def find_matching(
+        cls, variety_name: str, latin_name: str
+    ) -> Optional["SeedPacket"]:
         """
         Find existing seed packet matching variety_name and latin_name
         """

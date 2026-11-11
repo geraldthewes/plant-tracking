@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from typing import ClassVar
 
 
@@ -25,11 +25,40 @@ class Plant:
     spacing: str | None = None
     sun_requirements: str | None = None
     indoor_start_time: str | None = None
-    planting_date: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
+    planting_date: date = field(default_factory=date.today)
     seed_packet_id: str | None = None
     genus_id: str | None = None
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
+    death_date: date | None = None
+    death_reason: str | None = None
+    death_comment: str | None = None
+
+    DEATH_REASONS: ClassVar[tuple[str, ...]] = (
+        "Pest infestation",
+        "Disease",
+        "Overwatering",
+        "Underwatering",
+        "Frost/cold damage",
+        "Heat stress",
+        "Transplant shock",
+        "Drought",
+        "Unknown",
+        "Other",
+    )
+
+    def __post_init__(self) -> None:
+        """Validate fields on construction."""
+        # Validate death fields
+        type(self).validate_death_fields(
+            self.death_date, self.death_reason, self.death_comment, self.planting_date
+        )
+
+
+    @property
+    def is_dead(self) -> bool:
+        """Return True if the plant has been marked as dead."""
+        return bool(self.death_date)
 
     @staticmethod
     def make_abbrev(variety_name: str) -> str:
@@ -43,7 +72,9 @@ class Plant:
             abbrev = variety_name[:4].upper()
         return abbrev
 
-    def generate_id(self, variety_name: str, planting_date: str, seq: int = 1) -> str:
+    def generate_id(
+        self, variety_name: str, planting_date: date | None = None, seq: int = 1
+    ) -> str:
         """
         Generate plant ID in VARIETY-YYYY-SEQ format.
         Preserves exact logic from commands/models/plant.py:52-69
@@ -52,12 +83,7 @@ class Plant:
         Default seq=1 is for standalone use (testing/domain layer only).
         """
         abbrev = self.make_abbrev(variety_name)
-
-        if planting_date:
-            year = datetime.strptime(planting_date, "%Y-%m-%d").year
-        else:
-            year = datetime.now().year
-
+        year = planting_date.year if planting_date else date.today().year
         return f"{abbrev}-{year}-{seq:03d}"
 
     @staticmethod
@@ -96,11 +122,44 @@ class Plant:
             if not re.match(r"^SPKT-\d{3}$", data["seed_packet_id"]):
                 raise ValueError("seed_packet_id must match SPKT-NNN format")
 
-        # Validate date format
-        if "planting_date" in data:
-            try:
-                datetime.strptime(data["planting_date"], "%Y-%m-%d")
-            except ValueError:
-                raise ValueError("planting_date must be in YYYY-MM-DD format")
-
         return cls(**data)
+
+    @classmethod
+    def validate_death_fields(
+        cls,
+        death_date: date | None,
+        death_reason: str | None,
+        death_comment: str | None = None,
+        planting_date: date | None = None,
+    ) -> None:
+        """Validate death-related fields.
+
+        - death_reason (if provided) must be in DEATH_REASONS.
+        - If death_reason == 'Other', death_comment is required.
+        - death_date and death_reason must both be present or both absent.
+        - If both death_date and planting_date are provided, death_date must be
+          on or after planting_date and not in the future.
+        """
+        if death_reason is not None:
+            if death_reason not in cls.DEATH_REASONS:
+                raise ValueError(
+                    f"death_reason must be one of: {', '.join(cls.DEATH_REASONS)}"
+                )
+
+        if death_reason == "Other" and (not death_comment or not str(death_comment).strip()):
+            raise ValueError(
+                'death_comment is required when death_reason is "Other"'
+            )
+
+        if death_date is not None and not death_reason:
+            raise ValueError("death_reason is required when death_date is provided")
+        if death_reason is not None and not death_date:
+            raise ValueError("death_date is required when death_reason is provided")
+        if death_comment and (not death_date or not death_reason):
+            raise ValueError("death_comment requires both death_date and death_reason")
+
+        if death_date is not None and planting_date is not None:
+            if death_date < planting_date:
+                raise ValueError("death_date cannot be before planting_date")
+            if death_date > date.today():
+                raise ValueError("death_date cannot be in the future")

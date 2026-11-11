@@ -2,12 +2,19 @@
 Plant data model and validation
 """
 
+import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import TYPE_CHECKING, Dict, Any, Optional
 import yaml
+
+logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from commands.genus_model import Genus
+    from commands.seed_packet_model import SeedPacket
 
 # Fields needed for label generation (all required)
 LABEL_FIELDS = ["variety_name", "latin_name", "planting_date"]
@@ -60,10 +67,19 @@ class Plant:
 
     def __init__(self, data: Dict[str, Any]):
         self.data = data
+        self._normalize_date_fields()
         self.validate()
         # Generate ID if not present
         if "id" not in self.data:
             self.data["id"] = self.generate_id()
+
+    def _normalize_date_fields(self):
+        """Normalize date objects to ISO strings so frontmatter values stay string-typed."""
+        value = self.data.get("planting_date")
+        if isinstance(value, datetime):
+            self.data["planting_date"] = value.date().isoformat()
+        elif isinstance(value, date):
+            self.data["planting_date"] = value.isoformat()
 
     def validate(self):
         """Validate plant data"""
@@ -144,7 +160,7 @@ class Plant:
                                         seq = int(match.group(1))
                                         max_seq = max(max_seq, seq)
                 except Exception:
-                    continue  # Skip unreadable files
+                    logger.warning("Skipping unreadable file: %s", file)
 
         return max_seq + 1
 

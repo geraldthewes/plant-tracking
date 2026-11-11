@@ -1,6 +1,7 @@
 """
 SQLAlchemy model for Genus entity
 """
+
 import re
 from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import String

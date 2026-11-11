@@ -1,0 +1,2 @@
+2026-08-12 22:09:25,286 INFO     deep_architect.review_analyzer Processing 38 findings (model=standard/coder, concurrency=2, timeout=300s)
+2026-08-12 22:09:25,374 INFO     deep_architect.review_analyzer Catalog-aware triage: 14 entries (heads injected into prompts)

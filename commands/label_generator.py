@@ -2,18 +2,23 @@
 Label generation for plant tracking system
 """
 
+import logging
 import qrcode
+from typing import Any
+
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from .plant_model import load_plant_from_file, get_database_dir
-from .label_format import LabelFormat, get_label_format, LabelFormatEnum
+from .label_format import get_label_format, LabelFormatEnum
+
+logger = logging.getLogger(__name__)
 
 # Default format for backward compatibility
 DEFAULT_FORMAT = LabelFormatEnum.FORMAT_40X30MM.value
 
 
 def create_label(
-    plant_id: str, output_path: Path = None, format_str: str = DEFAULT_FORMAT
+    plant_id: str, output_path: Path | None = None, format_str: str = DEFAULT_FORMAT
 ) -> Path:
     """
     Create a label for a plant with specified format
@@ -59,7 +64,7 @@ def create_label(
                     if genus:
                         latin_text = genus.data.get("latin_name", "")
                 except Exception:
-                    pass
+                    logger.debug("Skipping unreadable genus file: %s", genus_file)
 
     # Fallback to direct Latin name field (for backward compatibility)
     if not latin_text:
@@ -88,7 +93,6 @@ def create_label(
     # Vertical positions - using format configuration
     name_y = MARGIN
     id_y = name_y + name_h + 6
-    date_y = id_y + id_h + 6 if planting_date else None
     # Position latin name using format configuration
     latin_y = (
         label_format.height_px - MARGIN - label_format.latin_name_offset_from_bottom
@@ -109,7 +113,7 @@ def create_label(
     qr_height = max(qr_height, 60)
 
     # Generate QR code to exactly fill the allocated space
-    qr = qrcode.QRCode(
+    qr: Any = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
         box_size=6,  # smaller boxes for higher density
@@ -143,7 +147,7 @@ def create_label(
 
     # Rotate 90° for 50x70mm so text flows along the long (70mm) roll direction
     if format_str == "50x70mm":
-        label_image = label_image.transpose(Image.ROTATE_90)
+        label_image = label_image.transpose(Image.Transpose.ROTATE_90)
 
     # Convert to 1-bit black and white for printer compatibility
     if label_image.mode != "1":

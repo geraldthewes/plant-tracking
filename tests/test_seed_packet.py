@@ -73,8 +73,6 @@ class TestSeedPacketModel(unittest.TestCase):
 
     def test_id_format(self):
         """Test that IDs follow SPKT-NNN format."""
-        import re
-
         data = self._packet_data()
         packet = self.SeedPacket(data)
         self.assertRegex(packet.data["id"], r"^SPKT-\d{3}$")

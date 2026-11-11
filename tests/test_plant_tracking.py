@@ -2,12 +2,15 @@
 Test suite for plant tracking system
 """
 
+import io
+import logging
 import os
+import re
 import shutil
 import tempfile
 import unittest
 from unittest import mock
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 
@@ -86,8 +89,6 @@ class TestPlantModel(unittest.TestCase):
 
     def test_plant_id_generation_format(self):
         """Test that plant IDs follow VARIETY-YYYY-SEQ format"""
-        import re
-
         plant_data = self._required_plant_data(
             variety_name="Habanero",
             latin_name="Capsicum chinense",
@@ -309,7 +310,7 @@ class TestPlantSeedPacketReference(unittest.TestCase):
 
     def test_get_seed_packet_resolves_reference(self):
         """Test that get_seed_packet resolves to the correct SeedPacket."""
-        from commands.seed_packet_model import SeedPacket, load_from_file
+        from commands.seed_packet_model import SeedPacket
 
         packet_data = {
             "variety_name": "Yellow Habanero",
@@ -418,7 +419,6 @@ class TestLabelGeneration(unittest.TestCase):
 
         # Count black pixels in the image (QR code area is on the right side)
         black_count = sum(1 for r, g, b in pixels if r < 100 and g < 100 and b < 100)
-        total = len(pixels)
 
         # Labels are mostly white; check for presence of rendered content
         self.assertGreater(
@@ -826,7 +826,7 @@ class TestEndToEnd(unittest.TestCase):
 
     def test_create_packet_then_plant_reference(self):
         """Create a seed packet, then create a plant that references it."""
-        from commands.seed_packet_model import SeedPacket, load_from_file
+        from commands.seed_packet_model import SeedPacket
         from commands.plant_model import Plant, load_plant_from_file
 
         # Create seed packet
@@ -1532,3 +1532,1632 @@ class TestPlantLogModel(unittest.TestCase):
         self.assertEqual(entries[0]["plant_id"], plant_id)
         self.assertEqual(entries[0]["event_type"], "humidity")
         self.assertEqual(entries[0]["level"], 7)
+
+
+class TestIsPlantDeadHelper(unittest.TestCase):
+    """Tests for the _is_plant_dead CLI helper."""
+
+    def setUp(self):
+        from commands.plant_tracking_cli import _is_plant_dead
+
+        self._is_plant_dead = _is_plant_dead
+
+    def test_plant_object_with_is_dead_true(self):
+        """Plant object with is_dead=True is dead."""
+
+        class Plant:
+            is_dead = True
+
+        self.assertTrue(self._is_plant_dead(Plant()))
+
+    def test_plant_object_with_is_dead_false(self):
+        """Plant object with is_dead=False is alive."""
+
+        class Plant:
+            is_dead = False
+
+        self.assertFalse(self._is_plant_dead(Plant()))
+
+    def test_dict_based_object_with_death_date(self):
+        """Dict-based object with death_date in data is dead."""
+
+        class Record:
+            data = {"death_date": "2026-07-01"}
+
+        self.assertTrue(self._is_plant_dead(Record()))
+
+    def test_dict_based_object_without_death_date(self):
+        """Dict-based object without death_date in data is alive."""
+
+        class Record:
+            data = {"id": "PLANT-2026-001", "variety_name": "Test"}
+
+        self.assertFalse(self._is_plant_dead(Record()))
+
+    def test_neither_is_dead_nor_data(self):
+        """Object with neither is_dead nor data is alive."""
+
+        class Bare:
+            pass
+
+        self.assertFalse(self._is_plant_dead(Bare()))
+
+
+class TestListPlantsDBFiltering(unittest.TestCase):
+    """Tests that CLI list_plants pushes alive/dead filters to the DB layer."""
+
+    def _make_args(self, alive_only=False, dead_only=False):
+        return type("Args", (), {"alive_only": alive_only, "dead_only": dead_only})()
+
+    def _make_domain_plant(self, plant_id, death_date=None):
+        p = mock.Mock()
+        p.id = plant_id
+        p.variety_name = "Test Plant"
+        p.latin_name = "Testum testum"
+        p.planting_date = date(2026, 5, 1)
+        p.is_dead = death_date is not None
+        return p
+
+    def _make_file_stub(self, plant_id, death_date=None):
+        data = {
+            "id": plant_id,
+            "variety_name": "Test Plant",
+            "latin_name": "Testum testum",
+            "planting_date": "2026-05-01",
+        }
+        if death_date:
+            data["death_date"] = death_date
+
+        class Record:
+            pass
+
+        record = Record()
+        record.data = data
+        return record
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_alive_only_passed_to_repository(self, mock_create_uow):
+        """alive_only is forwarded to the repository, not filtered in Python."""
+        from commands.plant_tracking_cli import list_plants
+
+        uow = mock.Mock()
+        uow.plants.list_plants.return_value = iter(
+            [self._make_domain_plant("PL-2026-001")]
+        )
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            list_plants(self._make_args(alive_only=True), db=object())
+
+        uow.plants.list_plants.assert_called_once_with(alive_only=True, dead_only=False)
+        self.assertIn("PL-2026-001", mock_stdout.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_dead_only_passed_to_repository(self, mock_create_uow):
+        """dead_only is forwarded to the repository, not filtered in Python."""
+        from commands.plant_tracking_cli import list_plants
+
+        uow = mock.Mock()
+        uow.plants.list_plants.return_value = iter(
+            [self._make_domain_plant("PL-2026-002", "2026-07-01")]
+        )
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            list_plants(self._make_args(dead_only=True), db=object())
+
+        uow.plants.list_plants.assert_called_once_with(alive_only=False, dead_only=True)
+        self.assertIn("PL-2026-002", mock_stdout.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_no_filters_passes_falses(self, mock_create_uow):
+        """Without flags, the repository is called with both filters False."""
+        from commands.plant_tracking_cli import list_plants
+
+        uow = mock.Mock()
+        uow.plants.list_plants.return_value = iter([])
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        list_plants(self._make_args(), db=object())
+
+        uow.plants.list_plants.assert_called_once_with(
+            alive_only=False, dead_only=False
+        )
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_both_flags_rejected_without_db_call(self, mock_create_uow):
+        """Specifying both filters is an error and never reaches the DB."""
+        from commands.plant_tracking_cli import list_plants
+
+        with self.assertRaises(SystemExit):
+            list_plants(self._make_args(alive_only=True, dead_only=True), db=object())
+
+        mock_create_uow.assert_not_called()
+
+    @mock.patch("commands.plant_tracking_cli._get_db", return_value=None)
+    @mock.patch("commands.plant_tracking_cli._list_plants_from_files")
+    def test_file_fallback_still_filters_in_python(self, mock_list_files, mock_get_db):
+        """Markdown fallback path keeps filtering in Python via _is_plant_dead."""
+        from commands.plant_tracking_cli import list_plants
+
+        mock_list_files.return_value = [
+            self._make_file_stub("PL-2026-001"),
+            self._make_file_stub("PL-2026-002", "2026-07-01"),
+        ]
+
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            list_plants(self._make_args(dead_only=True), db=None)
+        output = mock_stdout.getvalue()
+        self.assertIn("PL-2026-002", output)
+        self.assertNotIn("PL-2026-001", output)
+
+        mock_list_files.return_value = [
+            self._make_file_stub("PL-2026-001"),
+            self._make_file_stub("PL-2026-002", "2026-07-01"),
+        ]
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            list_plants(self._make_args(alive_only=True), db=None)
+        output = mock_stdout.getvalue()
+        self.assertIn("PL-2026-001", output)
+        self.assertNotIn("PL-2026-002", output)
+
+
+class TestDatabaseConfigLoading(unittest.TestCase):
+    """Regression: .env must be loaded before DATABASE_URL is read."""
+
+    def _restore_database_url(self, original):
+        if original is not None:
+            os.environ["DATABASE_URL"] = original
+        else:
+            os.environ.pop("DATABASE_URL", None)
+
+    def test_get_database_url_reads_env_lazily(self):
+        """get_database_url reflects the current environment, not an import-time snapshot."""
+        from commands import database
+
+        self.addCleanup(setattr, database, "engine", None)
+        original = os.environ.get("DATABASE_URL")
+        self.addCleanup(self._restore_database_url, original)
+        os.environ["DATABASE_URL"] = "postgresql://lazy:test/db"
+        self.assertEqual(database.get_database_url(), "postgresql://lazy:test/db")
+        os.environ.pop("DATABASE_URL")
+        self.assertIsNone(database.get_database_url())
+
+    def test_get_engine_raises_when_url_missing(self):
+        """_get_engine raises ValueError when DATABASE_URL is unset."""
+        from commands import database
+
+        self.addCleanup(setattr, database, "engine", None)
+        database.engine = None
+        original = os.environ.get("DATABASE_URL")
+        self.addCleanup(self._restore_database_url, original)
+        os.environ.pop("DATABASE_URL", None)
+        with self.assertRaises(ValueError):
+            database._get_engine()
+
+    def test_fresh_interpreter_loads_env_before_database_import(self):
+        """A process without DATABASE_URL in its env still resolves it from .env."""
+        import subprocess
+        import sys
+
+        repo_root = Path(__file__).resolve().parent.parent
+        if not (repo_root / ".env").exists():
+            self.skipTest("no .env in repo root")
+
+        env = {k: v for k, v in os.environ.items() if k != "DATABASE_URL"}
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from commands.database import get_database_url; "
+                "print(get_database_url() or '')",
+            ],
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=repo_root,
+            timeout=60,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.startswith("postgresql://"), result.stdout)
+
+    def test_get_db_reports_root_cause_on_failure(self):
+        """_get_db surfaces the underlying error instead of failing silently."""
+        from commands import plant_tracking_cli as cli
+
+        with mock.patch(
+            "commands.database.init_db",
+            side_effect=ValueError("DATABASE_URL environment variable must be set"),
+        ), mock.patch("sys.stderr", new_callable=io.StringIO) as mock_stderr:
+            db = cli._get_db()
+
+        self.assertIsNone(db)
+        self.assertIn(
+            "DATABASE_URL environment variable must be set", mock_stderr.getvalue()
+        )
+
+    def test_list_plants_warns_on_markdown_fallback(self):
+        """list_plants warns on stderr when it falls back to Markdown files."""
+        from commands import plant_tracking_cli as cli
+        from commands.plant_tracking_cli import list_plants
+
+        args = type("Args", (), {"alive_only": False, "dead_only": False})()
+        with mock.patch.object(cli, "_get_db", return_value=None), mock.patch.object(
+            cli, "_list_plants_from_files", return_value=[]
+        ), mock.patch(
+            "sys.stdout", new_callable=io.StringIO
+        ) as mock_stdout, mock.patch(
+            "sys.stderr", new_callable=io.StringIO
+        ) as mock_stderr:
+            list_plants(args)
+
+        self.assertIn("No plants found", mock_stdout.getvalue())
+        self.assertIn("Markdown", mock_stderr.getvalue())
+
+
+class TestPromptDeathDetails(unittest.TestCase):
+    """Tests for the _prompt_death_details CLI helper (interactive input loops)."""
+
+    def _call_with_inputs(self, inputs):
+        from commands.plant_tracking_cli import _prompt_death_details
+
+        with mock.patch("builtins.input", side_effect=list(inputs)), mock.patch(
+            "sys.stdout", new_callable=io.StringIO
+        ) as mock_stdout:
+            result = _prompt_death_details()
+        return result, mock_stdout.getvalue()
+
+    def test_happy_path_reason_by_number(self):
+        """Valid date + numbered reason + comment returns the expected tuple."""
+        result, _ = self._call_with_inputs(["2026-07-15", "2", "Fungal infection"])
+        self.assertEqual(result, (date(2026, 7, 15), "Disease", "Fungal infection"))
+
+    def test_reason_by_name_case_insensitive(self):
+        """A reason name (any case) is accepted without numbering."""
+        result, _ = self._call_with_inputs(["2026-07-15", "disease", ""])
+        self.assertEqual(result, (date(2026, 7, 15), "Disease", ""))
+
+    def test_future_date_rejected_then_accepted(self):
+        """A future date is rejected with a message, then the loop re-prompts."""
+        from datetime import timedelta
+
+        future = (date.today() + timedelta(days=1)).isoformat()
+        result, output = self._call_with_inputs([future, "2026-07-15", "3", ""])
+        self.assertIn("Date cannot be in the future.", output)
+        self.assertEqual(result, (date(2026, 7, 15), "Overwatering", ""))
+
+    def test_invalid_date_format_rejected_then_accepted(self):
+        """A malformed date is rejected with a message, then the loop re-prompts."""
+        result, output = self._call_with_inputs(["07-15-2026", "2026-07-15", "3", ""])
+        self.assertIn("Invalid date format", output)
+        self.assertEqual(result[0], date(2026, 7, 15))
+
+    def test_invalid_reason_reprompted(self):
+        """An out-of-range number and an unknown name both re-prompt."""
+        result, output = self._call_with_inputs(
+            ["2026-07-15", "99", "not a reason", "2", ""]
+        )
+        self.assertIn("Please enter a number between 1 and 10", output)
+        self.assertIn("Invalid reason", output)
+        self.assertEqual(result[1], "Disease")
+
+    def test_other_reason_requires_comment(self):
+        """'Other' with an empty comment loops until a non-empty comment is given."""
+        # Empty comment is rejected by the loop; the second input is accepted.
+        # (input() prompt strings are not emitted when builtins.input is mocked,
+        # so behavior is verified via the returned tuple.)
+        result, _ = self._call_with_inputs(["2026-07-15", "10", "", "custom cause"])
+        self.assertEqual(result, (date(2026, 7, 15), "Other", "custom cause"))
+
+
+class TestMarkDeadCLI(unittest.TestCase):
+    """Tests for the mark_dead CLI command (service-backed path)."""
+
+    PLANT_ID = "PE-2026-001"
+
+    def _make_args(self):
+        return type("Args", (), {"plant_id": self.PLANT_ID})()
+
+    def _make_plant(self, is_dead=False, death_date=None):
+        plant = mock.Mock()
+        plant.id = self.PLANT_ID
+        plant.variety_name = "Test Plant"
+        plant.latin_name = "Testum testum"
+        plant.is_dead = is_dead
+        plant.death_date = death_date
+        plant.death_reason = "Disease" if is_dead else None
+        return plant
+
+    def _make_uow(self, plant, updated=None):
+        uow = mock.Mock()
+        uow.plants.get_plant.return_value = plant
+        uow.plants.update_plant.return_value = updated
+        return uow
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_happy_path_marks_plant_dead(self, mock_create_uow):
+        """Happy path: prompt results are written via update_plant and reported."""
+        from commands import plant_tracking_cli
+
+        plant = self._make_plant()
+        updated = mock.Mock()
+        updated.death_date = date(2026, 7, 15)
+        updated.death_reason = "Disease"
+        updated.death_comment = "Fungal infection"
+        mock_create_uow.return_value.__enter__.return_value = self._make_uow(
+            plant, updated
+        )
+
+        with mock.patch(
+            "builtins.input",
+            side_effect=["2026-07-15", "2", "Fungal infection"],
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        uow = mock_create_uow.return_value.__enter__.return_value
+        uow.plants.update_plant.assert_called_once_with(
+            self.PLANT_ID,
+            {
+                "death_date": date(2026, 7, 15),
+                "death_reason": "Disease",
+                "death_comment": "Fungal infection",
+            },
+        )
+        output = mock_stdout.getvalue()
+        self.assertIn("marked as dead successfully", output)
+        self.assertIn("Disease", output)
+        self.assertIn("Fungal infection", output)
+
+    @mock.patch("commands.plant_tracking_cli._get_db", return_value=None)
+    def test_service_unavailable_without_db(self, mock_get_db):
+        """Without a database, mark_dead exits with a friendly error."""
+        from commands import plant_tracking_cli
+
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("requires database service", mock_stdout.getvalue())
+        mock_get_db.assert_called_once()
+
+    @mock.patch("commands.plant_tracking_cli._get_db")
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", False)
+    def test_service_unavailable_flag(self, mock_get_db):
+        """With the service flag off, mark_dead exits even when db is present."""
+        from commands import plant_tracking_cli
+
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("requires database service", mock_stdout.getvalue())
+        mock_get_db.assert_not_called()
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_plant_not_found(self, mock_create_uow):
+        """A missing plant exits before prompting or writing."""
+        from commands import plant_tracking_cli
+
+        mock_create_uow.return_value.__enter__.return_value = self._make_uow(None)
+
+        with mock.patch("builtins.input") as mock_input, mock.patch(
+            "sys.stdout", new_callable=io.StringIO
+        ) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant not found", mock_stdout.getvalue())
+        mock_input.assert_not_called()
+        uow = mock_create_uow.return_value.__enter__.return_value
+        uow.plants.update_plant.assert_not_called()
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_already_dead_rejected(self, mock_create_uow):
+        """An already-dead plant exits with its existing death details."""
+        from commands import plant_tracking_cli
+
+        plant = self._make_plant(is_dead=True, death_date=date(2026, 7, 1))
+        mock_create_uow.return_value.__enter__.return_value = self._make_uow(plant)
+
+        with mock.patch("builtins.input") as mock_input, mock.patch(
+            "sys.stdout", new_callable=io.StringIO
+        ) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        output = mock_stdout.getvalue()
+        self.assertIn("already marked as dead", output)
+        self.assertIn("2026-07-01", output)
+        mock_input.assert_not_called()
+        uow = mock_create_uow.return_value.__enter__.return_value
+        uow.plants.update_plant.assert_not_called()
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_update_returns_none_exits_cleanly(self, mock_create_uow):
+        """A None result from update_plant (missing row) exits cleanly, no crash."""
+        from commands import plant_tracking_cli
+
+        uow = self._make_uow(self._make_plant())
+        uow.plants.update_plant.return_value = None
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        with mock.patch(
+            "builtins.input", side_effect=["2026-07-15", "2", ""]
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant not found", mock_stdout.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_validation_error_from_update(self, mock_create_uow):
+        """A ValidationException from the write phase exits with a clean message."""
+        from commands import plant_tracking_cli
+        from plant_service.domain.exceptions import ValidationException
+
+        uow = self._make_uow(self._make_plant())
+        uow.plants.update_plant.side_effect = ValidationException("bad reason")
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        with mock.patch(
+            "builtins.input", side_effect=["2026-07-15", "2", ""]
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Validation error", mock_stdout.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_unexpected_error_from_update(self, mock_create_uow):
+        """An unexpected exception from the write phase exits cleanly."""
+        from commands import plant_tracking_cli
+
+        uow = self._make_uow(self._make_plant())
+        uow.plants.update_plant.side_effect = RuntimeError("boom")
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        with mock.patch(
+            "builtins.input", side_effect=["2026-07-15", "2", ""]
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.mark_dead(self._make_args(), db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Unexpected error marking plant as dead", mock_stdout.getvalue())
+
+
+class TestCLILoggingConfig(unittest.TestCase):
+    """Tests for CLI logging configuration in main() per ADR-0009."""
+
+    LOGGER_NAME = "plant_tracking.cli"
+
+    def setUp(self):
+        self.logger = logging.getLogger(self.LOGGER_NAME)
+        self._saved_handlers = self.logger.handlers
+        self._saved_level = self.logger.level
+        self.logger.handlers.clear()
+
+    def tearDown(self):
+        self.logger.handlers = self._saved_handlers
+        self.logger.setLevel(self._saved_level)
+
+    def _run_main(self, env_overrides=None, before_return=None):
+        """Run main() with stdout/stderr captured.
+
+        Returns (stdout_text, stderr_text). When env_overrides is None the
+        PLANT_TRACKING_LOG_LEVEL variable is removed for the call.
+        """
+        from commands import plant_tracking_cli
+
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        env_patch = (
+            mock.patch.dict(os.environ, env_overrides)
+            if env_overrides is not None
+            else mock.patch.dict(os.environ)
+        )
+        with env_patch as env, mock.patch("sys.argv", ["plant-tracking"]), mock.patch(
+            "sys.stdout", stdout
+        ), mock.patch("sys.stderr", stderr):
+            if env_overrides is None:
+                env.pop("PLANT_TRACKING_LOG_LEVEL", None)
+            plant_tracking_cli.main()
+            if before_return is not None:
+                before_return()
+        return stdout.getvalue(), stderr.getvalue()
+
+    def test_unexpected_error_logged_to_stderr_with_format(self):
+        """With PLANT_TRACKING_LOG_LEVEL unset, an unexpected exception from
+        the CLI logger is written to stderr (not stdout) in the ADR-0009
+        format, including the traceback."""
+
+        def log_unexpected():
+            try:
+                raise RuntimeError("simulated unexpected failure")
+            except Exception:
+                self.logger.exception("Unexpected error: %s", "simulated failure")
+
+        stdout_text, stderr_text = self._run_main(before_return=log_unexpected)
+
+        self.assertEqual(self.logger.level, logging.INFO)
+        matching = [
+            line
+            for line in stderr_text.splitlines()
+            if "Unexpected error: simulated failure" in line
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertRegex(
+            matching[0],
+            r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} "
+            r"ERROR plant_tracking\.cli: Unexpected error: simulated failure$",
+        )
+        self.assertIn("Traceback (most recent call last)", stderr_text)
+        self.assertNotIn("simulated failure", stdout_text)
+
+    def test_log_level_from_env_var(self):
+        """PLANT_TRACKING_LOG_LEVEL=debug sets the CLI logger to DEBUG."""
+        self._run_main(env_overrides={"PLANT_TRACKING_LOG_LEVEL": "debug"})
+
+        self.assertEqual(self.logger.level, logging.DEBUG)
+
+    def test_invalid_log_level_falls_back_to_info(self):
+        """An unrecognized PLANT_TRACKING_LOG_LEVEL falls back to INFO."""
+        self._run_main(env_overrides={"PLANT_TRACKING_LOG_LEVEL": "bogus"})
+
+        self.assertEqual(self.logger.level, logging.INFO)
+
+    def test_repeated_main_calls_do_not_duplicate_handlers(self):
+        """Calling main() multiple times adds at most one stderr handler."""
+        for _ in range(2):
+            self._run_main()
+
+        self.assertEqual(len(self.logger.handlers), 1)
+
+
+class TestLogCommandExitCodes(unittest.TestCase):
+    """log_* commands must exit 1 on failure paths (ADR-0009)."""
+
+    def setUp(self):
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.test_db = self.test_dir / "test_database"
+        self.test_db.mkdir()
+        self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
+        os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
+
+    def tearDown(self):
+        os.environ["PLANT_DATABASE_DIR"] = self.original_db
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def _make_args(self, **kwargs):
+        return type("Args", (), kwargs)()
+
+    def _service_uow(self, plant, entry_side_effect=None):
+        uow = mock.Mock()
+        uow.plants.get_plant.return_value = plant
+        if entry_side_effect is not None:
+            uow.logs.create_log_entry.side_effect = entry_side_effect
+        return uow
+
+    def test_log_humidity_unknown_plant_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(plant_id="NOPE-1", level=5, date=None)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_humidity(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant ID 'NOPE-1' not found", out.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_log_humidity_unexpected_error_exits_1(self, mock_create_uow):
+        from commands import plant_tracking_cli
+
+        mock_create_uow.return_value.__enter__.return_value = self._service_uow(
+            mock.Mock(), entry_side_effect=RuntimeError("boom")
+        )
+        args = self._make_args(plant_id="P1", level=5, date=None)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_humidity(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("boom", out.getvalue())
+
+    def test_log_water_unknown_plant_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(plant_id="NOPE-1", amount="1L", date=None)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_water(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant ID 'NOPE-1' not found", out.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_log_water_invalid_amount_exits_1(self, mock_create_uow):
+        from commands import plant_tracking_cli
+
+        mock_create_uow.return_value.__enter__.return_value = self._service_uow(
+            mock.Mock()
+        )
+        args = self._make_args(plant_id="P1", amount="not-a-volume", date=None)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_water(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Invalid water amount", out.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_log_water_unexpected_error_exits_1(self, mock_create_uow):
+        from commands import plant_tracking_cli
+
+        mock_create_uow.return_value.__enter__.return_value = self._service_uow(
+            mock.Mock(), entry_side_effect=RuntimeError("boom")
+        )
+        args = self._make_args(plant_id="P1", amount="1L", date=None)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_water(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("boom", out.getvalue())
+
+    def test_log_fertilizer_unknown_plant_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(
+            plant_id="NOPE-1", type="compost tea", strength="1/2", date=None
+        )
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_fertilizer(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant ID 'NOPE-1' not found", out.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_log_fertilizer_unexpected_error_exits_1(self, mock_create_uow):
+        from commands import plant_tracking_cli
+
+        mock_create_uow.return_value.__enter__.return_value = self._service_uow(
+            mock.Mock(), entry_side_effect=RuntimeError("boom")
+        )
+        args = self._make_args(plant_id="P1", type="tea", strength="1/2", date=None)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_fertilizer(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("boom", out.getvalue())
+
+    def test_log_note_missing_file_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(
+            plant_id="P1",
+            text=None,
+            file=str(self.test_db / "missing.md"),
+            date=None,
+        )
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_note(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("File not found", out.getvalue())
+
+    def test_log_note_no_text_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(plant_id="P1", text=None, file=None, date=None)
+        with mock.patch("sys.stdin") as mock_stdin, mock.patch(
+            "sys.stdout", new_callable=io.StringIO
+        ) as out:
+            mock_stdin.isatty.return_value = True
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_note(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("No note text provided", out.getvalue())
+
+    def test_log_note_empty_text_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(plant_id="P1", text="   ", file=None, date=None)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_note(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Note text is empty", out.getvalue())
+
+    def test_log_note_unknown_plant_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(plant_id="NOPE-1", text="hello", file=None, date=None)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_note(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant ID 'NOPE-1' not found", out.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_log_note_unexpected_error_exits_1(self, mock_create_uow):
+        from commands import plant_tracking_cli
+
+        mock_create_uow.return_value.__enter__.return_value = self._service_uow(
+            mock.Mock(), entry_side_effect=RuntimeError("boom")
+        )
+        args = self._make_args(plant_id="P1", text="hello", file=None, date=None)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_note(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("boom", out.getvalue())
+
+    def test_log_list_unknown_plant_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(plant_id="NOPE-1", type="all")
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.log_list(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant ID 'NOPE-1' not found", out.getvalue())
+
+
+class TestMediaCommandExitCodes(unittest.TestCase):
+    """media_* commands must exit 1 on failure paths (ADR-0009)."""
+
+    def setUp(self):
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.test_db = self.test_dir / "test_database"
+        self.test_db.mkdir()
+        self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
+        os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
+        self.image_path = self.test_db / "photo.png"
+        self.image_path.write_bytes(b"fake image")
+
+    def tearDown(self):
+        os.environ["PLANT_DATABASE_DIR"] = self.original_db
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def _make_args(self, **kwargs):
+        return type("Args", (), kwargs)()
+
+    def test_media_add_missing_file_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(
+            plant_id="P1",
+            image_path=str(self.test_db / "nope.png"),
+            label=None,
+            tags=None,
+        )
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_add_attachment(
+                    args, db=None, media_type="image"
+                )
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("File not found", out.getvalue())
+
+    def test_media_add_unknown_plant_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(
+            plant_id="NOPE-1",
+            image_path=str(self.image_path),
+            label=None,
+            tags=None,
+        )
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_add_attachment(
+                    args, db=None, media_type="image"
+                )
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant ID 'NOPE-1' not found", out.getvalue())
+
+    def test_media_add_without_db_service_exits_1(self):
+        from commands import plant_tracking_cli
+
+        (self.test_db / "P1.md").write_text("# plant P1\n")
+        args = self._make_args(
+            plant_id="P1",
+            image_path=str(self.image_path),
+            label=None,
+            tags=None,
+        )
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_add_attachment(
+                    args, db=None, media_type="image"
+                )
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("require database service", out.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_add_unexpected_error_exits_1(self, mock_create_uow):
+        from commands import plant_tracking_cli
+
+        uow = mock.Mock()
+        uow.plants.get_plant.return_value = mock.Mock()
+        cm = mock.MagicMock()
+        cm.__enter__.return_value = uow
+        mock_create_uow.side_effect = [cm, RuntimeError("boom")]
+        args = self._make_args(
+            plant_id="P1",
+            image_path=str(self.image_path),
+            label=None,
+            tags=None,
+        )
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_add_attachment(
+                    args, db=object(), media_type="image"
+                )
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Error creating image attachment: boom", out.getvalue())
+
+    def test_media_list_without_db_service_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(plant_id="P1")
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_list_attachments(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("require database service", out.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_list_unexpected_error_exits_1(self, mock_create_uow):
+        from commands import plant_tracking_cli
+
+        uow = mock.Mock()
+        uow.media_attachments.get_media_attachments_by_plant.side_effect = RuntimeError(
+            "boom"
+        )
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(plant_id="P1")
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_list_attachments(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Error listing media attachments: boom", out.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_list_empty_result_exits_0(self, mock_create_uow):
+        """An empty attachment list is a valid result, not a failure."""
+        from commands import plant_tracking_cli
+
+        uow = mock.Mock()
+        uow.media_attachments.get_media_attachments_by_plant.return_value = []
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(plant_id="P1")
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            plant_tracking_cli.media_list_attachments(args, db=object())
+
+        self.assertIn("No media attachments found", out.getvalue())
+
+    def test_media_show_without_db_service_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(media_id=1)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_show_attachment(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("require database service", out.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_show_not_found_exits_1(self, mock_create_uow):
+        from commands import plant_tracking_cli
+
+        uow = mock.Mock()
+        uow.media_attachments.get_media_attachment.return_value = None
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(media_id=1)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_show_attachment(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Media attachment not found: 1", out.getvalue())
+
+    def test_media_delete_without_db_service_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(media_id=1)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_delete_attachment(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("require database service", out.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_delete_not_found_exits_1(self, mock_create_uow):
+        from commands import plant_tracking_cli
+
+        uow = mock.Mock()
+        uow.media_attachments.get_media_attachment.return_value = None
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(media_id=1)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_delete_attachment(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Media attachment not found: 1", out.getvalue())
+
+    @mock.patch("plant_service.service_layer.s3_service.S3Service")
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_delete_failure_exits_1(self, mock_create_uow, mock_s3):
+        from commands import plant_tracking_cli
+
+        uow = mock.Mock()
+        uow.media_attachments.get_media_attachment.return_value = mock.Mock()
+        uow.media_attachments.delete_media_attachment.return_value = False
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(media_id=1)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_delete_attachment(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Failed to delete media attachment 1", out.getvalue())
+
+    def test_media_url_without_db_service_exits_1(self):
+        from commands import plant_tracking_cli
+
+        args = self._make_args(media_id=1)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_get_url(args, db=None)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("require database service", out.getvalue())
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_url_not_found_exits_1(self, mock_create_uow):
+        from commands import plant_tracking_cli
+
+        uow = mock.Mock()
+        uow.media_attachments.get_media_attachment.return_value = None
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(media_id=1)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_get_url(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Media attachment not found: 1", out.getvalue())
+
+    @mock.patch("plant_service.service_layer.s3_service.S3Service")
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_url_generation_failure_exits_1(self, mock_create_uow, mock_s3):
+        from commands import plant_tracking_cli
+
+        uow = mock.Mock()
+        uow.media_attachments.get_media_attachment.return_value = mock.Mock()
+        mock_s3.return_value.get_presigned_url.return_value = None
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(media_id=1)
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                plant_tracking_cli.media_get_url(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Failed to generate URL", out.getvalue())
+
+
+class TestUserCancellationExitCode(unittest.TestCase):
+    """User-initiated cancellations must still exit 0 (ADR-0009)."""
+
+    def setUp(self):
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.test_db = self.test_dir / "test_database"
+        self.test_db.mkdir()
+        self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
+        os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
+
+    def tearDown(self):
+        os.environ["PLANT_DATABASE_DIR"] = self.original_db
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_create_seed_packet_cancelled_exits_0(self, mock_create_uow):
+        """Answering 'n' to 'Create anyway?' returns normally (exit 0)."""
+        from commands import plant_tracking_cli
+
+        existing = mock.Mock()
+        existing.variety_name = "Yellow Habanero"
+        existing.latin_name = "Capsicum chinense"
+        existing.id = "SP-2026-001"
+        existing.brand = "SeedCo"
+        uow = mock.Mock()
+        uow.seed_packets.list_seed_packets.return_value = iter([existing])
+        mock_create_uow.return_value.__enter__.return_value = uow
+
+        args = type("Args", (), {})()
+        with mock.patch(
+            "builtins.input",
+            side_effect=["Yellow Habanero", "Capsicum chinense", "n"],
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            plant_tracking_cli.create_seed_packet(
+                args, db=object(), packets_dir=self.test_db
+            )
+
+        self.assertIn("Cancelled.", out.getvalue())
+
+
+class TestSilentPathWarnings(unittest.TestCase):
+    """Formerly-silent except paths must log a warning (ADR-0009 §4).
+
+    Each test covers one representative silent path per command family and
+    asserts both that a warning is logged and that the fallback behavior
+    still executes.
+    """
+
+    def setUp(self):
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.test_db = self.test_dir / "test_database"
+        self.test_db.mkdir()
+        self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
+        os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
+        from commands import plant_tracking_cli
+
+        self.cli = plant_tracking_cli
+
+    def tearDown(self):
+        os.environ["PLANT_DATABASE_DIR"] = self.original_db
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def _make_args(self, **kwargs):
+        return type("Args", (), kwargs)()
+
+    def _fail_uow(self, mock_create_uow):
+        """Make entering the unit-of-work context raise (simulated DB failure)."""
+        mock_create_uow.return_value.__enter__.side_effect = RuntimeError("db down")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_log_humidity_plant_check_failure_warns_and_falls_back(
+        self, mock_create_uow
+    ):
+        self._fail_uow(mock_create_uow)
+        args = self._make_args(plant_id="P1", level=5, date=None)
+        with mock.patch.object(self.cli.logger, "warning") as mock_warning, mock.patch(
+            "sys.stdout", new_callable=io.StringIO
+        ) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                self.cli.log_humidity(args, db=object())
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant ID 'P1' not found", out.getvalue())
+        mock_warning.assert_called_once()
+        self.assertEqual(
+            mock_warning.call_args[0][0],
+            "Plant existence check failed for plant_id=%s",
+        )
+        self.assertEqual(mock_warning.call_args[0][1], "P1")
+        self.assertTrue(mock_warning.call_args.kwargs.get("exc_info"))
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_create_plant_genus_lookup_failure_warns_and_falls_back(
+        self, mock_create_uow
+    ):
+        self._fail_uow(mock_create_uow)
+        inputs = iter(
+            [
+                "Test Variety",
+                "Testum testum",  # latin name prompt (fallback)
+                "n",  # create genus? no
+                "C",  # packet choice: skip
+                "",  # brand
+                "",  # days to maturity
+                "",  # germination
+                "",  # depth
+                "",  # spacing
+                "",  # sun
+                "",  # indoor start
+                "2026-07-15",  # planting date
+            ]
+        )
+        args = self._make_args()
+        with mock.patch.object(self.cli.logger, "warning") as mock_warning, mock.patch(
+            "builtins.input", side_effect=lambda _: next(inputs)
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                self.cli.create_plant(
+                    args,
+                    db=object(),
+                    database_dir=self.test_db,
+                    packets_dir=self.test_db,
+                    genera_dir=self.test_db,
+                )
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Error creating plant record", out.getvalue())
+        messages = [c[0][0] for c in mock_warning.call_args_list]
+        self.assertIn("Genus lookup failed for variety_name=%s", messages)
+        variety_args = [
+            c[0][1]
+            for c in mock_warning.call_args_list
+            if c[0][0] == "Genus lookup failed for variety_name=%s"
+        ]
+        self.assertEqual(variety_args, ["Test Variety"])
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_create_seed_packet_duplicate_check_failure_warns_and_falls_back(
+        self, mock_create_uow
+    ):
+        self._fail_uow(mock_create_uow)
+        inputs = iter(
+            [
+                "Test Variety",
+                "Testum testum",
+                "",  # 7 optional fields
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+            ]
+        )
+        args = self._make_args()
+        with mock.patch.object(self.cli.logger, "warning") as mock_warning, mock.patch(
+            "builtins.input", side_effect=lambda _: next(inputs)
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                self.cli.create_seed_packet(args, db=object(), packets_dir=self.test_db)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Error creating seed packet", out.getvalue())
+        mock_warning.assert_called_once()
+        self.assertEqual(
+            mock_warning.call_args[0][0],
+            "Duplicate seed packet check failed for variety_name=%s, latin_name=%s",
+        )
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_create_genus_duplicate_check_failure_warns_and_falls_back(
+        self, mock_create_uow
+    ):
+        self._fail_uow(mock_create_uow)
+        args = self._make_args()
+        with mock.patch.object(self.cli.logger, "warning") as mock_warning, mock.patch(
+            "builtins.input", side_effect=["Test Variety", "Testum testum"]
+        ), mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                self.cli.create_genus(args, db=object(), genera_dir=self.test_db)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Error creating genus", out.getvalue())
+        mock_warning.assert_called_once()
+        self.assertEqual(
+            mock_warning.call_args[0][0],
+            "Duplicate genus check failed for variety_name=%s, latin_name=%s",
+        )
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_add_plant_check_failure_warns_and_falls_back(self, mock_create_uow):
+        self._fail_uow(mock_create_uow)
+        image = self.test_db / "photo.png"
+        image.write_bytes(b"fake image")
+        args = self._make_args(
+            plant_id="P1", image_path=str(image), label=None, tags=None
+        )
+        with mock.patch.object(self.cli.logger, "warning") as mock_warning, mock.patch(
+            "sys.stdout", new_callable=io.StringIO
+        ) as out:
+            with self.assertRaises(SystemExit) as ctx:
+                self.cli.media_add_attachment(args, db=object(), media_type="image")
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Plant ID 'P1' not found", out.getvalue())
+        mock_warning.assert_called_once()
+        self.assertEqual(
+            mock_warning.call_args[0][0],
+            "Plant existence check failed for plant_id=%s",
+        )
+        self.assertEqual(mock_warning.call_args[0][1], "P1")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_warning_reaches_stderr_via_configured_handler(self, mock_create_uow):
+        """End-to-end: the warning flows to stderr through the ADR-0009 handler."""
+        self._fail_uow(mock_create_uow)
+
+        logger = logging.getLogger("plant_tracking.cli")
+        saved_handlers, saved_level = logger.handlers, logger.level
+        logger.handlers.clear()
+        try:
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            args = self._make_args(plant_id="P1", level=5, date=None)
+            with mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
+                self.cli._configure_logging()
+                with self.assertRaises(SystemExit):
+                    self.cli.log_humidity(args, db=object())
+        finally:
+            logger.handlers, logger.level = saved_handlers, saved_level
+
+        self.assertIn("Plant existence check failed for plant_id=P1", stderr.getvalue())
+        self.assertNotIn("Plant existence check failed", stdout.getvalue())
+
+
+class TestUnexpectedErrorLogging(unittest.TestCase):
+    """Unexpected errors must log a full traceback to stderr (ADR-0009 §2)
+    while the user only sees the concise message on stdout."""
+
+    def setUp(self):
+        self.test_dir = Path(tempfile.mkdtemp())
+        self.test_db = self.test_dir / "test_database"
+        self.test_db.mkdir()
+        self.original_db = os.environ.get("PLANT_DATABASE_DIR", "database")
+        os.environ["PLANT_DATABASE_DIR"] = str(self.test_db)
+        from commands import plant_tracking_cli
+
+        self.cli = plant_tracking_cli
+        self._logger = logging.getLogger("plant_tracking.cli")
+        self._saved_handlers = self._logger.handlers
+        self._saved_level = self._logger.level
+
+    def tearDown(self):
+        self._logger.handlers = self._saved_handlers
+        self._logger.setLevel(self._saved_level)
+        os.environ["PLANT_DATABASE_DIR"] = self.original_db
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def _make_args(self, **kwargs):
+        return type("Args", (), kwargs)()
+
+    def _run_with_logging(self, fn):
+        """Run fn() with the ADR-0009 logging configured on captured streams.
+
+        Returns (stdout_text, stderr_text, exit_code); exit_code is None
+        when fn returns normally.
+        """
+        self._logger.handlers.clear()
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        exit_code = None
+        with mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
+            self.cli._configure_logging()
+            try:
+                fn()
+            except SystemExit as e:
+                exit_code = e.code
+        return stdout.getvalue(), stderr.getvalue(), exit_code
+
+    def _assert_error_logged(self, stdout_text, stderr_text, message):
+        """The formatted ERROR line and traceback are on stderr only."""
+        error_lines = [
+            line
+            for line in stderr_text.splitlines()
+            if line.endswith(message) and "plant_tracking.cli:" in line
+        ]
+        self.assertEqual(len(error_lines), 1)
+        self.assertRegex(
+            error_lines[0],
+            r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} "
+            r"ERROR plant_tracking\.cli: " + re.escape(message),
+        )
+        self.assertIn("Traceback (most recent call last)", stderr_text)
+        self.assertNotIn("Traceback", stdout_text)
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_mark_dead_check_phase_error_logs_traceback(self, mock_create_uow):
+        mock_create_uow.return_value.__enter__.side_effect = RuntimeError("boom")
+        args = self._make_args(plant_id="P1")
+        with mock.patch("builtins.input") as mock_input:
+            out, err, code = self._run_with_logging(
+                lambda: self.cli.mark_dead(args, db=object())
+            )
+        self.assertEqual(code, 1)
+        mock_input.assert_not_called()
+        self._assert_error_logged(out, err, "Unexpected error: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_mark_dead_write_phase_error_logs_traceback(self, mock_create_uow):
+        uow = mock.Mock()
+        plant = mock.Mock()
+        plant.is_dead = False
+        uow.plants.get_plant.return_value = plant
+        uow.plants.update_plant.side_effect = RuntimeError("boom")
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(plant_id="P1")
+        with mock.patch("builtins.input", side_effect=["2026-07-15", "2", ""]):
+            out, err, code = self._run_with_logging(
+                lambda: self.cli.mark_dead(args, db=object())
+            )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(
+            out, err, "Unexpected error marking plant as dead: boom"
+        )
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_create_plant_error_logs_traceback(self, mock_create_uow):
+        mock_create_uow.return_value.__enter__.side_effect = RuntimeError("boom")
+        inputs = iter(
+            [
+                "Test Variety",
+                "Testum testum",
+                "n",
+                "C",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "2026-07-15",
+            ]
+        )
+        args = self._make_args()
+        with mock.patch("builtins.input", side_effect=lambda _: next(inputs)):
+            out, err, code = self._run_with_logging(
+                lambda: self.cli.create_plant(
+                    args,
+                    db=object(),
+                    database_dir=self.test_db,
+                    packets_dir=self.test_db,
+                    genera_dir=self.test_db,
+                )
+            )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error creating plant record: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_create_seed_packet_error_logs_traceback(self, mock_create_uow):
+        mock_create_uow.return_value.__enter__.side_effect = RuntimeError("boom")
+        inputs = iter(["Test Variety", "Testum testum"] + [""] * 7)
+        args = self._make_args()
+        with mock.patch("builtins.input", side_effect=lambda _: next(inputs)):
+            out, err, code = self._run_with_logging(
+                lambda: self.cli.create_seed_packet(
+                    args, db=object(), packets_dir=self.test_db
+                )
+            )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error creating seed packet: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_create_genus_error_logs_traceback(self, mock_create_uow):
+        mock_create_uow.return_value.__enter__.side_effect = RuntimeError("boom")
+        args = self._make_args()
+        with mock.patch(
+            "builtins.input", side_effect=["Test Variety", "Testum testum"]
+        ):
+            out, err, code = self._run_with_logging(
+                lambda: self.cli.create_genus(
+                    args, db=object(), genera_dir=self.test_db
+                )
+            )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error creating genus: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_show_seed_packet_error_logs_traceback(self, mock_create_uow):
+        mock_create_uow.return_value.__enter__.side_effect = RuntimeError("boom")
+        args = self._make_args(packet_id="SP-1")
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.show_seed_packet(args, db=object())
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error showing seed packet: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_show_genus_error_logs_traceback(self, mock_create_uow):
+        mock_create_uow.return_value.__enter__.side_effect = RuntimeError("boom")
+        args = self._make_args(genus_id="GEN-1")
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.show_genus(args, db=object())
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error showing genus: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_show_plant_error_logs_traceback(self, mock_create_uow):
+        mock_create_uow.return_value.__enter__.side_effect = RuntimeError("boom")
+        args = self._make_args(plant_id="P1")
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.show_plant(args, db=object())
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error showing plant: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_log_humidity_error_logs_traceback(self, mock_create_uow):
+        uow = mock.Mock()
+        uow.plants.get_plant.return_value = mock.Mock()
+        uow.logs.create_log_entry.side_effect = RuntimeError("boom")
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(plant_id="P1", level=5, date=None)
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.log_humidity(args, db=object())
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_log_water_error_logs_traceback(self, mock_create_uow):
+        uow = mock.Mock()
+        uow.plants.get_plant.return_value = mock.Mock()
+        uow.logs.create_log_entry.side_effect = RuntimeError("boom")
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(plant_id="P1", amount="1L", date=None)
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.log_water(args, db=object())
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_log_fertilizer_error_logs_traceback(self, mock_create_uow):
+        uow = mock.Mock()
+        uow.plants.get_plant.return_value = mock.Mock()
+        uow.logs.create_log_entry.side_effect = RuntimeError("boom")
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(plant_id="P1", type="tea", strength="1/2", date=None)
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.log_fertilizer(args, db=object())
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_log_note_error_logs_traceback(self, mock_create_uow):
+        uow = mock.Mock()
+        uow.plants.get_plant.return_value = mock.Mock()
+        uow.logs.create_log_entry.side_effect = RuntimeError("boom")
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(plant_id="P1", text="hello", file=None, date=None)
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.log_note(args, db=object())
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_add_error_logs_traceback(self, mock_create_uow):
+        uow = mock.Mock()
+        uow.plants.get_plant.return_value = mock.Mock()
+        cm = mock.MagicMock()
+        cm.__enter__.return_value = uow
+        mock_create_uow.side_effect = [cm, RuntimeError("boom")]
+        image = self.test_db / "photo.png"
+        image.write_bytes(b"fake image")
+        args = self._make_args(
+            plant_id="P1", image_path=str(image), label=None, tags=None
+        )
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.media_add_attachment(args, db=object(), media_type="image")
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error creating image attachment: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_list_error_logs_traceback(self, mock_create_uow):
+        uow = mock.Mock()
+        uow.media_attachments.get_media_attachments_by_plant.side_effect = RuntimeError(
+            "boom"
+        )
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(plant_id="P1")
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.media_list_attachments(args, db=object())
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error listing media attachments: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_show_error_logs_traceback(self, mock_create_uow):
+        uow = mock.Mock()
+        uow.media_attachments.get_media_attachment.side_effect = RuntimeError("boom")
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(media_id=1)
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.media_show_attachment(args, db=object())
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error showing media attachment: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_delete_error_logs_traceback(self, mock_create_uow):
+        uow = mock.Mock()
+        uow.media_attachments.get_media_attachment.side_effect = RuntimeError("boom")
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(media_id=1)
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.media_delete_attachment(args, db=object())
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error deleting media attachment: boom")
+
+    @mock.patch("commands.plant_tracking_cli.SERVICE_AVAILABLE", True)
+    @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
+    def test_media_url_error_logs_traceback(self, mock_create_uow):
+        uow = mock.Mock()
+        uow.media_attachments.get_media_attachment.side_effect = RuntimeError("boom")
+        mock_create_uow.return_value.__enter__.return_value = uow
+        args = self._make_args(media_id=1)
+        out, err, code = self._run_with_logging(
+            lambda: self.cli.media_get_url(args, db=object())
+        )
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error getting media attachment URL: boom")
+
+    @mock.patch("commands.printer.print_label", side_effect=RuntimeError("boom"))
+    def test_print_label_error_logs_traceback(self, mock_printer):
+        args = self._make_args(plant_id="P1", format="40x30mm", no_print=True)
+        out, err, code = self._run_with_logging(lambda: self.cli.print_label(args))
+        self.assertEqual(code, 1)
+        self._assert_error_logged(out, err, "Error printing label: boom")

@@ -18,8 +18,20 @@ class PlantService(Protocol):
         """Retrieve a plant by ID"""
         ...
 
-    def list_plants(self) -> Iterator[Plant]:
-        """List all plants (returns iterator for streaming)"""
+    def list_plants(self, alive_only: bool = False, dead_only: bool = False) -> Iterator[Plant]:
+        """List plants with optional alive/dead filtering (returns iterator for streaming).
+
+        Args:
+            alive_only: If True, only return plants that are still alive (no death_date).
+            dead_only: If True, only return plants that are dead (have death_date set).
+
+        Note:
+            If both are False, all plants are returned. Implementations should raise
+            ValueError if both alive_only and dead_only are True.
+
+        Returns:
+            An iterator yielding Plant objects matching the filter criteria.
+        """
         ...
 
     def update_plant(self, plant_id: str, plant_data: dict) -> Plant | None:

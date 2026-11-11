@@ -2,12 +2,15 @@
 Seed packet data model and validation
 """
 
+import logging
 import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 import yaml
+
+logger = logging.getLogger(__name__)
 
 
 SEED_PACKET_FIELDS = [
@@ -88,7 +91,7 @@ class SeedPacket:
                                         seq = int(match.group(1))
                                         max_seq = max(max_seq, seq)
                 except Exception:
-                    continue
+                    logger.warning("Skipping unreadable file: %s", file)
 
         return max_seq + 1
 
@@ -111,14 +114,14 @@ def find_matching(variety_name: str, latin_name: str) -> Optional[SeedPacket]:
             ):
                 return packet
         except Exception:
-            continue
+            logger.warning("Skipping unreadable file: %s", file)
 
     return None
 
 
 def list_all() -> List[SeedPacket]:
     """Return all seed packets."""
-    packets = []
+    packets: List[SeedPacket] = []
     packets_dir = get_seed_packets_dir()
     if not packets_dir.exists():
         return packets
@@ -127,7 +130,7 @@ def list_all() -> List[SeedPacket]:
         try:
             packets.append(load_from_file(file))
         except Exception:
-            continue
+            logger.warning("Skipping unreadable file: %s", file)
 
     return packets
 

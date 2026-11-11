@@ -1,6 +1,6 @@
 """Unit tests for Plant domain model"""
-from datetime import datetime
-from unittest.mock import patch
+from datetime import date
+from typing import ClassVar
 
 import pytest
 
@@ -22,24 +22,49 @@ class TestPlantMakeAbbrev:
         assert result == "123 "
 
 
+class TestPlantDateTypes:
+    def test_planting_date_is_date_object(self):
+        plant = Plant(variety_name="Test", latin_name="Test")
+        assert isinstance(plant.planting_date, date)
+        assert plant.planting_date == date.today()
+
+    def test_planting_date_explicit_date(self):
+        plant = Plant(
+            variety_name="Test", latin_name="Test", planting_date=date(2026, 7, 1)
+        )
+        assert plant.planting_date == date(2026, 7, 1)
+
+    def test_death_date_can_be_date_or_none(self):
+        plant = Plant(variety_name="Test", latin_name="Test")
+        assert plant.death_date is None
+
+        death_date = date(2026, 8, 1)
+        plant = Plant(
+            variety_name="Test",
+            latin_name="Test",
+            planting_date=date(2026, 7, 1),
+            death_date=death_date,
+            death_reason="Disease",
+        )
+        assert isinstance(plant.death_date, date)
+        assert plant.death_date == death_date
+
+
 class TestPlantGenerateId:
     def test_basic_format(self):
         plant = Plant(variety_name="Yellow Habanero", latin_name="Capsicum chinense")
-        result = plant.generate_id("Yellow Habanero", "2026-03-15", seq=1)
+        result = plant.generate_id("Yellow Habanero", date(2026, 3, 15), seq=1)
         assert result == "YEHA-2026-001"
 
     def test_sequence_padding(self):
         plant = Plant(variety_name="Tomato", latin_name="Solanum lycopersicum")
-        result = plant.generate_id("Tomato", "2026-01-01", seq=100)
+        result = plant.generate_id("Tomato", date(2026, 1, 1), seq=100)
         assert result == "TO-2026-100"
 
     def test_no_planting_date_uses_current_year(self):
-        with patch("plant_service.domain.plant.datetime") as mock_datetime:
-            mock_datetime.now.return_value = datetime(2026, 6, 27)
-            mock_datetime.strptime = datetime.strptime
-            plant = Plant(variety_name="Pepper", latin_name="Capsicum annuum")
-            result = plant.generate_id("Pepper", "", seq=5)
-            assert result == "PE-2026-005"
+        plant = Plant(variety_name="Pepper", latin_name="Capsicum annuum")
+        result = plant.generate_id("Pepper", None, seq=5)
+        assert result == f"PE-{date.today().year}-005"
 
 
 class TestPlantFindNextSequence:
@@ -60,12 +85,12 @@ class TestPlantCreateFromDict:
         data = {
             "variety_name": "Yellow Habanero",
             "latin_name": "Capsicum chinense",
-            "planting_date": "2026-03-15",
+            "planting_date": date(2026, 3, 15),
         }
         plant = Plant.create_from_dict(data)
         assert plant.variety_name == "Yellow Habanero"
         assert plant.latin_name == "Capsicum chinense"
-        assert plant.planting_date == "2026-03-15"
+        assert plant.planting_date == date(2026, 3, 15)
         assert plant.id == ""  # id generation happens in service layer
 
     def test_valid_data_with_id(self):
@@ -73,7 +98,7 @@ class TestPlantCreateFromDict:
             "id": "YEHA-2026-001",
             "variety_name": "Yellow Habanero",
             "latin_name": "Capsicum chinense",
-            "planting_date": "2026-03-15",
+            "planting_date": date(2026, 3, 15),
         }
         plant = Plant.create_from_dict(data)
         assert plant.id == "YEHA-2026-001"
@@ -87,7 +112,7 @@ class TestPlantCreateFromDict:
             Plant.create_from_dict({
                 "variety_name": "Tomato",
                 "latin_name": "Solanum lycopersicum",
-                "planting_date": "2026-01-01",
+                "planting_date": date(2026, 1, 1),
                 "genus_id": "INVALID",
             })
 
@@ -95,7 +120,7 @@ class TestPlantCreateFromDict:
         plant = Plant.create_from_dict({
             "variety_name": "Tomato",
             "latin_name": "Solanum lycopersicum",
-            "planting_date": "2026-01-01",
+            "planting_date": date(2026, 1, 1),
             "genus_id": "GENUS-001",
         })
         assert plant.genus_id == "GENUS-001"
@@ -104,24 +129,292 @@ class TestPlantCreateFromDict:
         plant = Plant.create_from_dict({
             "variety_name": "Tomato",
             "latin_name": "Solanum lycopersicum",
-            "planting_date": "2026-01-01",
+            "planting_date": date(2026, 1, 1),
             "genus_id": "unknown",
         })
         assert plant.genus_id == "unknown"
-
-    def test_invalid_date_format(self):
-        with pytest.raises(ValueError, match="YYYY-MM-DD"):
-            Plant.create_from_dict({
-                "variety_name": "Tomato",
-                "latin_name": "Solanum lycopersicum",
-                "planting_date": "01-01-2026",
-            })
 
     def test_invalid_seed_packet_id(self):
         with pytest.raises(ValueError, match="SPKT-NNN"):
             Plant.create_from_dict({
                 "variety_name": "Tomato",
                 "latin_name": "Solanum lycopersicum",
-                "planting_date": "2026-01-01",
+                "planting_date": date(2026, 1, 1),
                 "seed_packet_id": "INVALID",
             })
+
+
+class TestPlantDeathFields:
+    @pytest.fixture
+    def base_plant_dict(self):
+        return {
+            "variety_name": "Tomato",
+            "latin_name": "Solanum lycopersicum",
+            "planting_date": date(2026, 1, 1),
+        }
+
+    def test_default_alive(self):
+        plant = Plant(
+            variety_name="Tomato",
+            latin_name="Solanum lycopersicum",
+            planting_date=date(2026, 1, 1),
+        )
+        assert plant.death_date is None
+        assert plant.death_reason is None
+        assert plant.death_comment is None
+        assert plant.is_dead is False
+
+    def test_dead_plant(self):
+        plant = Plant(
+            variety_name="Tomato",
+            latin_name="Solanum lycopersicum",
+            planting_date=date(2026, 1, 1),
+            death_date=date(2026, 8, 7),
+            death_reason="Disease",
+            death_comment="Fungal infection",
+        )
+        assert plant.death_date == date(2026, 8, 7)
+        assert plant.death_reason == "Disease"
+        assert plant.death_comment == "Fungal infection"
+        assert plant.is_dead is True
+
+    def test_create_from_dict_with_death_fields(self, base_plant_dict):
+        data = {
+            **base_plant_dict,
+            "death_date": date(2026, 8, 7),
+            "death_reason": "Disease",
+            "death_comment": "Fungal infection",
+        }
+        plant = Plant.create_from_dict(data)
+        assert plant.is_dead is True
+        assert plant.death_reason == "Disease"
+
+    def test_valid_death_reasons(self, base_plant_dict):
+        for reason in Plant.DEATH_REASONS:
+            data = {
+                **base_plant_dict,
+                "death_date": date(2026, 8, 7),
+                "death_reason": reason,
+                "death_comment": "comment" if reason == "Other" else "",
+            }
+            plant = Plant.create_from_dict(data)
+            assert plant.death_reason == reason
+            expected_comment = "comment" if reason == "Other" else ""
+            assert plant.death_comment == expected_comment
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
+    def test_death_date_before_planting_date_raises(self, constructor):
+        with pytest.raises(ValueError, match="death_date cannot be before planting_date"):
+            constructor(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date=date(2026, 2, 1),
+                death_date=date(2026, 1, 5),
+                death_reason="Disease",
+            )
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
+    def test_death_date_in_future_raises(self, constructor):
+        with pytest.raises(ValueError, match="death_date cannot be in the future"):
+            constructor(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date=date(2026, 1, 1),
+                death_date=date(2099, 12, 31),
+                death_reason="Disease",
+            )
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
+    def test_death_date_equal_to_planting_date_allowed(self, constructor):
+        plant = constructor(
+            variety_name="Tomato",
+            latin_name="Solanum lycopersicum",
+            planting_date=date(2026, 2, 1),
+            death_date=date(2026, 2, 1),
+            death_reason="Frost/cold damage",
+        )
+        assert plant.is_dead is True
+        assert plant.death_date == date(2026, 2, 1)
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
+    def test_invalid_death_reason(self, constructor):
+        with pytest.raises(ValueError, match="death_reason must be one of"):
+            constructor(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date=date(2026, 1, 1),
+                death_date=date(2026, 8, 7),
+                death_reason="Not a valid reason",
+            )
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
+    def test_other_reason_requires_comment(self, constructor):
+        with pytest.raises(
+            ValueError,
+            match='death_comment is required when death_reason is "Other"',
+        ):
+            constructor(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date=date(2026, 1, 1),
+                death_date=date(2026, 8, 7),
+                death_reason="Other",
+            )
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
+    def test_other_reason_with_comment(self, constructor):
+        plant = constructor(
+            variety_name="Tomato",
+            latin_name="Solanum lycopersicum",
+            planting_date=date(2026, 1, 1),
+            death_date=date(2026, 8, 7),
+            death_reason="Other",
+            death_comment="Custom reason here",
+        )
+        assert plant.death_reason == "Other"
+        assert plant.death_comment == "Custom reason here"
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
+    def test_death_date_without_reason_raises(self, constructor):
+        with pytest.raises(
+            ValueError, match="death_reason is required when death_date is provided"
+        ):
+            constructor(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date=date(2026, 1, 1),
+                death_date=date(2026, 8, 7),
+            )
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
+    def test_death_reason_without_date_raises(self, constructor):
+        with pytest.raises(
+            ValueError, match="death_date is required when death_reason is provided"
+        ):
+            constructor(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date=date(2026, 1, 1),
+                death_reason="Disease",
+            )
+
+    @pytest.mark.parametrize(
+        "constructor",
+        [Plant, lambda **kw: Plant.create_from_dict(kw)],
+    )
+    def test_death_date_none_means_alive(self, constructor):
+        plant = constructor(
+            variety_name="Tomato",
+            latin_name="Solanum lycopersicum",
+            planting_date=date(2026, 1, 1),
+        )
+        assert plant.is_dead is False
+
+    def test_death_reasons_invariants(self):
+        assert len(Plant.DEATH_REASONS) > 0
+        assert len(Plant.DEATH_REASONS) == len(set(Plant.DEATH_REASONS))
+        assert all(isinstance(r, str) and r for r in Plant.DEATH_REASONS)
+        assert "Other" in Plant.DEATH_REASONS
+        assert "Unknown" in Plant.DEATH_REASONS
+
+
+class TestValidateDeathFields:
+    def test_valid_death_fields_passes(self):
+        Plant.validate_death_fields(date(2026, 8, 7), "Disease", "Fungal infection")
+
+    def test_valid_death_fields_no_comment(self):
+        Plant.validate_death_fields(date(2026, 8, 7), "Drought")
+
+    def test_death_date_before_planting_date_rejected(self):
+        with pytest.raises(ValueError, match="death_date cannot be before planting_date"):
+            Plant.validate_death_fields(date(2026, 1, 5), "Disease", None, date(2026, 2, 1))
+
+    def test_death_date_in_future_rejected(self):
+        with pytest.raises(ValueError, match="death_date cannot be in the future"):
+            Plant.validate_death_fields(date(2099, 12, 31), "Disease", None, date(2026, 1, 1))
+
+    def test_death_date_valid_relative_to_planting_date(self):
+        Plant.validate_death_fields(date(2026, 2, 1), "Disease", None, date(2026, 1, 1))
+
+    def test_invalid_death_reason(self):
+        with pytest.raises(ValueError, match="death_reason must be one of"):
+            Plant.validate_death_fields(date(2026, 8, 7), "InvalidReason")
+
+    def test_other_reason_no_comment(self):
+        with pytest.raises(
+            ValueError,
+            match='death_comment is required when death_reason is "Other"',
+        ):
+            Plant.validate_death_fields(date(2026, 8, 7), "Other", "")
+
+    def test_other_reason_with_comment(self):
+        Plant.validate_death_fields(date(2026, 8, 7), "Other", "Custom explanation")
+
+    def test_death_date_without_reason_raises(self):
+        with pytest.raises(ValueError, match="death_reason must be one of"):
+            Plant.validate_death_fields(date(2026, 8, 7), "")
+
+    def test_death_reason_without_date_raises(self):
+        with pytest.raises(ValueError,
+                             match="death_date is required when death_reason is provided"):
+            Plant.validate_death_fields(None, "Disease")
+
+    def test_all_death_reasons_valid(self):
+        for reason in Plant.DEATH_REASONS:
+            comment = "detail" if reason == "Other" else ""
+            Plant.validate_death_fields(date(2026, 8, 7), reason, comment)
+
+    def test_empty_string_death_reason_rejected(self):
+        with pytest.raises(ValueError, match="death_reason must be one of"):
+            Plant.validate_death_fields(date(2026, 8, 7), "")
+
+    def test_empty_string_death_reason_via_constructor(self):
+        with pytest.raises(ValueError, match="death_reason must be one of"):
+            Plant(
+                variety_name="Tomato",
+                latin_name="Solanum lycopersicum",
+                planting_date=date(2026, 1, 1),
+                death_date=date(2026, 8, 7),
+                death_reason="",
+            )
+
+    def test_isolated_death_comment_rejected(self):
+        with pytest.raises(ValueError, match="death_comment requires"):
+            Plant.validate_death_fields(None, None, "orphan comment")
+
+    def test_subclass_death_reasons_respected_via_constructor(self):
+        class ExoticPlant(Plant):
+            DEATH_REASONS: ClassVar[tuple[str, ...]] = Plant.DEATH_REASONS + ("Custom reason",)
+
+        plant = ExoticPlant(
+            variety_name="Tomato",
+            latin_name="Solanum lycopersicum",
+            planting_date=date(2026, 1, 1),
+            death_date=date(2026, 8, 7),
+            death_reason="Custom reason",
+        )
+        assert plant.death_reason == "Custom reason"

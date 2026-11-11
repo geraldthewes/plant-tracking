@@ -1,8 +1,9 @@
 """SQLAlchemy ORM model for Plant entity"""
 from __future__ import annotations
 
+from datetime import date
 from typing import TYPE_CHECKING, Optional
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import Date, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base, TimestampMixin
 
@@ -27,7 +28,7 @@ class Plant(Base, TimestampMixin):
     spacing: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     sun_requirements: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     indoor_start_time: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    planting_date: Mapped[str] = mapped_column(String(10), nullable=False)
+    planting_date: Mapped[date] = mapped_column(Date(), nullable=False)
 
     seed_packet_id: Mapped[Optional[str]] = mapped_column(
         String(10), ForeignKey("seed_packets.id"), nullable=True
@@ -35,6 +36,10 @@ class Plant(Base, TimestampMixin):
     genus_id: Mapped[Optional[str]] = mapped_column(
         String(10), ForeignKey("genera.id"), nullable=True
     )
+
+    death_date: Mapped[Optional[date]] = mapped_column(Date(), nullable=True)
+    death_reason: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    death_comment: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     seed_packet: Mapped[Optional["SeedPacket"]] = relationship(
         "SeedPacket", lazy="selectin", back_populates="plants"
@@ -61,4 +66,9 @@ class Plant(Base, TimestampMixin):
             planting_date=self.planting_date,
             seed_packet_id=self.seed_packet_id,
             genus_id=self.genus_id,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            death_date=self.death_date,
+            death_reason=self.death_reason,
+            death_comment=self.death_comment,
         )

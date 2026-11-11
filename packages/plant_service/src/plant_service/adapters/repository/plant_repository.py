@@ -1,7 +1,7 @@
 """Plant repository adapter implementing plant service port"""
 from __future__ import annotations
 
-import datetime
+from datetime import date
 from typing import Iterator
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -20,30 +20,22 @@ class PlantRepository(BaseRepository[Plant], PlantService):
 
     def create_plant(self, plant_data: dict) -> PlantDomain:
         """Create a new plant record"""
-        # Validate required fields and date format early
+        # Validate required fields early
         if "variety_name" not in plant_data:
             raise ValueError("Missing required field: variety_name")
 
-        planting_date = plant_data.get("planting_date")
-        if planting_date is not None:
-            try:
-                datetime.datetime.strptime(planting_date, "%Y-%m-%d")
-            except ValueError:
-                raise ValueError("planting_date must be in YYYY-MM-DD format")
+        # Preserve caller-provided ID; otherwise generate one via domain logic
+        if not plant_data.get("id"):
+            planting_date = plant_data.get("planting_date") or date.today()
+            abbrev = PlantDomain.make_abbrev(plant_data["variety_name"])
+            year = planting_date.year
 
-        # Generate ID with sequence from existing records
-        abbrev = PlantDomain.make_abbrev(plant_data["variety_name"])
-        if planting_date is None:
-            planting_date = datetime.datetime.now().strftime("%Y-%m-%d")
-        year = datetime.datetime.strptime(planting_date, "%Y-%m-%d").year
+            existing_ids = self.get_all_ids()
+            seq = PlantDomain.find_next_sequence(abbrev, year, existing_ids)
 
-        existing_ids = self.get_all_ids()
-        seq = PlantDomain.find_next_sequence(abbrev, year, existing_ids)
-
-        plant_data["id"] = PlantDomain().generate_id(
-            plant_data["variety_name"], planting_date, seq
-
-        )
+            plant_data["id"] = PlantDomain().generate_id(
+                plant_data["variety_name"], planting_date, seq
+            )
         domain_obj = PlantDomain.create_from_dict(plant_data)
         orm_obj = Plant(
             id=domain_obj.id,
@@ -59,6 +51,9 @@ class PlantRepository(BaseRepository[Plant], PlantService):
             planting_date=domain_obj.planting_date,
             seed_packet_id=domain_obj.seed_packet_id,
             genus_id=domain_obj.genus_id,
+            death_date=domain_obj.death_date,
+            death_reason=domain_obj.death_reason,
+            death_comment=domain_obj.death_comment,
         )
         self.add(orm_obj)
         return domain_obj
@@ -70,9 +65,30 @@ class PlantRepository(BaseRepository[Plant], PlantService):
             return result.to_domain()
         return None
 
-    def list_plants(self) -> Iterator[PlantDomain]:
-        """List all plants (returns iterator for streaming)"""
-        for orm_plant in self.list_all():
+    def list_plants(
+        self, alive_only: bool = False, dead_only: bool = False
+    ) -> Iterator[PlantDomain]:
+        """List plants with optional alive/dead filtering at DB level.
+
+        Args:
+            alive_only: If True, only yield plants without a death_date (i.e., still alive).
+            dead_only: If True, only yield plants that have a death_date set.
+
+        Yields:
+            PlantDomain: The domain model instances matching the filter criteria.
+
+        Raises:
+            ValueError: If both alive_only and dead_only are set to True.
+        """
+        if alive_only and dead_only:
+            raise ValueError("Cannot specify both alive_only and dead_only")
+        stmt = select(Plant)
+        if alive_only:
+            stmt = stmt.where(Plant.death_date.is_(None))
+        elif dead_only:
+            stmt = stmt.where(Plant.death_date.isnot(None))
+
+        for orm_plant in self.session.execute(stmt).scalars().yield_per(100):
             yield orm_plant.to_domain()
 
     def update_plant(self, plant_id: str, plant_data: dict) -> PlantDomain | None:

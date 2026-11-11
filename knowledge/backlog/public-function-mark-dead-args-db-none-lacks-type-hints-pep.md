@@ -1,0 +1,106 @@
+---
+title: Public function mark_dead(args, db=None) lacks type hints (PEP 484/PEP 8). _prom…
+source_report: code-review-proj-0013-r4.json
+source_severity: n/a
+created_at: 2026-08-13T02:42:08Z
+updated_at: 2026-08-21T18:27:40Z
+source: review-analyzer
+occurrences:
+  - feedback: feedback-proj-0013-r4/cf9314f8-22.md
+    file: commands/plant_tracking_cli.py
+    lines: 785-786
+    date: 2026-08-13
+  - feedback: .review-runs/feedback-r1/0ccd4f32-11.md
+    file: packages/plant_service/tests/integration/test_repository.py
+    lines: 32-39
+    date: 2026-08-18
+  - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r4/0ccd4f32-13.md
+    file: packages/plant_service/tests/integration/test_repository.py
+    lines: 32-39
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T021224Z/feedback-r4/cf9314f8-17.md
+    file: commands/plant_tracking_cli.py
+    lines: 792-793
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r1/e76ef807-16.md
+    file: backend/fastapi/tests/conftest.py
+    lines: 67-68
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r2/cf9314f8-8.md
+    file: commands/plant_tracking_cli.py
+    lines: 792-792
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r4/cf9314f8-11.md
+    file: commands/plant_tracking_cli.py
+    lines: 1793-1797
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r4/01205db9-12.md
+    file: packages/plant_service/tests/unit/test_plant_model.py
+    lines: 132-149
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r6/346b706d-8.md
+    file: tests/test_plant_tracking.py
+    lines: 1540-1543
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r6/346b706d-12.md
+    file: tests/test_plant_tracking.py
+    lines: 1545-1551
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r7/e76ef807-5.md
+    file: backend/fastapi/tests/conftest.py
+    lines: 67-87
+    date: 2026-08-21
+  - feedback: .review-runs/PROJ-0013/20260821T115106Z/feedback-r7/cf9314f8-8.md
+    file: commands/plant_tracking_cli.py
+    lines: 792-793
+    date: 2026-08-21
+---
+
+# Public function mark_dead(args, db=None) lacks type hints (PEP 484/PEP 8). _prom…
+
+## Problem
+
+The finding is real: `_prompt_death_details` (line 734) has type hints (`-> tuple[str, str, str]`) while `mark_dead` (line 785) and `list_plants` (line 1780) do not. However, this isn't an isolated defect — all 21 public command handler functions in this 2636-line file lack parameter type hints (create_plant, print_label, log_humidity, log_water, etc.). Adding type hints is a style campaign across the entire file, not a single-file fix. Per classification rule 2, style campaigns should be BACKLO
+
+## Recommendation
+
+Revisit this deferred review finding when capacity allows.
+
+## Occurrences
+
+- **2026-08-13** — `feedback-proj-0013-r4/cf9314f8-22.md` (`commands/plant_tracking_cli.py`) lines 785-786
+  The finding is real: `_prompt_death_details` (line 734) has type hints (`-> tuple[str, str, str]`) while `mark_dead` (line 785) and `list_plants` (line 1780) do not. However, this isn't an isolated de…
+
+
+- **2026-08-18** — `.review-runs/feedback-r1/0ccd4f32-11.md` (`packages/plant_service/tests/integration/test_repository.py`) lines 32-39
+  This is the same deferred theme as the existing backlog entry: adding type hints per PEP 484 is a style campaign, not a concrete defect. The existing backlog entry (knowledge/backlog/public-function-m…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r4/0ccd4f32-13.md` (`packages/plant_service/tests/integration/test_repository.py`) lines 32-39
+  Confirmed real: the `sample_plant_dict` fixture at packages/plant_service/tests/integration/test_repository.py:32-39 lacks a return type hint. However, this is a trivial style item, not a defect, and …
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T021224Z/feedback-r4/cf9314f8-17.md` (`commands/plant_tracking_cli.py`) lines 792-793
+  Confirmed: mark_dead (line 792) lacks type hints, but this is not an isolated defect. Of the 21+ public command handler functions in this 2661-line file, all lack parameter type hints (create_plant:38…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r1/e76ef807-16.md` (`backend/fastapi/tests/conftest.py`) lines 67-68
+  This is the same deferred type-hint style campaign already tracked in the catalog. The fixture at conftest.py:67 lacks a return type annotation, which is a trivial PEP 484 style item, not a concrete d…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r2/cf9314f8-8.md` (`commands/plant_tracking_cli.py`) lines 792-792
+  This finding is already tracked as a deferred style campaign in the knowledge catalog. The backlog entry confirms that all 21 public command handler functions in this 2600+ line file lack parameter ty…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r4/cf9314f8-11.md` (`commands/plant_tracking_cli.py`) lines 1793-1797
+  This is the same deferred type-hint style campaign already tracked in the catalog. The backlog entry knowledge/backlog/public-function-mark-dead-args-db-none-lacks-type-hints-pep.md documents that all…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r4/01205db9-12.md` (`packages/plant_service/tests/unit/test_plant_model.py`) lines 132-149
+  Real but trivial style finding: the base_plant_dict fixture (test_plant_model.py:133) lacks a return annotation and test methods lack -> None. Not a concrete defect — missing annotations on pytest fix…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r6/346b706d-8.md` (`tests/test_plant_tracking.py`) lines 1540-1543
+  This is a type-hint-on-test-method style nit, part of the broader 'add type hints' campaign already deferred to backlog. Prior feedback consistently classifies the same theme as BACKLOG: fixture/test-…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r6/346b706d-12.md` (`tests/test_plant_tracking.py`) lines 1545-1551
+  This is the same deferred 'add type hints' theme repeatedly classified as BACKLOG in prior rounds (test_plant_model.py r4, conftest.py r1, plant_tracking_cli.py r4). The finding is trivial: adding `->…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r7/e76ef807-5.md` (`backend/fastapi/tests/conftest.py`) lines 67-87
+  This is the same 'add type hints to test fixtures' theme already tracked in the backlog. Prior feedback (e76ef807-16 in r1) made the identical finding on conftest.py and was dispositioned as BACKLOG/u…
+
+- **2026-08-21** — `.review-runs/PROJ-0013/20260821T115106Z/feedback-r7/cf9314f8-8.md` (`commands/plant_tracking_cli.py`) lines 792-793
+  The finding is technically real — mark_dead at line 792 lacks parameter and return type hints. However, this is not an isolated defect but part of a file-wide style campaign: all 21+ public command ha…

@@ -1,6 +1,7 @@
 """
 SQLAlchemy model for PlantLogEntry entity
 """
+
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import String, Integer, ForeignKey, CheckConstraint
@@ -20,7 +21,9 @@ class PlantLogEntry(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     # Core fields
-    plant_id: Mapped[str] = mapped_column(String(20), ForeignKey("plants.id"), nullable=False)
+    plant_id: Mapped[str] = mapped_column(
+        String(20), ForeignKey("plants.id"), nullable=False
+    )
     event_type: Mapped[str] = mapped_column(String(20), nullable=False)
     timestamp: Mapped[str] = mapped_column(String(20), nullable=False)
 
@@ -28,7 +31,9 @@ class PlantLogEntry(Base, TimestampMixin):
     level: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     amount_ml: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     fertilizer_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    fertilizer_strength: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    fertilizer_strength: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True
+    )
     text: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     # Relationship

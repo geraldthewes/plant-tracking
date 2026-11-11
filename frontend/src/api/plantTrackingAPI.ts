@@ -32,6 +32,76 @@ export interface HTTPValidationError {
   detail?: ValidationError[];
 }
 
+/**
+ * Response after marking a plant as dead.
+ */
+export interface PlantDeadResponse {
+  id: string;
+  variety_name: string;
+  death_date?: string | null;
+  death_reason?: string | null;
+  death_comment?: string | null;
+  is_dead?: boolean;
+}
+
+/**
+ * Request body for marking a plant as dead.
+ */
+export interface PlantDeathRequest {
+  death_date: string;
+  death_reason: string;
+  death_comment?: string | null;
+}
+
+/**
+ * Plant summary for list responses.
+ */
+export interface PlantSummary {
+  id: string;
+  variety_name: string;
+  latin_name: string;
+  planting_date?: string | null;
+  death_date?: string | null;
+  death_reason?: string | null;
+  is_dead?: boolean;
+}
+
+/**
+ * Response for plant list endpoints.
+ */
+export interface PlantListResponse {
+  count: number;
+  plants: PlantSummary[];
+}
+
+/**
+ * Full plant details response.
+ */
+export interface PlantResponse {
+  id: string;
+  variety_name: string;
+  latin_name: string;
+  brand?: string | null;
+  days_to_maturity?: number | null;
+  germination_time?: number | null;
+  planting_depth?: string | null;
+  spacing?: string | null;
+  sun_requirements?: string | null;
+  indoor_start_time?: number | null;
+  planting_date?: string | null;
+  seed_packet_id?: string | null;
+  genus_id?: string | null;
+  death_date?: string | null;
+  death_reason?: string | null;
+  death_comment?: string | null;
+  is_dead?: boolean;
+}
+
+export type ListPlantsApiPlantsGetParams = {
+alive_only?: boolean;
+dead_only?: boolean;
+};
+
 export type healthCheckHealthGetResponse200 = {
   data: unknown
   status: 200
@@ -121,7 +191,7 @@ export const rootGet = async ( options?: RequestInit): Promise<rootGetResponse> 
 
 
 export type getPlantsNeedingCareApiPlantsCareNeededGetResponse200 = {
-  data: unknown
+  data: PlantListResponse
   status: 200
 }
 
@@ -162,6 +232,177 @@ export const getPlantsNeedingCareApiPlantsCareNeededGet = async ( options?: Requ
 
   const data: getPlantsNeedingCareApiPlantsCareNeededGetResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as getPlantsNeedingCareApiPlantsCareNeededGetResponse
+}
+
+
+
+export type listPlantsApiPlantsGetResponse200 = {
+  data: PlantListResponse
+  status: 200
+}
+
+export type listPlantsApiPlantsGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type listPlantsApiPlantsGetResponseSuccess = (listPlantsApiPlantsGetResponse200) & {
+  headers: Headers;
+};
+export type listPlantsApiPlantsGetResponseError = (listPlantsApiPlantsGetResponse422) & {
+  headers: Headers;
+};
+
+export type listPlantsApiPlantsGetResponse = (listPlantsApiPlantsGetResponseSuccess | listPlantsApiPlantsGetResponseError)
+
+export const getListPlantsApiPlantsGetUrl = (params?: ListPlantsApiPlantsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/plants/?${stringifiedParams}` : `/api/plants/`
+}
+
+/**
+ * List all plants with optional alive/dead filtering.
+ *
+ * Args:
+ *     alive_only: If True, return only plants without death_date.
+ *     dead_only: If True, return only plants with death_date.
+ *
+ * Returns:
+ *     PlantListResponse: List of matching plants and count.
+ *
+ * Raises:
+ *     HTTPException: 400 if both filters specified.
+ * @summary List Plants
+ */
+export const listPlantsApiPlantsGet = async (params?: ListPlantsApiPlantsGetParams, options?: RequestInit): Promise<listPlantsApiPlantsGetResponse> => {
+
+  const res = await fetch(getListPlantsApiPlantsGetUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listPlantsApiPlantsGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as listPlantsApiPlantsGetResponse
+}
+
+
+
+export type getPlantApiPlantsPlantIdGetResponse200 = {
+  data: PlantResponse
+  status: 200
+}
+
+export type getPlantApiPlantsPlantIdGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type getPlantApiPlantsPlantIdGetResponseSuccess = (getPlantApiPlantsPlantIdGetResponse200) & {
+  headers: Headers;
+};
+export type getPlantApiPlantsPlantIdGetResponseError = (getPlantApiPlantsPlantIdGetResponse422) & {
+  headers: Headers;
+};
+
+export type getPlantApiPlantsPlantIdGetResponse = (getPlantApiPlantsPlantIdGetResponseSuccess | getPlantApiPlantsPlantIdGetResponseError)
+
+export const getGetPlantApiPlantsPlantIdGetUrl = (plantId: string,) => {
+
+
+
+
+  return `/api/plants/${plantId}`
+}
+
+/**
+ * Get a specific plant by ID.
+ * @summary Get Plant
+ */
+export const getPlantApiPlantsPlantIdGet = async (plantId: string, options?: RequestInit): Promise<getPlantApiPlantsPlantIdGetResponse> => {
+
+  const res = await fetch(getGetPlantApiPlantsPlantIdGetUrl(plantId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getPlantApiPlantsPlantIdGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getPlantApiPlantsPlantIdGetResponse
+}
+
+
+
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponse200 = {
+  data: PlantDeadResponse
+  status: 200
+}
+
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponseSuccess = (markPlantDeadApiPlantsPlantIdDeadPatchResponse200) & {
+  headers: Headers;
+};
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponseError = (markPlantDeadApiPlantsPlantIdDeadPatchResponse422) & {
+  headers: Headers;
+};
+
+export type markPlantDeadApiPlantsPlantIdDeadPatchResponse = (markPlantDeadApiPlantsPlantIdDeadPatchResponseSuccess | markPlantDeadApiPlantsPlantIdDeadPatchResponseError)
+
+export const getMarkPlantDeadApiPlantsPlantIdDeadPatchUrl = (plantId: string,) => {
+
+
+
+
+  return `/api/plants/${plantId}/dead`
+}
+
+/**
+ * Mark a plant as dead.
+ * @summary Mark Plant Dead
+ */
+export const markPlantDeadApiPlantsPlantIdDeadPatch = async (plantId: string,
+    plantDeathRequest: PlantDeathRequest, options?: RequestInit): Promise<markPlantDeadApiPlantsPlantIdDeadPatchResponse> => {
+
+  const res = await fetch(getMarkPlantDeadApiPlantsPlantIdDeadPatchUrl(plantId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(plantDeathRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: markPlantDeadApiPlantsPlantIdDeadPatchResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as markPlantDeadApiPlantsPlantIdDeadPatchResponse
 }
 
 
