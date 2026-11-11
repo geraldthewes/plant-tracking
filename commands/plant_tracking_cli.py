@@ -7,9 +7,10 @@ import logging
 import os
 import sys
 from datetime import date
+from typing import Any
 
 # Markdown model imports (for backup/export during transition)
-from .genus_model import get_genera_dir
+from .genus_model import Genus as MarkdownGenus, get_genera_dir
 from .plant_log_model import get_logs_dir
 from .plant_model import Plant as MarkdownPlant, get_database_dir, load_plant_from_file
 from .seed_packet_model import (
@@ -20,14 +21,15 @@ from .seed_packet_model import (
 )
 
 # Fuzzy matching for genus name searches
+FUZZY_MATCHING_AVAILABLE = False
+fuzz: Any = None
+process: Any = None
 try:
     from thefuzz import fuzz, process
 
     FUZZY_MATCHING_AVAILABLE = True
 except ImportError:
-    FUZZY_MATCHING_AVAILABLE = False
-    process = None
-    fuzz = None
+    pass
 
 
 # Service package imports
@@ -38,12 +40,8 @@ try:
         PlantTrackingServiceException,
         ValidationException,
         PlantNotFoundException,
-        SeedPacketNotFoundException,
-        GenusNotFoundException,
-        PlantLogNotFoundException,
-        DatabaseUnavailableError,
-        ExportError,
     )
+
     SERVICE_AVAILABLE = True
 except ImportError:
     SERVICE_AVAILABLE = False
@@ -121,9 +119,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # create-plant subcommand
-    subparsers.add_parser(
-        "create-plant", help="Create a new plant record"
-    )
+    subparsers.add_parser("create-plant", help="Create a new plant record")
 
     # print-label subcommand (consolidated from create-label and print-label)
     print_parser = subparsers.add_parser(
@@ -158,27 +154,19 @@ def main():
     subparsers.add_parser("list-genera", help="List all genera")
 
     # show-genus subcommand
-    show_genus_parser = subparsers.add_parser(
-        "show-genus", help="Show genus details"
-    )
+    show_genus_parser = subparsers.add_parser("show-genus", help="Show genus details")
     show_genus_parser.add_argument("genus_id", help="Genus ID")
 
     # show-plant subcommand
-    show_plant_parser = subparsers.add_parser(
-        "show-plant", help="Show plant details"
-    )
+    show_plant_parser = subparsers.add_parser("show-plant", help="Show plant details")
     show_plant_parser.add_argument("plant_id", help="Plant ID")
 
     # mark-dead subcommand
-    mark_dead_parser = subparsers.add_parser(
-        "mark-dead", help="Mark a plant as dead"
-    )
+    mark_dead_parser = subparsers.add_parser("mark-dead", help="Mark a plant as dead")
     mark_dead_parser.add_argument("plant_id", help="Plant ID")
 
     # list-plants subcommand
-    list_parser = subparsers.add_parser(
-        "list-plants", help="List all plants"
-    )
+    list_parser = subparsers.add_parser("list-plants", help="List all plants")
     status_group = list_parser.add_mutually_exclusive_group()
     status_group.add_argument(
         "--alive-only", action="store_true", help="Show only living plants"
@@ -380,7 +368,12 @@ def main():
 
 
 def _prompt_field(field, description, data):
-    """Prompt user for a single field value with validation."""
+    """Prompt user for a single field value with validation.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
+    """
     while True:
         value = input(f"{description}: ").strip()
         if value:
@@ -391,7 +384,12 @@ def _prompt_field(field, description, data):
 
 
 def _prompt_date_field(field, description, data):
-    """Prompt user for a required date field, stored as a date object."""
+    """Prompt user for a required date field, stored as a date object.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
+    """
     while True:
         value = input(f"{description}: ").strip()
         if not value:
@@ -410,7 +408,12 @@ def _date_to_iso(value):
 
 
 def _prompt_optional_field(field, description, data):
-    """Prompt user for an optional field value."""
+    """Prompt user for an optional field value.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
+    """
     value = input(f"{description} (optional): ").strip()
     if value:
         data[field] = value
@@ -485,9 +488,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
             genus_variety = existing_genus.data["variety_name"]
 
     if genus_id:
-        print(
-            f"\n✓ Found genus: {genus_id} - {genus_variety}"
-        )
+        print(f"\n✓ Found genus: {genus_id} - {genus_variety}")
         print(f"  Latin name: {genus_latin}")
         plant_data["latin_name"] = genus_latin
         plant_data["genus_id"] = genus_id
@@ -506,11 +507,15 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                                     f"\n✓ Fuzzy match found: {genus.id} - {genus.variety_name}"
                                 )
                                 print(f"  Latin name: {genus.latin_name}")
-                                confirm = input("Use this genus? (Y/n): ").strip().lower()
+                                confirm = (
+                                    input("Use this genus? (Y/n): ").strip().lower()
+                                )
                                 if confirm != "n":
                                     plant_data["latin_name"] = genus.latin_name
                                     plant_data["genus_id"] = genus.id
-                                    print("  Latin name auto-resolved from genus database.")
+                                    print(
+                                        "  Latin name auto-resolved from genus database."
+                                    )
                                 break
                 except Exception:
                     logger.warning(
@@ -594,6 +599,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
                     plant_data["genus_id"] = genus.id
                     # Markdown backup
                     from .genus_model import Genus as MarkdownGenus
+
                     backup_data = genus_data.copy()
                     backup_data["id"] = genus.id
                     markdown_genus = MarkdownGenus(backup_data)
@@ -650,9 +656,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
             plant_data["variety_name"], plant_data["latin_name"]
         )
         if spkt:
-            print(
-                f"\n✓ Found seed packet: {spkt.id} - {spkt.variety_name}"
-            )
+            print(f"\n✓ Found seed packet: {spkt.id} - {spkt.variety_name}")
             plant_data["seed_packet_id"] = spkt.id
             packet_matched = True
     else:
@@ -759,7 +763,9 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
         else:
             # Fallback to Markdown-only mode
             markdown_data = dict(plant_data)
-            markdown_data["planting_date"] = _date_to_iso(markdown_data["planting_date"])
+            markdown_data["planting_date"] = _date_to_iso(
+                markdown_data["planting_date"]
+            )
             plant = MarkdownPlant(markdown_data)
             filepath = database_dir / f"{plant.data['id']}.md"
             _write_markdown_backup(filepath, plant)
@@ -776,9 +782,7 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
             print(f"Genus: {genus_id}")
         print(f"Saved to: {filepath}")
         print("\nNext steps:")
-        print(
-            f"  1. Generate/print label: plant-tracking print-label {plant_id}"
-        )
+        print(f"  1. Generate/print label: plant-tracking print-label {plant_id}")
         print(
             f"  2. Generate image only: plant-tracking print-label {plant_id} --no-print"
         )
@@ -793,7 +797,12 @@ def create_plant(args, db=None, database_dir=None, packets_dir=None, genera_dir=
 
 
 def _prompt_death_details() -> tuple[date, str, str]:
-    """Prompt user for death date, reason, and comment. No DB access."""
+    """Prompt user for death date, reason, and comment. No DB access.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
+    """
     # Prompt for death date
     while True:
         try:
@@ -828,10 +837,7 @@ def _prompt_death_details() -> tuple[date, str, str]:
             else:
                 print(f"Please enter a number between 1 and {len(reasons)}")
         else:
-            matching = [
-                r for r in reasons
-                if r.lower() == reason_input.lower()
-            ]
+            matching = [r for r in reasons if r.lower() == reason_input.lower()]
             if matching:
                 death_reason = matching[0]
                 break
@@ -842,11 +848,11 @@ def _prompt_death_details() -> tuple[date, str, str]:
     death_comment = ""
     if death_reason == "Other":
         while not death_comment:
-            death_comment = input(
-                "Comment (required for 'Other'): "
-            ).strip()
+            death_comment = input("Comment (required for 'Other'): ").strip()
     else:
-        death_comment = input("Additional comment (optional, press Enter to skip): ").strip()
+        death_comment = input(
+            "Additional comment (optional, press Enter to skip): "
+        ).strip()
 
     return death_date, death_reason, death_comment
 
@@ -897,11 +903,14 @@ def mark_dead(args, db=None):
     # Phase 3: short write transaction
     try:
         with create_unit_of_work() as uow:
-            updated = uow.plants.update_plant(plant_id, {
-                "death_date": death_date,
-                "death_reason": death_reason,
-                "death_comment": death_comment,
-            })
+            updated = uow.plants.update_plant(
+                plant_id,
+                {
+                    "death_date": death_date,
+                    "death_reason": death_reason,
+                    "death_comment": death_comment,
+                },
+            )
 
         if updated is None:
             print(f"✗ Plant not found: {plant_id}")
@@ -928,6 +937,10 @@ def mark_dead(args, db=None):
 
 def _prompt_packet_choice(plant_data):
     """Prompt user to choose how to handle seed packet.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
 
     Returns 'create', 'select', or 'skip'.
     """
@@ -1063,7 +1076,12 @@ def _select_existing_packet(db):
 
 
 def _prompt_record_fields(plant_data):
-    """Prompt for record-keeping fields when no seed packet is used."""
+    """Prompt for record-keeping fields when no seed packet is used.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
+    """
     print()
     print("--- Optional record fields (enter directly, no seed packet) ---")
     record_fields = [
@@ -1081,6 +1099,10 @@ def _prompt_record_fields(plant_data):
 
 def _prompt_genus_choice(plant_data):
     """Prompt user to choose genus handling method.
+
+    Intended for interactive terminal use only. Prompts block on input();
+    in automated or non-interactive contexts the caller is responsible for
+    supplying stdin non-blockingly (e.g., via piped input).
 
     Returns 'create', 'select', 'fuzzy', or 'skip'.
     """
@@ -1222,6 +1244,7 @@ def _fuzzy_search_genus(variety_name: str, db):
         return None
 
     try:
+        genera: list[Any]
         if db and SERVICE_AVAILABLE:
             with create_unit_of_work() as uow:
                 genera = list(uow.genera.list_genera())
@@ -1472,9 +1495,7 @@ def list_seed_packets(args, db=None):
             pid = p.data["id"]
             variety = p.data["variety_name"]
             latin = p.data["latin_name"]
-        print(
-            f"{pid:<12} {variety:<25} {latin:<25} {brand:<20}"
-        )
+        print(f"{pid:<12} {variety:<25} {latin:<25} {brand:<20}")
 
 
 def show_seed_packet(args, db=None):
@@ -1510,9 +1531,13 @@ def show_seed_packet(args, db=None):
                         print(f"  {label:<22} {val}")
                 print()
                 if packet.created_at:
-                    print(f"  Created: {packet.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Created: {packet.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
                 if packet.updated_at:
-                    print(f"  Updated: {packet.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Updated: {packet.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
         except Exception as e:
             logger.exception("Error showing seed packet: %s", e)
             print(f"✗ Error showing seed packet: {e}")
@@ -1646,9 +1671,7 @@ def create_genus(args, db=None, genera_dir=None):
         # Markdown fallback
         from .genus_model import find_matching
 
-        existing = find_matching(
-            genus_data["variety_name"], genus_data["latin_name"]
-        )
+        existing = find_matching(genus_data["variety_name"], genus_data["latin_name"])
         if existing:
             print("\n⚠ A matching genus already exists:")
             print(f"  ID: {existing.data['id']}")
@@ -1767,9 +1790,7 @@ def list_genera(args, db=None):
             gid = g.data["id"]
             variety = g.data["variety_name"]
             latin = g.data["latin_name"]
-        print(
-            f"{gid:<12} {variety:<25} {latin:<25}"
-        )
+        print(f"{gid:<12} {variety:<25} {latin:<25}")
 
 
 def show_genus(args, db=None):
@@ -1798,9 +1819,13 @@ def show_genus(args, db=None):
                         print(f"  {label:<22} {val}")
                 print()
                 if genus.created_at:
-                    print(f"  Created: {genus.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Created: {genus.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
                 if genus.updated_at:
-                    print(f"  Updated: {genus.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Updated: {genus.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
         except Exception as e:
             logger.exception("Error showing genus: %s", e)
             print(f"✗ Error showing genus: {e}")
@@ -1868,7 +1893,7 @@ def _list_plants_from_files():
         try:
             plants.append(load_plant_from_file(filepath))
         except Exception:
-            continue
+            logger.warning("Skipping unreadable file: %s", filepath)
     return plants
 
 
@@ -1957,9 +1982,7 @@ def list_plants(args, db=None):
             variety = p.data["variety_name"]
             latin = p.data["latin_name"]
             planting_date = p.data["planting_date"]
-        print(
-            f"{pid:<12} {variety:<25} {latin:<25} {planting_date:<15} {status:<10}"
-        )
+        print(f"{pid:<12} {variety:<25} {latin:<25} {planting_date:<15} {status:<10}")
 
 
 def show_plant(args, db=None):
@@ -2005,9 +2028,13 @@ def show_plant(args, db=None):
                         print(f"  {'Death Comment':<22} {plant.death_comment}")
                 print()
                 if plant.created_at:
-                    print(f"  Created: {plant.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Created: {plant.created_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
                 if plant.updated_at:
-                    print(f"  Updated: {plant.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+                    print(
+                        f"  Updated: {plant.updated_at.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                    )
         except Exception as e:
             logger.exception("Error showing plant: %s", e)
             print(f"✗ Error showing plant: {e}")
@@ -2084,6 +2111,7 @@ def show_plant(args, db=None):
 
 # ─── Log command handlers ────────────────────────────────────────
 
+
 def log_humidity(args, db=None):
     """Log a humidity reading for a plant."""
     if db is None:
@@ -2146,7 +2174,10 @@ def log_humidity(args, db=None):
             print(f"✓ Humidity logged for plant {args.plant_id}")
         else:
             # Markdown fallback
-            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+            from .plant_log_model import (
+                PlantLogEntry as MarkdownLogEntry,
+                append_log_entry,
+            )
 
             entry = MarkdownLogEntry(entry_data)
             append_log_entry(entry)
@@ -2190,6 +2221,8 @@ def log_water(args, db=None):
     else:
         # Markdown fallback
         plant_file = get_database_dir() / f"{args.plant_id}.md"
+        if plant_file.exists():
+            plant_exists = True
 
     if not plant_exists:
         print(f"✗ Error: Plant ID '{args.plant_id}' not found")
@@ -2229,7 +2262,10 @@ def log_water(args, db=None):
             print(f"✓ Watering logged for plant {args.plant_id}")
         else:
             # Markdown fallback
-            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+            from .plant_log_model import (
+                PlantLogEntry as MarkdownLogEntry,
+                append_log_entry,
+            )
 
             entry = MarkdownLogEntry(entry_data)
             append_log_entry(entry)
@@ -2306,7 +2342,10 @@ def log_fertilizer(args, db=None):
             print(f"✓ Fertilizer logged for plant {args.plant_id}")
         else:
             # Markdown fallback
-            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+            from .plant_log_model import (
+                PlantLogEntry as MarkdownLogEntry,
+                append_log_entry,
+            )
 
             # For markdown, use original field names
             md_entry_data = {
@@ -2413,7 +2452,10 @@ def log_note(args, db=None):
             print(f"✓ Note logged for plant {args.plant_id}")
         else:
             # Markdown fallback
-            from .plant_log_model import PlantLogEntry as MarkdownLogEntry, append_log_entry
+            from .plant_log_model import (
+                PlantLogEntry as MarkdownLogEntry,
+                append_log_entry,
+            )
 
             entry = MarkdownLogEntry(entry_data)
             append_log_entry(entry)
@@ -2469,9 +2511,9 @@ def log_list(args, db=None):
     if db and SERVICE_AVAILABLE:
         try:
             with create_unit_of_work() as uow:
-                entries = list(uow.logs.list_entries(
-                    plant_id=args.plant_id, event_type=event_type
-                ))
+                entries = list(
+                    uow.logs.list_entries(plant_id=args.plant_id, event_type=event_type)
+                )
                 # Convert domain objects to dict for display
                 entries_dict = []
                 for entry in entries:
@@ -2518,7 +2560,9 @@ def log_list(args, db=None):
                 # Markdown fallback
                 from .plant_log_model import load_log_entries
 
-                entries_dict = load_log_entries(plant_id=args.plant_id, event_type=event_type)
+                entries_dict = load_log_entries(
+                    plant_id=args.plant_id, event_type=event_type
+                )
     elif db:
         # Fallback to original models
         from .models import PlantLogEntry
@@ -2583,6 +2627,7 @@ def log_list(args, db=None):
 
 
 # ─── Media command handlers ─────────────────────────────────────
+
 
 def media_add_attachment(args, db=None, media_type="image"):
     """Handle adding media attachment (image, video, audio)."""
@@ -2677,9 +2722,7 @@ def media_list_attachments(args, db=None):
                 return
 
             print(f"Media attachments for plant {args.plant_id}:")
-            print(
-                f"{'ID':<5} {'Type':<8} {'Label':<25} {'Tags':<30} {'Timestamp':<20}"
-            )
+            print(f"{'ID':<5} {'Type':<8} {'Label':<25} {'Tags':<30} {'Timestamp':<20}")
             print("-" * 90)
             for ma in media_attachments:
                 label = ma.label or ""
@@ -2705,9 +2748,7 @@ def media_show_attachment(args, db=None):
 
     try:
         with create_unit_of_work() as uow:
-            media_attachment = uow.media_attachments.get_media_attachment(
-                args.media_id
-            )
+            media_attachment = uow.media_attachments.get_media_attachment(args.media_id)
 
             if not media_attachment:
                 print(f"Media attachment not found: {args.media_id}")
@@ -2740,9 +2781,7 @@ def media_delete_attachment(args, db=None):
         from plant_service.service_layer.s3_service import S3Service
 
         with create_unit_of_work() as uow:
-            media_attachment = uow.media_attachments.get_media_attachment(
-                args.media_id
-            )
+            media_attachment = uow.media_attachments.get_media_attachment(args.media_id)
             if not media_attachment:
                 print(f"Media attachment not found: {args.media_id}")
                 sys.exit(1)
@@ -2776,9 +2815,7 @@ def media_get_url(args, db=None):
         from plant_service.service_layer.s3_service import S3Service
 
         with create_unit_of_work() as uow:
-            media_attachment = uow.media_attachments.get_media_attachment(
-                args.media_id
-            )
+            media_attachment = uow.media_attachments.get_media_attachment(args.media_id)
             if not media_attachment:
                 print(f"Media attachment not found: {args.media_id}")
                 sys.exit(1)

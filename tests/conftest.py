@@ -6,6 +6,7 @@ importing the commands package does not load a live database connection
 from the repo-root .env via load_dotenv (which never overrides an
 already-set value).
 """
+
 import os
 
 os.environ.setdefault("DATABASE_URL", "")

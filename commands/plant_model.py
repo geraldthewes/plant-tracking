@@ -2,12 +2,15 @@
 Plant data model and validation
 """
 
+import logging
 import os
 import re
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Any, Optional
 import yaml
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from commands.genus_model import Genus
@@ -157,7 +160,7 @@ class Plant:
                                         seq = int(match.group(1))
                                         max_seq = max(max_seq, seq)
                 except Exception:
-                    continue  # Skip unreadable files
+                    logger.warning("Skipping unreadable file: %s", file)
 
         return max_seq + 1
 

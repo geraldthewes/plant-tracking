@@ -89,8 +89,6 @@ class TestPlantModel(unittest.TestCase):
 
     def test_plant_id_generation_format(self):
         """Test that plant IDs follow VARIETY-YYYY-SEQ format"""
-        import re
-
         plant_data = self._required_plant_data(
             variety_name="Habanero",
             latin_name="Capsicum chinense",
@@ -312,7 +310,7 @@ class TestPlantSeedPacketReference(unittest.TestCase):
 
     def test_get_seed_packet_resolves_reference(self):
         """Test that get_seed_packet resolves to the correct SeedPacket."""
-        from commands.seed_packet_model import SeedPacket, load_from_file
+        from commands.seed_packet_model import SeedPacket
 
         packet_data = {
             "variety_name": "Yellow Habanero",
@@ -421,7 +419,6 @@ class TestLabelGeneration(unittest.TestCase):
 
         # Count black pixels in the image (QR code area is on the right side)
         black_count = sum(1 for r, g, b in pixels if r < 100 and g < 100 and b < 100)
-        total = len(pixels)
 
         # Labels are mostly white; check for presence of rendered content
         self.assertGreater(
@@ -829,7 +826,7 @@ class TestEndToEnd(unittest.TestCase):
 
     def test_create_packet_then_plant_reference(self):
         """Create a seed packet, then create a plant that references it."""
-        from commands.seed_packet_model import SeedPacket, load_from_file
+        from commands.seed_packet_model import SeedPacket
         from commands.plant_model import Plant, load_plant_from_file
 
         # Create seed packet
@@ -1774,9 +1771,7 @@ class TestDatabaseConfigLoading(unittest.TestCase):
 
         with mock.patch(
             "commands.database.init_db",
-            side_effect=ValueError(
-                "DATABASE_URL environment variable must be set"
-            ),
+            side_effect=ValueError("DATABASE_URL environment variable must be set"),
         ), mock.patch("sys.stderr", new_callable=io.StringIO) as mock_stderr:
             db = cli._get_db()
 
@@ -1793,7 +1788,9 @@ class TestDatabaseConfigLoading(unittest.TestCase):
         args = type("Args", (), {"alive_only": False, "dead_only": False})()
         with mock.patch.object(cli, "_get_db", return_value=None), mock.patch.object(
             cli, "_list_plants_from_files", return_value=[]
-        ), mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout, mock.patch(
+        ), mock.patch(
+            "sys.stdout", new_callable=io.StringIO
+        ) as mock_stdout, mock.patch(
             "sys.stderr", new_callable=io.StringIO
         ) as mock_stderr:
             list_plants(args)
@@ -2452,8 +2449,8 @@ class TestMediaCommandExitCodes(unittest.TestCase):
         from commands import plant_tracking_cli
 
         uow = mock.Mock()
-        uow.media_attachments.get_media_attachments_by_plant.side_effect = (
-            RuntimeError("boom")
+        uow.media_attachments.get_media_attachments_by_plant.side_effect = RuntimeError(
+            "boom"
         )
         mock_create_uow.return_value.__enter__.return_value = uow
         args = self._make_args(plant_id="P1")
@@ -2760,9 +2757,7 @@ class TestSilentPathWarnings(unittest.TestCase):
             "builtins.input", side_effect=lambda _: next(inputs)
         ), mock.patch("sys.stdout", new_callable=io.StringIO) as out:
             with self.assertRaises(SystemExit) as ctx:
-                self.cli.create_seed_packet(
-                    args, db=object(), packets_dir=self.test_db
-                )
+                self.cli.create_seed_packet(args, db=object(), packets_dir=self.test_db)
 
         self.assertEqual(ctx.exception.code, 1)
         self.assertIn("Error creating seed packet", out.getvalue())
@@ -2783,9 +2778,7 @@ class TestSilentPathWarnings(unittest.TestCase):
             "builtins.input", side_effect=["Test Variety", "Testum testum"]
         ), mock.patch("sys.stdout", new_callable=io.StringIO) as out:
             with self.assertRaises(SystemExit) as ctx:
-                self.cli.create_genus(
-                    args, db=object(), genera_dir=self.test_db
-                )
+                self.cli.create_genus(args, db=object(), genera_dir=self.test_db)
 
         self.assertEqual(ctx.exception.code, 1)
         self.assertIn("Error creating genus", out.getvalue())
@@ -2808,9 +2801,7 @@ class TestSilentPathWarnings(unittest.TestCase):
             "sys.stdout", new_callable=io.StringIO
         ) as out:
             with self.assertRaises(SystemExit) as ctx:
-                self.cli.media_add_attachment(
-                    args, db=object(), media_type="image"
-                )
+                self.cli.media_add_attachment(args, db=object(), media_type="image")
 
         self.assertEqual(ctx.exception.code, 1)
         self.assertIn("Plant ID 'P1' not found", out.getvalue())
@@ -2928,9 +2919,7 @@ class TestUnexpectedErrorLogging(unittest.TestCase):
         uow.plants.update_plant.side_effect = RuntimeError("boom")
         mock_create_uow.return_value.__enter__.return_value = uow
         args = self._make_args(plant_id="P1")
-        with mock.patch(
-            "builtins.input", side_effect=["2026-07-15", "2", ""]
-        ):
+        with mock.patch("builtins.input", side_effect=["2026-07-15", "2", ""]):
             out, err, code = self._run_with_logging(
                 lambda: self.cli.mark_dead(args, db=object())
             )
@@ -3072,9 +3061,7 @@ class TestUnexpectedErrorLogging(unittest.TestCase):
         uow.plants.get_plant.return_value = mock.Mock()
         uow.logs.create_log_entry.side_effect = RuntimeError("boom")
         mock_create_uow.return_value.__enter__.return_value = uow
-        args = self._make_args(
-            plant_id="P1", type="tea", strength="1/2", date=None
-        )
+        args = self._make_args(plant_id="P1", type="tea", strength="1/2", date=None)
         out, err, code = self._run_with_logging(
             lambda: self.cli.log_fertilizer(args, db=object())
         )
@@ -3109,9 +3096,7 @@ class TestUnexpectedErrorLogging(unittest.TestCase):
             plant_id="P1", image_path=str(image), label=None, tags=None
         )
         out, err, code = self._run_with_logging(
-            lambda: self.cli.media_add_attachment(
-                args, db=object(), media_type="image"
-            )
+            lambda: self.cli.media_add_attachment(args, db=object(), media_type="image")
         )
         self.assertEqual(code, 1)
         self._assert_error_logged(out, err, "Error creating image attachment: boom")
@@ -3120,8 +3105,8 @@ class TestUnexpectedErrorLogging(unittest.TestCase):
     @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
     def test_media_list_error_logs_traceback(self, mock_create_uow):
         uow = mock.Mock()
-        uow.media_attachments.get_media_attachments_by_plant.side_effect = (
-            RuntimeError("boom")
+        uow.media_attachments.get_media_attachments_by_plant.side_effect = RuntimeError(
+            "boom"
         )
         mock_create_uow.return_value.__enter__.return_value = uow
         args = self._make_args(plant_id="P1")
@@ -3135,9 +3120,7 @@ class TestUnexpectedErrorLogging(unittest.TestCase):
     @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
     def test_media_show_error_logs_traceback(self, mock_create_uow):
         uow = mock.Mock()
-        uow.media_attachments.get_media_attachment.side_effect = RuntimeError(
-            "boom"
-        )
+        uow.media_attachments.get_media_attachment.side_effect = RuntimeError("boom")
         mock_create_uow.return_value.__enter__.return_value = uow
         args = self._make_args(media_id=1)
         out, err, code = self._run_with_logging(
@@ -3150,9 +3133,7 @@ class TestUnexpectedErrorLogging(unittest.TestCase):
     @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
     def test_media_delete_error_logs_traceback(self, mock_create_uow):
         uow = mock.Mock()
-        uow.media_attachments.get_media_attachment.side_effect = RuntimeError(
-            "boom"
-        )
+        uow.media_attachments.get_media_attachment.side_effect = RuntimeError("boom")
         mock_create_uow.return_value.__enter__.return_value = uow
         args = self._make_args(media_id=1)
         out, err, code = self._run_with_logging(
@@ -3165,9 +3146,7 @@ class TestUnexpectedErrorLogging(unittest.TestCase):
     @mock.patch("commands.plant_tracking_cli.create_unit_of_work")
     def test_media_url_error_logs_traceback(self, mock_create_uow):
         uow = mock.Mock()
-        uow.media_attachments.get_media_attachment.side_effect = RuntimeError(
-            "boom"
-        )
+        uow.media_attachments.get_media_attachment.side_effect = RuntimeError("boom")
         mock_create_uow.return_value.__enter__.return_value = uow
         args = self._make_args(media_id=1)
         out, err, code = self._run_with_logging(

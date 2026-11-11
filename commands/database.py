@@ -1,6 +1,7 @@
 """
 Database connection and session management for PostgreSQL integration
 """
+
 import os
 from contextlib import contextmanager
 from pathlib import Path
@@ -141,7 +142,9 @@ def export_to_markdown() -> None:
                 "spacing": plant.spacing or "unknown",
                 "sun_requirements": plant.sun_requirements or "unknown",
                 "indoor_start_time": plant.indoor_start_time or "unknown",
-                "planting_date": plant.planting_date.isoformat() if plant.planting_date else "",
+                "planting_date": (
+                    plant.planting_date.isoformat() if plant.planting_date else ""
+                ),
                 "seed_packet_id": plant.seed_packet_id or "unknown",
                 "genus_id": plant.genus_id or "unknown",
             }
@@ -151,7 +154,9 @@ def export_to_markdown() -> None:
                 f.write(markdown_plant.to_markdown())
 
         # Export log entries
-        log_entries = session.query(PlantLogEntry).order_by(PlantLogEntry.timestamp).all()
+        log_entries = (
+            session.query(PlantLogEntry).order_by(PlantLogEntry.timestamp).all()
+        )
         log_file = export_dir / "logs" / "plant-activity-log.md"
 
         with open(log_file, "w") as f:
@@ -178,7 +183,9 @@ def export_to_markdown() -> None:
 
             markdown_entry = MarkdownPlantLogEntry(entry_data)
             yaml_content = yaml.dump(
-                markdown_entry.to_yaml_entry(), default_flow_style=False, sort_keys=False
+                markdown_entry.to_yaml_entry(),
+                default_flow_style=False,
+                sort_keys=False,
             )
             with open(log_file, "a") as f:
                 if f.tell() > 0:

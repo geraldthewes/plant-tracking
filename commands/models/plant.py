@@ -1,6 +1,7 @@
 """
 SQLAlchemy model for Plant entity
 """
+
 import re
 from datetime import date, datetime, timezone
 from typing import TYPE_CHECKING, Optional

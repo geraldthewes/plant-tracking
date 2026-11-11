@@ -2,14 +2,14 @@
 Printing functionality for plant labels
 """
 
-import glob
-import os
+import logging
+import shutil
 import subprocess
-import sys
-import time
 from pathlib import Path
 from .label_generator import create_label
-from .label_format import LabelFormatEnum, is_format_supported, get_label_format
+from .label_format import LabelFormatEnum, is_format_supported
+
+logger = logging.getLogger(__name__)
 
 PHOMEMO_VENDOR_IDS = (0x0493, 0x0483)
 
@@ -47,7 +47,7 @@ def _find_usb_phomemo_devices():
                 try:
                     serial = usb.util.get_string(dev, dev.iSerialNumber) or ""
                 except Exception:
-                    pass
+                    logger.debug("Could not read serial number for device %s", dev)
 
                 description = (
                     f"Phomemo {model} (bus {dev.bus:03d}, dev {dev.address:03d})"
@@ -171,10 +171,15 @@ def print_label(
 
     media_option = format_to_media.get(format_str, "w40h30")  # default to 40x30mm
 
+    lp_bin = shutil.which("lp")
+    if lp_bin is None:
+        print("Error: lp command not found. Ensure CUPS is installed.")
+        return False
+
     try:
         # Print using lp with media option based on format
-        result = subprocess.run(
-            ["lp", "-d", queue_name, "-o", f"media={media_option}", str(label_path)],
+        result = subprocess.run(  # nosec B603  # fixed arg list; lp resolved via which
+            [lp_bin, "-d", queue_name, "-o", f"media={media_option}", str(label_path)],
             capture_output=True,
             text=False,
         )
@@ -192,7 +197,7 @@ def print_label(
         return True
 
     except FileNotFoundError:
-        print(f"Error: lp command not found. Ensure CUPS is installed.")
+        print("Error: lp command not found. Ensure CUPS is installed.")
         return False
     except Exception as e:
         print(f"Error during printing: {e}")

@@ -2,12 +2,15 @@
 Genus data model and validation
 """
 
+import logging
 import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 import yaml
+
+logger = logging.getLogger(__name__)
 
 
 # All available fields
@@ -84,7 +87,7 @@ class Genus:
                                         seq = int(match.group(1))
                                         max_seq = max(max_seq, seq)
                 except Exception:
-                    continue  # Skip unreadable files
+                    logger.warning("Skipping unreadable file: %s", file)
 
         return max_seq + 1
 
@@ -104,7 +107,7 @@ def find_matching(variety_name: str, latin_name: str) -> Optional["Genus"]:
             ):
                 return genus
         except Exception:
-            continue  # Skip unreadable files
+            logger.warning("Skipping unreadable file: %s", file)
     return None
 
 
@@ -120,7 +123,7 @@ def find_by_variety_name(variety_name: str) -> Optional["Genus"]:
             if genus.data.get("variety_name", "").lower() == variety_name.lower():
                 return genus
         except Exception:
-            continue  # Skip unreadable files
+            logger.warning("Skipping unreadable file: %s", file)
     return None
 
 
@@ -136,7 +139,7 @@ def list_all() -> List["Genus"]:
             genus = load_from_file(file)
             genera.append(genus)
         except Exception:
-            continue  # Skip unreadable files
+            logger.warning("Skipping unreadable file: %s", file)
     return genera
 
 

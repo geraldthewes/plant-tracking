@@ -1,6 +1,7 @@
 """
 Plant Tracking Models Package
 """
+
 from .plant import Plant
 from .seed_packet import SeedPacket
 from .genus import Genus
